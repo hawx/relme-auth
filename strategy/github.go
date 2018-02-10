@@ -29,8 +29,8 @@ func (strategy *authGitHub) Match(me *url.URL) bool {
 	return me.Hostname() == "github.com"
 }
 
-func (strategy *authGitHub) Redirect() string {
-	return strategy.Conf.AuthCodeURL("state", oauth2.AccessTypeOffline)
+func (strategy *authGitHub) Redirect(state string) string {
+	return strategy.Conf.AuthCodeURL(state, oauth2.AccessTypeOffline)
 }
 
 func (strategy *authGitHub) Callback(code string) (string, error) {

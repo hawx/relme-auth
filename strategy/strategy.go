@@ -8,7 +8,7 @@ type Strategy interface {
 	Match(me *url.URL) bool
 
 	// Redirect returns the URL to redirect the user to begin the authentication flow.
-	Redirect() string
+	Redirect(state string) string
 
 	// Callback handles the user's return from the 3rd party auth provider. It
 	// returns the profile URL for the authenticated user, hopefully matching the

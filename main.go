@@ -9,6 +9,7 @@ import (
 	"hawx.me/code/route"
 	"hawx.me/code/relme"
 	"hawx.me/code/relme-auth/strategy"
+	"hawx.me/code/relme-auth/state"
 	"github.com/BurntSushi/toml"
 )
 
@@ -46,6 +47,8 @@ func main() {
 	strategies := []strategy.Strategy{
 		gitHubStrategy,
 	}
+
+	authStore := state.Store()
 	
 	route.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `
@@ -53,17 +56,15 @@ func main() {
 <html>
 <body>
   <form action="/authenticate" method="POST">
-    <label for="me">URL</label>
-    <input type="text" id="me" name="me" />
-    <button type="submit">Authenticate</button>
+    <label for="me">Web Address:</label>
+    <input type="url" id="me" name="me" />
+    <button type="submit">Sign-in</button>
   </form>
 </body>
 </html>
 `)
 	})
 
-	var expectedURL string
-	
 	route.HandleFunc("/authenticate", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(415)
@@ -74,8 +75,13 @@ func main() {
 
 		verifiedLinks, _ := relme.FindVerified(me)
 		if chosenStrategy, expectedLink, ok := findStrategy(verifiedLinks, strategies); ok {
-			expectedURL = expectedLink
-			http.Redirect(w, r, chosenStrategy.Redirect(), http.StatusFound)
+			state, err := authStore.Insert(expectedLink)
+			if err != nil {
+				http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
+				return
+			}
+			
+			http.Redirect(w, r, chosenStrategy.Redirect(state), http.StatusFound)
 			return
 		}
 
@@ -84,6 +90,13 @@ func main() {
 
 	route.HandleFunc("/oauth/callback/github", func(w http.ResponseWriter, r *http.Request) {
 		code := r.FormValue("code")
+		state := r.FormValue("state")
+
+		expectedURL, ok := authStore.Claim(state)
+		if !ok {
+			http.Error(w, "How did you get here?", http.StatusInternalServerError)
+			return
+		}
 
 		userProfileURL, err := gitHubStrategy.Callback(code)
 		if err != nil {
@@ -117,3 +130,4 @@ func findStrategy(verifiedLinks []string, strategies []strategy.Strategy) (s str
 
 	return
 }
+
