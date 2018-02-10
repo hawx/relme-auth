@@ -16,7 +16,7 @@ func Store() *authStore {
 }
 
 func (store *authStore) Insert(link string) (state string, err error) {
-	state, err = secureRandomAlphaString(64)
+	state, err = randomString(64)
 	if err != nil {
 		return
 	}

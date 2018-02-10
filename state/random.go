@@ -4,35 +4,21 @@ import (
 	"crypto/rand"
 )
 
-// https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang
-const (
-	letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" // 52 possibilities
-	letterIdxBits = 6                    // 6 bits to represent 64 possibilities / indexes
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-)
+const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
 
-func secureRandomAlphaString(length int) (randomString string, err error) {
-	result := make([]byte, length)
-	bufferSize := int(float64(length)*1.3)
-	for i, j, randomBytes := 0, 0, []byte{}; i < length; j++ {
-		if j%bufferSize == 0 {
-			randomBytes, err = secureRandomBytes(bufferSize)
-			if err != nil {
-				return
-			}
-		}
-		if idx := int(randomBytes[j%length] & letterIdxMask); idx < len(letterBytes) {
-			result[i] = letterBytes[idx]
-			i++
-		}
+func randomString(n int) (string, error) {
+	bytes, err := randomBytes(n)
+	if err != nil {
+		return "", err
 	}
-
-	return string(result), nil
+	for i, b := range bytes {
+		bytes[i] = letters[b%byte(len(letters))]
+	}
+	return string(bytes), nil
 }
 
-// secureRandomBytes returns the requested number of bytes using crypto/rand
-func secureRandomBytes(length int) (randomBytes []byte, err error) {
-	randomBytes = make([]byte, length)
-	_, err = rand.Read(randomBytes)
+func randomBytes(length int) (b []byte, err error) {
+	b = make([]byte, length)
+	_, err = rand.Read(b)
 	return 
 }
