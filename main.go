@@ -1,6 +1,10 @@
 package main
 
 import (
+	"crypto/x509"
+	"io/ioutil"
+	"crypto/rsa"
+	"encoding/pem"
 	"net/url"
 	"net/http"
 	"fmt"
@@ -10,6 +14,7 @@ import (
 	"hawx.me/code/relme"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/token"
 	"github.com/BurntSushi/toml"
 )
 
@@ -33,10 +38,17 @@ func main() {
 		port = flag.String("port", "8080", "Port to run on")
 		socket = flag.String("socket", "", "Socket to run on")
 		config = flag.String("config", "./config.toml", "Path to config file")
+		privateKeyPath = flag.String("private-key", "./priv.pem", "Path to private key in pem format")
 	)
 	flag.Parse()
 
 	conf, err := readConfig(*config)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	privateKey, err := readPrivateKey(*privateKeyPath)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -109,7 +121,8 @@ func main() {
 			return
 		}
 
-		fmt.Fprint(w, "Here is a JWT")
+		jwt, _ := token.NewJWT(expectedURL).Encode(privateKey)
+		fmt.Fprint(w, jwt)
 	})
 	
 	serve.Serve(*port, *socket, route.Default)
@@ -131,3 +144,16 @@ func findStrategy(verifiedLinks []string, strategies []strategy.Strategy) (s str
 	return
 }
 
+func readPrivateKey(path string) (*rsa.PrivateKey, error) {
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	encoded, _ := pem.Decode(bytes)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	return x509.ParsePKCS1PrivateKey(encoded.Bytes)
+}
