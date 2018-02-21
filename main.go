@@ -1,67 +1,49 @@
 package main
 
 import (
-	"crypto/x509"
-	"io/ioutil"
-	"crypto/rsa"
-	"encoding/pem"
-	"net/url"
-	"net/http"
-	"fmt"
 	"flag"
-	"hawx.me/code/serve"
-	"hawx.me/code/route"
+	"fmt"
+	"net/http"
+	"net/url"
+
 	"hawx.me/code/relme"
-	"hawx.me/code/relme-auth/strategy"
+	"hawx.me/code/relme-auth/config"
 	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/relme-auth/token"
-	"github.com/BurntSushi/toml"
+	"hawx.me/code/route"
+	"hawx.me/code/serve"
 )
-
-type Config struct {
-	GitHub *strategyConfig `toml:"github"`
-}
-
-type strategyConfig struct {
-	Id string `toml:"id"`
-	Secret string `toml:"secret"`
-}
-
-func readConfig(path string) (Config, error) {
-	var conf Config
-	_, err := toml.DecodeFile(path, &conf)
-	return conf, err
-}
 
 func main() {
 	var (
-		port = flag.String("port", "8080", "Port to run on")
-		socket = flag.String("socket", "", "Socket to run on")
-		config = flag.String("config", "./config.toml", "Path to config file")
+		port           = flag.String("port", "8080", "Port to run on")
+		socket         = flag.String("socket", "", "Socket to run on")
+		configPath     = flag.String("config", "./config.toml", "Path to config file")
 		privateKeyPath = flag.String("private-key", "./priv.pem", "Path to private key in pem format")
 	)
 	flag.Parse()
 
-	conf, err := readConfig(*config)
+	conf, err := config.Read(*configPath)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	privateKey, err := readPrivateKey(*privateKeyPath)
+	privateKey, err := config.ReadPrivateKey(*privateKeyPath)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	
+
 	gitHubStrategy := strategy.GitHub(conf.GitHub.Id, conf.GitHub.Secret)
-	
+
 	strategies := []strategy.Strategy{
 		gitHubStrategy,
 	}
 
 	authStore := state.Store()
-	
+
 	route.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `
 <!DOCTYPE html>
@@ -92,7 +74,7 @@ func main() {
 				http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
 				return
 			}
-			
+
 			http.Redirect(w, r, chosenStrategy.Redirect(state), http.StatusFound)
 			return
 		}
@@ -124,7 +106,7 @@ func main() {
 		jwt, _ := token.NewJWT(expectedURL).Encode(privateKey)
 		fmt.Fprint(w, jwt)
 	})
-	
+
 	serve.Serve(*port, *socket, route.Default)
 }
 
@@ -132,7 +114,7 @@ func findStrategy(verifiedLinks []string, strategies []strategy.Strategy) (s str
 	for _, link := range verifiedLinks {
 		fmt.Printf("me=%s\n", link)
 		linkURL, _ := url.Parse(link)
-		
+
 		for _, strategy := range strategies {
 			if strategy.Match(linkURL) {
 				fmt.Printf("Can authenticate with %s\n", link)
@@ -142,18 +124,4 @@ func findStrategy(verifiedLinks []string, strategies []strategy.Strategy) (s str
 	}
 
 	return
-}
-
-func readPrivateKey(path string) (*rsa.PrivateKey, error) {
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	encoded, _ := pem.Decode(bytes)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	return x509.ParsePKCS1PrivateKey(encoded.Bytes)
 }
