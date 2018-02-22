@@ -3,13 +3,18 @@ package state
 import (
 	"sync"
 )
-	
+
 type authStore struct {
-	mu sync.Mutex
+	mu         sync.Mutex
 	inProgress map[string]string
 }
 
-func Store() *authStore {
+type Store interface {
+	Insert(link string) (state string, err error)
+	Claim(state string) (link string, ok bool)
+}
+
+func NewStore() *authStore {
 	return &authStore{
 		inProgress: map[string]string{},
 	}
@@ -20,13 +25,13 @@ func (store *authStore) Insert(link string) (state string, err error) {
 	if err != nil {
 		return
 	}
-	
+
 	store.mu.Lock()
 	defer store.mu.Unlock()
-	
+
 	store.inProgress[state] = link
 
-	return 
+	return
 }
 
 func (store *authStore) Claim(state string) (link string, ok bool) {
@@ -38,5 +43,5 @@ func (store *authStore) Claim(state string) (link string, ok bool) {
 		delete(store.inProgress, state)
 	}
 
-	return 
+	return
 }
