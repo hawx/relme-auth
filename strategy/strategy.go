@@ -1,6 +1,11 @@
 package strategy
 
-import "net/url"
+import (
+	"fmt"
+	"net/url"
+)
+
+type Strategies []Strategy
 
 type Strategy interface {
 	// Match determines from the found rel="me" links whether this Strategy can be
@@ -16,4 +21,20 @@ type Strategy interface {
 	// with the OAuth provider is different to the user attempting to authenticate
 	// with relme-auth.
 	Callback(code string) (string, error)
+}
+
+func (strategies Strategies) Find(verifiedLinks []string) (found Strategy, expectedLink string, ok bool) {
+	for _, link := range verifiedLinks {
+		fmt.Printf("me=%s\n", link)
+		linkURL, _ := url.Parse(link)
+
+		for _, strategy := range strategies {
+			if strategy.Match(linkURL) {
+				fmt.Printf("Can authenticate with %s\n", link)
+				return strategy, link, true
+			}
+		}
+	}
+
+	return
 }
