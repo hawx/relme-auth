@@ -3,7 +3,6 @@ package strategy
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -68,7 +67,6 @@ func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 		Token:  oauthToken,
 		Secret: expectedSecret,
 	}
-	log.Println("tempCred", tempCred)
 	tokenCred, _, err := strategy.Client.RequestToken(http.DefaultClient, tempCred, form.Get("oauth_verifier"))
 	if err != nil {
 		return "", errors.New("Error getting request token, " + err.Error())

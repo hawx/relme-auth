@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Flickr  *Strategy `toml:"flickr"`
 	GitHub  *Strategy `toml:"github"`
 	Twitter *Strategy `toml:"twitter"`
 }
