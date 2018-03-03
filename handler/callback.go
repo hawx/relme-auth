@@ -12,27 +12,22 @@ import (
 
 func Callback(privateKey *rsa.PrivateKey, authStore state.Store, strat strategy.Strategy) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		code := r.FormValue("code")
-		state := r.FormValue("state")
-
-		expectedURL, ok := authStore.Claim(state)
-		if !ok {
-			http.Error(w, "How did you get here?", http.StatusInternalServerError)
-			return
-		}
-
-		userProfileURL, err := strat.Callback(code)
-		if err != nil {
+		if err := r.ParseForm(); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if userProfileURL != expectedURL {
-			http.Error(w, "You are not the user I was expecting", http.StatusUnauthorized)
+		userProfileURL, err := strat.Callback(r.Form)
+		if err != nil {
+			if err == strategy.ErrUnauthorized {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 
-		jwt, _ := token.NewJWT(expectedURL).Encode(privateKey)
+		jwt, _ := token.NewJWT(userProfileURL).Encode(privateKey)
 		fmt.Fprint(w, jwt)
 	})
 }

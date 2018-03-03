@@ -10,7 +10,8 @@ import (
 )
 
 type Config struct {
-	GitHub *Strategy `toml:"github"`
+	GitHub  *Strategy `toml:"github"`
+	Twitter *Strategy `toml:"twitter"`
 }
 
 type Strategy struct {

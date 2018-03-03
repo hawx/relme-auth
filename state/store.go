@@ -1,8 +1,6 @@
 package state
 
-import (
-	"sync"
-)
+import "sync"
 
 type authStore struct {
 	mu         sync.Mutex
@@ -11,6 +9,7 @@ type authStore struct {
 
 type Store interface {
 	Insert(link string) (state string, err error)
+	Set(key, value string) error
 	Claim(state string) (link string, ok bool)
 }
 
@@ -32,6 +31,14 @@ func (store *authStore) Insert(link string) (state string, err error) {
 	store.inProgress[state] = link
 
 	return
+}
+
+func (store *authStore) Set(key, value string) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	store.inProgress[key] = value
+	return nil
 }
 
 func (store *authStore) Claim(state string) (link string, ok bool) {

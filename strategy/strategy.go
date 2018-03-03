@@ -1,8 +1,14 @@
 package strategy
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
+	"strings"
+)
+
+var (
+	ErrUnauthorized = errors.New("You are not the user you told me you were")
 )
 
 type Strategies []Strategy
@@ -13,14 +19,14 @@ type Strategy interface {
 	Match(me *url.URL) bool
 
 	// Redirect returns the URL to redirect the user to begin the authentication flow.
-	Redirect(state string) string
+	Redirect(expectedLink string) (redirectURL string, err error)
 
 	// Callback handles the user's return from the 3rd party auth provider. It
 	// returns the profile URL for the authenticated user, hopefully matching the
 	// rel="me" link earlier. If it does not match then the user who authenticated
 	// with the OAuth provider is different to the user attempting to authenticate
 	// with relme-auth.
-	Callback(code string) (string, error)
+	Callback(form url.Values) (string, error)
 }
 
 func (strategies Strategies) Find(verifiedLinks []string) (found Strategy, expectedLink string, ok bool) {
@@ -37,4 +43,16 @@ func (strategies Strategies) Find(verifiedLinks []string) (found Strategy, expec
 	}
 
 	return
+}
+
+func urlsEqual(a, b string) bool {
+	return normalizeURL(a) == normalizeURL(b)
+}
+
+func normalizeURL(profileURL string) string {
+	if !strings.HasSuffix(profileURL, "/") {
+		return profileURL + "/"
+	}
+
+	return profileURL
 }

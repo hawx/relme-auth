@@ -33,17 +33,20 @@ func main() {
 		return
 	}
 
-	gitHubStrategy := strategy.GitHub(conf.GitHub.Id, conf.GitHub.Secret)
+	authStore := state.NewStore()
+
+	gitHubStrategy := strategy.GitHub(authStore, conf.GitHub.Id, conf.GitHub.Secret)
+	twitterStrategy := strategy.Twitter(authStore, conf.Twitter.Id, conf.Twitter.Secret)
 
 	strategies := []strategy.Strategy{
 		gitHubStrategy,
+		twitterStrategy,
 	}
-
-	authStore := state.NewStore()
 
 	route.Handle("/", handler.Login())
 	route.Handle("/authenticate", handler.Authenticate(authStore, strategies))
 	route.Handle("/oauth/callback/github", handler.Callback(privateKey, authStore, gitHubStrategy))
+	route.Handle("/oauth/callback/twitter", handler.Callback(privateKey, authStore, twitterStrategy))
 
 	serve.Serve(*port, *socket, route.Default)
 }

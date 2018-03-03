@@ -18,14 +18,14 @@ func Authenticate(authStore state.Store, strategies strategy.Strategies) http.Ha
 		me := r.FormValue("me")
 
 		verifiedLinks, _ := relme.FindVerified(me)
-		if chosenStrategy, expectedLink, ok := strategies.Find(verifiedLinks); ok {
-			state, err := authStore.Insert(expectedLink)
+		if chosenStrategy, _, ok := strategies.Find(verifiedLinks); ok {
+			redirectURL, err := chosenStrategy.Redirect(me)
 			if err != nil {
 				http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
 				return
 			}
 
-			http.Redirect(w, r, chosenStrategy.Redirect(state), http.StatusFound)
+			http.Redirect(w, r, redirectURL, http.StatusFound)
 			return
 		}
 
