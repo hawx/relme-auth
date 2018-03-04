@@ -15,6 +15,7 @@ type authTwitter struct {
 	Client      oauth.Client
 	CallbackURL string
 	Store       state.Store
+	ApiURI      string
 }
 
 func Twitter(store state.Store, id, secret string) Strategy {
@@ -32,6 +33,7 @@ func Twitter(store state.Store, id, secret string) Strategy {
 		Client:      oauthClient,
 		CallbackURL: "http://localhost:8080/oauth/callback/twitter",
 		Store:       store,
+		ApiURI:      "https://api.twitter.com/1.1",
 	}
 }
 
@@ -72,7 +74,7 @@ func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 		return "", errors.New("Error getting request token, " + err.Error())
 	}
 
-	resp, err := strategy.Client.Get(http.DefaultClient, tokenCred, "https://api.twitter.com/1.1/account/verify_credentials.json", nil)
+	resp, err := strategy.Client.Get(http.DefaultClient, tokenCred, strategy.ApiURI+"/account/verify_credentials.json", nil)
 	if err != nil {
 		return "", err
 	}

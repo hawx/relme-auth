@@ -14,17 +14,12 @@ import (
 	"hawx.me/code/relme-auth/state"
 )
 
-const (
-	id     = "my-cool-id"
-	secret = "my-cool-secret"
-)
-
-func TestFlickrMatch(t *testing.T) {
-	flickr := Flickr(state.NewStore(), id, secret)
+func TestTwitterMatch(t *testing.T) {
+	twitter := Twitter(state.NewStore(), id, secret)
 
 	testCases := []string{
-		"https://www.flickr.com/somebody",
-		"http://www.flickr.com/somebody",
+		"https://twitter.com/somebody",
+		"http://twitter.com/somebody",
 	}
 
 	for _, tc := range testCases {
@@ -32,18 +27,18 @@ func TestFlickrMatch(t *testing.T) {
 		t.Run(tc, func(t *testing.T) {
 			parsed, err := url.Parse(tc)
 			assert.Nil(t, err)
-			assert.True(t, flickr.Match(parsed))
+			assert.True(t, twitter.Match(parsed))
 		})
 	}
 }
 
-func TestFlickrNotMatch(t *testing.T) {
-	flickr := Flickr(state.NewStore(), id, secret)
+func TestTwitterNotMatch(t *testing.T) {
+	twitter := Twitter(state.NewStore(), id, secret)
 
 	testCases := []string{
-		"https://www.flickrz.com/somebody",
-		"www.flickr.com/somebody",
-		"https://flickr.com/somebody",
+		"https://www.twitter.com/somebody",
+		"twitter.com/somebody",
+		"https://twitterz.com/somebody",
 	}
 
 	for _, tc := range testCases {
@@ -51,17 +46,17 @@ func TestFlickrNotMatch(t *testing.T) {
 		t.Run(tc, func(t *testing.T) {
 			parsed, err := url.Parse(tc)
 			assert.Nil(t, err)
-			assert.False(t, flickr.Match(parsed))
+			assert.False(t, twitter.Match(parsed))
 		})
 	}
 }
 
-func TestFlickrAuthFlow(t *testing.T) {
+func TestTwitterAuthFlow(t *testing.T) {
 	const (
 		expectedURL = "http://whatever.example.com"
+		shortURL    = "https://t.co/whatever"
 		tempToken   = "temp-token"
 		tempSecret  = "temp-secret"
-		nsid        = "someflickrnsid"
 	)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -81,31 +76,30 @@ func TestFlickrAuthFlow(t *testing.T) {
 			r.PostFormValue("oauth_consumer_key") == id {
 
 			w.Write([]byte(url.Values{
-				"fullname":           {"Someone Someone"},
 				"oauth_token":        {tempToken},
 				"oauth_token_secret": {tempSecret},
-				"user_nsid":          {nsid},
-				"username":           {"someone"},
 			}.Encode()))
 		}
 
-		if r.Method == "GET" && r.URL.Path == "/services/rest" &&
-			r.FormValue("nojsoncallback") == "1" &&
-			r.FormValue("format") == "json" &&
-			r.FormValue("api_key") == id &&
-			r.FormValue("user_id") == nsid &&
-			r.FormValue("method") == "flickr.profile.getProfile" {
-
+		if r.Method == "GET" && r.URL.Path == "/1.1/account/verify_credentials.json" {
 			json.NewEncoder(w).Encode(map[string]interface{}{
-				"profile": map[string]string{
-					"website": expectedURL,
+				"url": shortURL,
+				"entities": map[string]interface{}{
+					"url": map[string]interface{}{
+						"urls": []map[string]interface{}{
+							{
+								"url":          shortURL,
+								"expanded_url": expectedURL,
+							},
+						},
+					},
 				},
 			})
 		}
 	}))
 	defer server.Close()
 
-	flickr := &authFlickr{
+	twitter := &authTwitter{
 		Client: oauth.Client{
 			TemporaryCredentialRequestURI: server.URL + "/oauth/request_token",
 			ResourceOwnerAuthorizationURI: server.URL + "/oauth/authorize",
@@ -117,19 +111,18 @@ func TestFlickrAuthFlow(t *testing.T) {
 		},
 		CallbackURL: "",
 		Store:       state.NewStore(),
-		ApiKey:      id,
-		ApiURI:      server.URL + "/services/rest",
+		ApiURI:      server.URL + "/1.1",
 	}
 
-	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s&perms=read", server.URL, tempToken)
+	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s", server.URL, tempToken)
 
 	// 1. Redirect
-	redirectURL, err := flickr.Redirect(expectedURL)
+	redirectURL, err := twitter.Redirect(expectedURL)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedRedirectURL, redirectURL)
 
 	// 2. Callback
-	profileURL, err := flickr.Callback(url.Values{
+	profileURL, err := twitter.Callback(url.Values{
 		"oauth_token":    {tempToken},
 		"oauth_verifier": {tempSecret},
 	})
