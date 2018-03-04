@@ -16,6 +16,7 @@ type authFlickr struct {
 	ApiKey      string
 	CallbackURL string
 	Store       state.Store
+	ApiURI      string
 }
 
 func Flickr(store state.Store, id, secret string) Strategy {
@@ -34,6 +35,7 @@ func Flickr(store state.Store, id, secret string) Strategy {
 		CallbackURL: "http://localhost:8080/oauth/callback/flickr",
 		Store:       store,
 		ApiKey:      id,
+		ApiURI:      "https://api.flickr.com/services/rest",
 	}
 }
 
@@ -76,7 +78,7 @@ func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 
 	nsid := vals.Get("user_nsid")
 
-	resp, err := strategy.Client.Get(http.DefaultClient, tokenCred, "https://api.flickr.com/services/rest", url.Values{
+	resp, err := strategy.Client.Get(http.DefaultClient, tokenCred, strategy.ApiURI, url.Values{
 		"nojsoncallback": {"1"},
 		"format":         {"json"},
 		"api_key":        {strategy.ApiKey},
