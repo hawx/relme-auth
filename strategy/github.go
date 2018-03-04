@@ -12,8 +12,9 @@ import (
 )
 
 type authGitHub struct {
-	Conf  *oauth2.Config
-	Store state.Store
+	Conf   *oauth2.Config
+	Store  state.Store
+	ApiURI string
 }
 
 func GitHub(store state.Store, id, secret string) Strategy {
@@ -27,7 +28,11 @@ func GitHub(store state.Store, id, secret string) Strategy {
 		},
 	}
 
-	return &authGitHub{Conf: conf, Store: store}
+	return &authGitHub{
+		Conf:   conf,
+		Store:  store,
+		ApiURI: "https://api.github.com",
+	}
 }
 
 func (strategy *authGitHub) Match(me *url.URL) bool {
@@ -57,7 +62,7 @@ func (strategy *authGitHub) Callback(form url.Values) (string, error) {
 	}
 
 	client := strategy.Conf.Client(ctx, tok)
-	resp, err := client.Get("https://api.github.com/user")
+	resp, err := client.Get(strategy.ApiURI + "/user")
 	if err != nil {
 		return "", err
 	}
