@@ -13,11 +13,11 @@ import (
 
 type authGitHub struct {
 	Conf   *oauth2.Config
-	Store  state.Store
+	Store  state.StrategyStore
 	ApiURI string
 }
 
-func GitHub(store state.Store, id, secret string) Strategy {
+func GitHub(store state.StrategyStore, id, secret string) Strategy {
 	conf := &oauth2.Config{
 		ClientID:     id,
 		ClientSecret: secret,

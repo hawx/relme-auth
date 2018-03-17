@@ -11,10 +11,14 @@ type authStore struct {
 	sessions   []*Session
 }
 
-type Store interface {
+type StrategyStore interface {
 	Insert(link string) (state string, err error)
 	Set(key, value string) error
 	Claim(state string) (link string, ok bool)
+}
+
+type Store interface {
+	StrategyStore
 
 	Save(*Session)
 	Get(string) (Session, bool)

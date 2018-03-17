@@ -14,11 +14,11 @@ import (
 type authTwitter struct {
 	Client      oauth.Client
 	CallbackURL string
-	Store       state.Store
+	Store       state.StrategyStore
 	ApiURI      string
 }
 
-func Twitter(store state.Store, id, secret string) Strategy {
+func Twitter(store state.StrategyStore, id, secret string) Strategy {
 	oauthClient := oauth.Client{
 		TemporaryCredentialRequestURI: "https://api.twitter.com/oauth/request_token",
 		ResourceOwnerAuthorizationURI: "https://api.twitter.com/oauth/authenticate",

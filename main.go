@@ -46,7 +46,6 @@ func main() {
 	}
 
 	route.Handle("/auth", handler.Auth(authStore, strategies))
-	route.Handle("/authenticate", handler.Authenticate(authStore, strategies))
 	route.Handle("/oauth/callback/flickr", handler.Callback(privateKey, authStore, flickrStrategy))
 	route.Handle("/oauth/callback/github", handler.Callback(privateKey, authStore, gitHubStrategy))
 	route.Handle("/oauth/callback/twitter", handler.Callback(privateKey, authStore, twitterStrategy))

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"hawx.me/code/assert"
@@ -26,7 +25,7 @@ func (s *fakeStrategy) Match(me *url.URL) bool {
 
 func (s *fakeStrategy) Redirect(expectedLink string) (redirectURL string, err error) {
 	s.expectedLink = expectedLink
-	return "https://redirect.example.com", nil
+	return "https://example.com/redirect", nil
 }
 
 func (s *fakeStrategy) Callback(form url.Values) (string, error) {
@@ -41,7 +40,7 @@ func (s *falseStrategy) Match(me *url.URL) bool {
 }
 
 func (s *falseStrategy) Redirect(expectedLink string) (redirectURL string, err error) {
-	return "https://redirect.example.com", nil
+	return "https://example.com/redirect", nil
 }
 
 func (s *falseStrategy) Callback(form url.Values) (string, error) {
@@ -61,7 +60,7 @@ func testPage(link string) string {
 `
 }
 
-func TestAuthenticate(t *testing.T) {
+func TestAuth(t *testing.T) {
 	var rURL, sURL string
 
 	authStore := state.NewStore()
@@ -79,7 +78,7 @@ func TestAuthenticate(t *testing.T) {
 	defer s.Close()
 	sURL = s.URL
 
-	a := httptest.NewServer(Authenticate(authStore, strategy.Strategies{strat}))
+	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}))
 	defer a.Close()
 
 	client := &http.Client{
@@ -88,9 +87,11 @@ func TestAuthenticate(t *testing.T) {
 		},
 	}
 
-	req, err := http.NewRequest("POST", a.URL, strings.NewReader(url.Values{
-		"me": {s.URL},
-	}.Encode()))
+	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
+		"me":           {s.URL},
+		"client_id":    {"https://example.com/"},
+		"redirect_uri": {"https://example.com/redirect"},
+	}.Encode(), nil)
 	assert.Nil(t, err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -101,10 +102,10 @@ func TestAuthenticate(t *testing.T) {
 		assert.Equal(t, r.URL, strat.match.String())
 	}
 
-	assert.Equal(t, "https://redirect.example.com", resp.Header.Get("Location"))
+	assert.Equal(t, "https://example.com/redirect", resp.Header.Get("Location"))
 }
 
-func TestAuthenticateWhenNoMatchingStrategies(t *testing.T) {
+func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	var rURL, sURL string
 
 	authStore := state.NewStore()
@@ -122,7 +123,7 @@ func TestAuthenticateWhenNoMatchingStrategies(t *testing.T) {
 	defer s.Close()
 	sURL = s.URL
 
-	a := httptest.NewServer(Authenticate(authStore, strategy.Strategies{strat}))
+	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}))
 	defer a.Close()
 
 	client := &http.Client{
@@ -131,9 +132,9 @@ func TestAuthenticateWhenNoMatchingStrategies(t *testing.T) {
 		},
 	}
 
-	req, err := http.NewRequest("POST", a.URL, strings.NewReader(url.Values{
+	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me": {s.URL},
-	}.Encode()))
+	}.Encode(), nil)
 	assert.Nil(t, err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
