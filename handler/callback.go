@@ -2,7 +2,7 @@ package handler
 
 import (
 	"crypto/rsa"
-	"fmt"
+	"log"
 	"net/http"
 
 	"hawx.me/code/relme-auth/state"
@@ -27,7 +27,14 @@ func Callback(privateKey *rsa.PrivateKey, authStore state.Store, strat strategy.
 			return
 		}
 
+		session, ok := authStore.Get(userProfileURL)
+		if !ok {
+			http.Error(w, "Who are you?", http.StatusInternalServerError)
+			return
+		}
+
 		jwt, _ := token.NewJWT(userProfileURL).Encode(privateKey)
-		fmt.Fprint(w, jwt)
+		log.Println(jwt)
+		http.Redirect(w, r, session.RedirectURI+"?code="+session.Code, http.StatusFound)
 	})
 }
