@@ -4,11 +4,11 @@ import (
 	"crypto/rsa"
 	"net/http"
 
-	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/store"
 	"hawx.me/code/relme-auth/strategy"
 )
 
-func Callback(privateKey *rsa.PrivateKey, authStore state.Store, strat strategy.Strategy) http.Handler {
+func Callback(privateKey *rsa.PrivateKey, authStore store.SessionStore, strat strategy.Strategy) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

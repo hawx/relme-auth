@@ -11,11 +11,11 @@ import (
 	"github.com/garyburd/go-oauth/oauth"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/store/memory"
 )
 
 func TestTwitterMatch(t *testing.T) {
-	twitter := Twitter(state.NewStore(), id, secret)
+	twitter := Twitter(memory.NewStore(), id, secret)
 
 	testCases := []string{
 		"https://twitter.com/somebody",
@@ -33,7 +33,7 @@ func TestTwitterMatch(t *testing.T) {
 }
 
 func TestTwitterNotMatch(t *testing.T) {
-	twitter := Twitter(state.NewStore(), id, secret)
+	twitter := Twitter(memory.NewStore(), id, secret)
 
 	testCases := []string{
 		"https://www.twitter.com/somebody",
@@ -110,7 +110,7 @@ func TestTwitterAuthFlow(t *testing.T) {
 			},
 		},
 		CallbackURL: "",
-		Store:       state.NewStore(),
+		Store:       memory.NewStore(),
 		ApiURI:      server.URL + "/1.1",
 	}
 

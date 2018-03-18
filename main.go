@@ -6,7 +6,7 @@ import (
 
 	"hawx.me/code/relme-auth/config"
 	"hawx.me/code/relme-auth/handler"
-	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/store/memory"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/route"
 	"hawx.me/code/serve"
@@ -33,7 +33,7 @@ func main() {
 		return
 	}
 
-	authStore := state.NewStore()
+	authStore := memory.NewStore()
 
 	flickrStrategy := strategy.Flickr(authStore, conf.Flickr.Id, conf.Flickr.Secret)
 	gitHubStrategy := strategy.GitHub(authStore, conf.GitHub.Id, conf.GitHub.Secret)

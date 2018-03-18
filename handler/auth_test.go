@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/store/memory"
 	"hawx.me/code/relme-auth/strategy"
 )
 
@@ -71,7 +71,7 @@ func testPage(link string) string {
 func TestAuth(t *testing.T) {
 	var rURL, sURL string
 
-	authStore := state.NewStore()
+	authStore := memory.NewStore()
 	strat := &fakeStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +116,7 @@ func TestAuth(t *testing.T) {
 func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	var rURL, sURL string
 
-	authStore := state.NewStore()
+	authStore := memory.NewStore()
 	strat := &falseStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

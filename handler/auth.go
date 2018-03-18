@@ -6,18 +6,18 @@ import (
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme"
-	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/store"
 	"hawx.me/code/relme-auth/strategy"
 )
 
-func Auth(authStore state.Store, strategies strategy.Strategies) http.Handler {
+func Auth(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
 	return mux.Method{
 		"GET":  redirectToProvider(authStore, strategies),
 		"POST": verifyCode(authStore),
 	}
 }
 
-func redirectToProvider(authStore state.Store, strategies strategy.Strategies) http.Handler {
+func redirectToProvider(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		me := r.FormValue("me")
 
@@ -39,7 +39,7 @@ func redirectToProvider(authStore state.Store, strategies strategy.Strategies) h
 			return
 		}
 
-		authStore.Save(&state.Session{
+		authStore.Save(&store.Session{
 			Me:          me,
 			ClientID:    r.FormValue("client_id"),
 			RedirectURI: r.FormValue("redirect_uri"),
@@ -54,7 +54,7 @@ type verifyCodeResponse struct {
 	Me string `json:"me"`
 }
 
-func verifyCode(authStore state.Store) http.Handler {
+func verifyCode(authStore store.SessionStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code := r.FormValue("code")
 

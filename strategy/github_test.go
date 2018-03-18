@@ -12,11 +12,11 @@ import (
 	"golang.org/x/oauth2"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/store/memory"
 )
 
 func TestGitHubMatch(t *testing.T) {
-	gitHub := GitHub(state.NewStore(), id, secret)
+	gitHub := GitHub(memory.NewStore(), id, secret)
 
 	testCases := []string{
 		"https://github.com/somebody",
@@ -34,7 +34,7 @@ func TestGitHubMatch(t *testing.T) {
 }
 
 func TestGitHubNotMatch(t *testing.T) {
-	gitHub := GitHub(state.NewStore(), id, secret)
+	gitHub := GitHub(memory.NewStore(), id, secret)
 
 	testCases := []string{
 		"https://www.github.com/somebody",

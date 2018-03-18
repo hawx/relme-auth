@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"hawx.me/code/relme-auth/state"
+	"hawx.me/code/relme-auth/store"
 
 	"github.com/garyburd/go-oauth/oauth"
 )
@@ -15,11 +15,11 @@ type authFlickr struct {
 	Client      oauth.Client
 	ApiKey      string
 	CallbackURL string
-	Store       state.StrategyStore
+	Store       store.StrategyStore
 	ApiURI      string
 }
 
-func Flickr(store state.StrategyStore, id, secret string) Strategy {
+func Flickr(store store.StrategyStore, id, secret string) Strategy {
 	oauthClient := oauth.Client{
 		TemporaryCredentialRequestURI: "https://www.flickr.com/services/oauth/request_token",
 		ResourceOwnerAuthorizationURI: "https://www.flickr.com/services/oauth/authorize",
