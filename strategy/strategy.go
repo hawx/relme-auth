@@ -14,6 +14,9 @@ var (
 type Strategies []Strategy
 
 type Strategy interface {
+	// Name returns a unique lowercase alpha string naming the Strategy.
+	Name() string
+
 	// Match determines from the found rel="me" links whether this Strategy can be
 	// used.
 	Match(me *url.URL) bool

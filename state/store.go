@@ -27,9 +27,11 @@ type Store interface {
 
 type Session struct {
 	Me          string
-	Code        string
+	Provider    string
+	ProfileURI  string
 	ClientID    string
 	RedirectURI string
+	Code        string
 	CreatedAt   time.Time
 }
 

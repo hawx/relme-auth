@@ -18,6 +18,10 @@ type fakeStrategy struct {
 	form         url.Values
 }
 
+func (fakeStrategy) Name() string {
+	return "fake"
+}
+
 func (s *fakeStrategy) Match(me *url.URL) bool {
 	s.match = me
 	return true
@@ -35,15 +39,19 @@ func (s *fakeStrategy) Callback(form url.Values) (string, error) {
 
 type falseStrategy struct{}
 
-func (s *falseStrategy) Match(me *url.URL) bool {
+func (falseStrategy) Name() string {
+	return "false"
+}
+
+func (falseStrategy) Match(me *url.URL) bool {
 	return false
 }
 
-func (s *falseStrategy) Redirect(expectedLink string) (redirectURL string, err error) {
+func (falseStrategy) Redirect(expectedLink string) (redirectURL string, err error) {
 	return "https://example.com/redirect", nil
 }
 
-func (s *falseStrategy) Callback(form url.Values) (string, error) {
+func (falseStrategy) Callback(form url.Values) (string, error) {
 	return "me", nil
 }
 
@@ -140,5 +148,5 @@ func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 
 	resp, err := client.Do(req)
 	assert.Nil(t, err)
-	assert.Equal(t, "/no-strategies", resp.Header.Get("Location"))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }

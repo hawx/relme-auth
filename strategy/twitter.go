@@ -37,7 +37,11 @@ func Twitter(store state.StrategyStore, id, secret string) Strategy {
 	}
 }
 
-func (strategy *authTwitter) Match(me *url.URL) bool {
+func (authTwitter) Name() string {
+	return "twitter"
+}
+
+func (authTwitter) Match(me *url.URL) bool {
 	return me.Hostname() == "twitter.com"
 }
 

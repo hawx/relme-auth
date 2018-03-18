@@ -35,7 +35,11 @@ func GitHub(store state.StrategyStore, id, secret string) Strategy {
 	}
 }
 
-func (strategy *authGitHub) Match(me *url.URL) bool {
+func (authGitHub) Name() string {
+	return "github"
+}
+
+func (authGitHub) Match(me *url.URL) bool {
 	return me.Hostname() == "github.com"
 }
 

@@ -77,7 +77,7 @@ func Example() http.Handler {
 <!DOCTYPE html>
 <html>
 <body>
-  <p>You are signed-in as %s.</p>
+  <p>You are signed-in as <a href="%[1]s">%[1]s</a>.</p>
 </body>
 </html>
 `, session.Values["me"])

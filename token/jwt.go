@@ -1,18 +1,18 @@
 package token
 
 import (
-	"strings"
-	"encoding/json"
-	"encoding/base64"
 	"crypto"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
+	"strings"
 )
 
 type JsonWebToken struct {
 	Header Header
-	Data Data
+	Data   Data
 }
 
 type Header struct {
@@ -49,17 +49,17 @@ func (jwt *JsonWebToken) Encode(privateKey *rsa.PrivateKey) (string, error) {
 	}
 	encodedData := base64UrlEncode(jsonData)
 
-	signature, err := RSASHA256(encodedHeader + "." + encodedData, privateKey)
+	signature, err := RSASHA256(encodedHeader+"."+encodedData, privateKey)
 	if err != nil {
 		return "", err
 	}
-	
+
 	return encodedHeader + "." + encodedData + "." + signature, nil
 }
 
 func RSASHA256(data string, key *rsa.PrivateKey) (string, error) {
 	hashed := sha256.Sum256([]byte(data))
-	
+
 	signed, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, hashed[:])
 	if err != nil {
 		return "", err

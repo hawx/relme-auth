@@ -39,7 +39,11 @@ func Flickr(store state.StrategyStore, id, secret string) Strategy {
 	}
 }
 
-func (strategy *authFlickr) Match(me *url.URL) bool {
+func (authFlickr) Name() string {
+	return "flickr"
+}
+
+func (authFlickr) Match(me *url.URL) bool {
 	return me.Hostname() == "www.flickr.com"
 }
 

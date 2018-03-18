@@ -12,41 +12,49 @@ import (
 
 func Auth(authStore state.Store, strategies strategy.Strategies) http.Handler {
 	return mux.Method{
-		"GET":  authGet(authStore, strategies),
-		"POST": authPost(authStore),
+		"GET":  redirectToProvider(authStore, strategies),
+		"POST": verifyCode(authStore),
 	}
 }
 
-func authGet(authStore state.Store, strategies strategy.Strategies) http.Handler {
+func redirectToProvider(authStore state.Store, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session := &state.Session{
-			Me:          r.FormValue("me"),
-			ClientID:    r.FormValue("client_id"),
-			RedirectURI: r.FormValue("redirect_uri"),
-		}
-		authStore.Save(session)
+		me := r.FormValue("me")
 
-		verifiedLinks, _ := relme.FindVerified(session.Me)
-		if chosenStrategy, _, ok := strategies.Find(verifiedLinks); ok {
-			redirectURL, err := chosenStrategy.Redirect(session.Me)
-			if err != nil {
-				http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
-				return
-			}
-
-			http.Redirect(w, r, redirectURL, http.StatusFound)
+		verifiedLinks, err := relme.FindVerified(me)
+		if err != nil {
+			http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
 			return
 		}
 
-		http.Redirect(w, r, "/no-strategies", http.StatusFound)
+		chosenStrategy, profileURI, ok := strategies.Find(verifiedLinks)
+		if !ok {
+			http.Error(w, "No rel=\"me\" links on your profile match a known provider", http.StatusBadRequest)
+			return
+		}
+
+		redirectURL, err := chosenStrategy.Redirect(me)
+		if err != nil {
+			http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
+			return
+		}
+
+		authStore.Save(&state.Session{
+			Me:          me,
+			ClientID:    r.FormValue("client_id"),
+			RedirectURI: r.FormValue("redirect_uri"),
+			Provider:    chosenStrategy.Name(),
+			ProfileURI:  profileURI,
+		})
+		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
 }
 
-type authPostResponse struct {
+type verifyCodeResponse struct {
 	Me string `json:"me"`
 }
 
-func authPost(authStore state.Store) http.Handler {
+func verifyCode(authStore state.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code := r.FormValue("code")
 
@@ -71,7 +79,7 @@ func authPost(authStore state.Store) http.Handler {
 			return
 		}
 
-		json.NewEncoder(w).Encode(authPostResponse{
+		json.NewEncoder(w).Encode(verifyCodeResponse{
 			Me: session.Me,
 		})
 	})

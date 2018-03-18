@@ -2,12 +2,10 @@ package handler
 
 import (
 	"crypto/rsa"
-	"log"
 	"net/http"
 
 	"hawx.me/code/relme-auth/state"
 	"hawx.me/code/relme-auth/strategy"
-	"hawx.me/code/relme-auth/token"
 )
 
 func Callback(privateKey *rsa.PrivateKey, authStore state.Store, strat strategy.Strategy) http.Handler {
@@ -33,8 +31,6 @@ func Callback(privateKey *rsa.PrivateKey, authStore state.Store, strat strategy.
 			return
 		}
 
-		jwt, _ := token.NewJWT(userProfileURL).Encode(privateKey)
-		log.Println(jwt)
 		http.Redirect(w, r, session.RedirectURI+"?code="+session.Code, http.StatusFound)
 	})
 }
