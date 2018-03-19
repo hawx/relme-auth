@@ -11,16 +11,16 @@ import (
 func Callback(privateKey *rsa.PrivateKey, authStore store.SessionStore, strat strategy.Strategy) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "form: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		userProfileURL, err := strat.Callback(r.Form)
 		if err != nil {
 			if err == strategy.ErrUnauthorized {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
+				http.Error(w, "unauthorized: "+err.Error(), http.StatusUnauthorized)
 			} else {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, "something: "+err.Error(), http.StatusInternalServerError)
 			}
 			return
 		}

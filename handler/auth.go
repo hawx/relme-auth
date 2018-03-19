@@ -1,37 +1,37 @@
 package handler
 
 import (
-	"encoding/json"
+	"log"
 	"net/http"
 
-	"hawx.me/code/mux"
-	"hawx.me/code/relme"
 	"hawx.me/code/relme-auth/store"
 	"hawx.me/code/relme-auth/strategy"
 )
 
 func Auth(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
-	return mux.Method{
-		"GET":  redirectToProvider(authStore, strategies),
-		"POST": verifyCode(authStore),
-	}
-}
-
-func redirectToProvider(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		me := r.FormValue("me")
+		var (
+			me             = r.FormValue("me")
+			provider       = r.FormValue("provider")
+			profile        = r.FormValue("profile")
+			clientID       = r.FormValue("client_id")
+			redirectURI    = r.FormValue("redirect_uri")
+			chosenStrategy strategy.Strategy
+			ok             bool
+		)
 
-		verifiedLinks, err := relme.FindVerified(me)
-		if err != nil {
-			http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
-			return
+		for _, s := range strategies {
+			if s.Name() == provider {
+				chosenStrategy = s
+				ok = true
+			}
 		}
 
-		chosenStrategy, profileURI, ok := strategies.Find(verifiedLinks)
 		if !ok {
 			http.Error(w, "No rel=\"me\" links on your profile match a known provider", http.StatusBadRequest)
 			return
 		}
+		log.Println("Authenticating", me, "using", provider)
 
 		redirectURL, err := chosenStrategy.Redirect(me)
 		if err != nil {
@@ -41,59 +41,11 @@ func redirectToProvider(authStore store.SessionStore, strategies strategy.Strate
 
 		authStore.Save(&store.Session{
 			Me:          me,
-			ClientID:    r.FormValue("client_id"),
-			RedirectURI: r.FormValue("redirect_uri"),
-			Provider:    chosenStrategy.Name(),
-			ProfileURI:  profileURI,
+			ClientID:    clientID,
+			RedirectURI: redirectURI,
+			Provider:    provider,
+			ProfileURI:  profile,
 		})
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
-}
-
-type verifyCodeResponse struct {
-	Me string `json:"me"`
-}
-
-func verifyCode(authStore store.SessionStore) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		code := r.FormValue("code")
-
-		if code == "" {
-			writeJsonError(w, "invalid_request", "Missing 'code' parameter", http.StatusBadRequest)
-			return
-		}
-
-		session, ok := authStore.GetByCode(code)
-		if !ok {
-			writeJsonError(w, "invalid_request", "The code provided was not valid", http.StatusNotFound)
-			return
-		}
-
-		if session.Expired() {
-			writeJsonError(w, "invalid_request", "The auth code has expired (valid for 60 seconds)", http.StatusNotFound)
-			return
-		}
-
-		if session.RedirectURI != r.FormValue("redirect_uri") {
-			writeJsonError(w, "invalid_request", "The 'redirect_uri' parameter did not match", http.StatusBadRequest)
-			return
-		}
-
-		json.NewEncoder(w).Encode(verifyCodeResponse{
-			Me: session.Me,
-		})
-	})
-}
-
-type jsonError struct {
-	Error       string `json:"error"`
-	Description string `json:"error_description"`
-}
-
-func writeJsonError(w http.ResponseWriter, error string, description string, statusCode int) {
-	json.NewEncoder(w).Encode(jsonError{
-		Error:       error,
-		Description: description,
-	})
-	w.WriteHeader(statusCode)
 }

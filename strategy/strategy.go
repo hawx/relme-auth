@@ -48,6 +48,26 @@ func (strategies Strategies) Find(verifiedLinks []string) (found Strategy, expec
 	return
 }
 
+func (strategies Strategies) Allowed(verifiedLinks []string) (found map[string]Strategy, any bool) {
+	found = map[string]Strategy{}
+
+	for _, link := range verifiedLinks {
+		linkURL, err := url.Parse(link)
+		if err != nil {
+			continue
+		}
+
+		for _, strategy := range strategies {
+			if strategy.Match(linkURL) {
+				found[link] = strategy
+				any = true
+			}
+		}
+	}
+
+	return found, any
+}
+
 func urlsEqual(a, b string) bool {
 	return normalizeURL(a) == normalizeURL(b)
 }
