@@ -14,7 +14,8 @@ var (
 type Strategies []Strategy
 
 type Strategy interface {
-	// Name returns a unique lowercase alpha string naming the Strategy.
+	// Name returns a unique lowercase alpha string naming the Strategy. This will
+	// be passed around as the "provider" parameter.
 	Name() string
 
 	// Match determines from the found rel="me" links whether this Strategy can be
@@ -32,6 +33,9 @@ type Strategy interface {
 	Callback(form url.Values) (string, error)
 }
 
+// Find iterates through the list of verifiedLinks to profiles checking if there
+// is a strategy that can be used to authenticate against it, the first strategy
+// that is matched is returned.
 func (strategies Strategies) Find(verifiedLinks []string) (found Strategy, expectedLink string, ok bool) {
 	for _, link := range verifiedLinks {
 		fmt.Printf("me=%s\n", link)
@@ -48,6 +52,9 @@ func (strategies Strategies) Find(verifiedLinks []string) (found Strategy, expec
 	return
 }
 
+// Allowed checks every profile in verifiedLinks against the strategies
+// returning a map of profile URL to strategy that can be used to authenticate
+// against it.
 func (strategies Strategies) Allowed(verifiedLinks []string) (found map[string]Strategy, any bool) {
 	found = map[string]Strategy{}
 

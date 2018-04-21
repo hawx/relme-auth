@@ -97,6 +97,8 @@ func TestAuth(t *testing.T) {
 
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me":           {s.URL},
+		"provider":     {strat.Name()},
+		"profile":      {"https://me.example.com"},
 		"client_id":    {"https://example.com/"},
 		"redirect_uri": {"https://example.com/redirect"},
 	}.Encode(), nil)
@@ -105,10 +107,6 @@ func TestAuth(t *testing.T) {
 
 	resp, err := client.Do(req)
 	assert.Nil(t, err)
-
-	if assert.NotNil(t, strat.match) {
-		assert.Equal(t, r.URL, strat.match.String())
-	}
 
 	assert.Equal(t, "https://example.com/redirect", resp.Header.Get("Location"))
 }

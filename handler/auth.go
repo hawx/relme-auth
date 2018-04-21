@@ -8,14 +8,24 @@ import (
 	"hawx.me/code/relme-auth/strategy"
 )
 
+// Auth takes the chosen provider and initiates authentication by redirecting
+// the user to the 3rd party. It takes a number of parameters:
+//
+//   - me: URL originally entered of who we are trying to authenticate
+//   - provider: 3rd party authentication provider that was chosen
+//   - profile: URL expected to be matched by the provider
+//   - client_id: ID/URL of the client that initiated authentication
+//   - redirect_uri: final URI to redirect to when auth is finished
 func Auth(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			me             = r.FormValue("me")
-			provider       = r.FormValue("provider")
-			profile        = r.FormValue("profile")
-			clientID       = r.FormValue("client_id")
-			redirectURI    = r.FormValue("redirect_uri")
+			me       = r.FormValue("me")
+			provider = r.FormValue("provider")
+			profile  = r.FormValue("profile")
+			clientID = r.FormValue("client_id")
+
+			redirectURI = r.FormValue("redirect_uri")
+
 			chosenStrategy strategy.Strategy
 			ok             bool
 		)

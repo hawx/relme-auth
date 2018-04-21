@@ -4,6 +4,7 @@ import "net/url"
 
 type authTrue struct{}
 
+// True should only be used for testing purposes, it says that everyone is authenticated!
 func True() Strategy {
 	return authTrue{}
 }

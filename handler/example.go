@@ -10,6 +10,8 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+// Example implmenets a basic site using the authentication flow provided by
+// this package.
 func Example() http.Handler {
 	mux := http.NewServeMux()
 	store := sessions.NewCookieStore([]byte("something-very-secret"))

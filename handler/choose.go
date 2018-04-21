@@ -11,6 +11,8 @@ import (
 	"hawx.me/code/relme-auth/strategy"
 )
 
+// Choose finds, for the "me" parameter, all authentication providers that can be
+// used for authentication.
 func Choose(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
 	return mux.Method{
 		"GET": chooseProvider(authStore, strategies),

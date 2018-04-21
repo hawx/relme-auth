@@ -7,10 +7,8 @@ import (
 	"hawx.me/code/relme-auth/store"
 )
 
-type verifyCodeResponse struct {
-	Me string `json:"me"`
-}
-
+// Verify allows clients to check who a particular "code" belongs to, or whether
+// it is invalid.
 func Verify(authStore store.SessionStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code := r.FormValue("code")
@@ -40,6 +38,10 @@ func Verify(authStore store.SessionStore) http.Handler {
 			Me: session.Me,
 		})
 	})
+}
+
+type verifyCodeResponse struct {
+	Me string `json:"me"`
 }
 
 type jsonError struct {

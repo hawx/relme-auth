@@ -1,14 +1,18 @@
 package handler
 
 import (
-	"crypto/rsa"
 	"net/http"
 
 	"hawx.me/code/relme-auth/store"
 	"hawx.me/code/relme-auth/strategy"
 )
 
-func Callback(privateKey *rsa.PrivateKey, authStore store.SessionStore, strat strategy.Strategy) http.Handler {
+// Callback handles the return from the authentication provider by delegating to
+// the relevant strategy. If authentication was successful, and for the correct
+// user, then it will redirect to the "redirect_uri" that the authentication
+// flow was originally started with. A "code" parameter is returned which can be
+// verified as belonging to the authenticated user for a short period of time.
+func Callback(authStore store.SessionStore, strat strategy.Strategy) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "form: "+err.Error(), http.StatusInternalServerError)
