@@ -22,15 +22,34 @@ func Example() http.Handler {
 		fmt.Fprintf(w, `
 <!DOCTYPE html>
 <html>
-<body>
-  <form action="/auth" method="get">
-    <label for="web_address">Web Address:</label>
-    <input id="web_address" type="text" name="me" placeholder="yourdomain.com" />
-    <p><button type="submit">Sign In</button></p>
-    <input type="hidden" name="client_id" value="%[1]s/" />
-    <input type="hidden" name="redirect_uri" value="%[1]s/callback" />
-  </form>
-</body>
+  <head>
+    <title>Example site</title>
+    <style>
+      body {
+        font: 16px/1.3 sans-serif;
+        margin: 2rem;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      label {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sign-in to Example site</h1>
+
+    <form action="/auth" method="get">
+      <label for="web_address">Web Address</label>
+      <input id="web_address" type="text" name="me" placeholder="https://yourdomain.com" />
+      <p><button type="submit">Sign In</button></p>
+      <input type="hidden" name="client_id" value="%[1]s/" />
+      <input type="hidden" name="redirect_uri" value="%[1]s/callback" />
+    </form>
+  </body>
 </html>
 `, thisURL)
 	})
@@ -78,9 +97,19 @@ func Example() http.Handler {
 		fmt.Fprintf(w, `
 <!DOCTYPE html>
 <html>
-<body>
-  <p>You are signed-in as <a href="%[1]s">%[1]s</a>.</p>
-</body>
+  <head>
+    <title>Example site</title>
+    <style>
+      body {
+        font: 16px/1.3 sans-serif;
+        margin: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Example site</h1>
+    <p>You are signed-in as <a href="%[1]s">%[1]s</a>.</p>
+  </body>
 </html>
 `, session.Values["me"])
 	})

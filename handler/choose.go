@@ -35,9 +35,14 @@ func chooseProvider(authStore store.SessionStore, strategies strategy.Strategies
 			return
 		}
 
-		fmt.Fprintf(w, `<!DOCTYPE html><html><body>
+		fmt.Fprintf(w, `<!DOCTYPE html>
+<html>
+  <title>relme-auth</title>
+  <style>
 
-<p>Authenticate using one of the methods below to sign-in to %s as %s
+  </style>
+  <body>
+    <p>Authenticate using one of the methods below to sign-in to %s as %s
 <ul>`, r.FormValue("client_id"), me)
 
 		for profileURL, strategy := range found {
