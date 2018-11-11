@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 
@@ -35,16 +35,7 @@ func chooseProvider(authStore store.SessionStore, strategies strategy.Strategies
 			return
 		}
 
-		fmt.Fprintf(w, `<!DOCTYPE html>
-<html>
-  <title>relme-auth</title>
-  <style>
-
-  </style>
-  <body>
-    <p>Authenticate using one of the methods below to sign-in to %s as %s
-<ul>`, r.FormValue("client_id"), me)
-
+		var methods []chooseCtxMethod
 		for profileURL, strategy := range found {
 			query := url.Values{
 				"me":           {me},
@@ -54,13 +45,51 @@ func chooseProvider(authStore store.SessionStore, strategies strategy.Strategies
 				"redirect_uri": {r.FormValue("redirect_uri")},
 			}
 
-			fmt.Fprintf(w, `
-<li>
-  <a href="/auth/start?%s">%s - %s</a>
-</li>
-`, query.Encode(), strategy.Name(), profileURL)
+			methods = append(methods, chooseCtxMethod{
+				Query:        query.Encode(),
+				StrategyName: strategy.Name(),
+				ProfileURL:   profileURL,
+			})
 		}
 
-		fmt.Fprint(w, `</ul></body></html>`)
+		chooseTmpl.Execute(w, chooseCtx{
+			ClientID: r.FormValue("client_id"),
+			Me:       me,
+			Methods:  methods,
+		})
 	})
 }
+
+type chooseCtx struct {
+	ClientID string
+	Me       string
+	Methods  []chooseCtxMethod
+}
+
+type chooseCtxMethod struct {
+	Query        string
+	StrategyName string
+	ProfileURL   string
+}
+
+const chooseHTML = `
+<!DOCTYPE html>
+<html>
+  <title>relme-auth</title>
+  <style>
+
+  </style>
+  <body>
+    <p>Authenticate using one of the methods below to sign-in to {{ .ClientID }} as {{ .Me }}
+<ul>
+{{ range .Methods }}
+<li>
+  <a href="/auth/start?{{ .Query }}">{{ .StrategyName }} - {{ .ProfileURL }}</a>
+</li>
+{{ end }}
+</ul>
+</body>
+</html>
+`
+
+var chooseTmpl = template.Must(template.New("choose").Parse(chooseHTML))
