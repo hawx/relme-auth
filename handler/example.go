@@ -39,8 +39,8 @@ func Example() http.Handler {
       }
     </style>
   </head>
-  <body>
-    <h1>Sign-in to Example site</h1>
+  <body class="h-x-app">
+    <h1>Sign-in to <span class="p-name">Example site</span></h1>
 
     <form action="/auth" method="get">
       <label for="web_address">Web Address</label>

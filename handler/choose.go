@@ -8,6 +8,7 @@ import (
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme"
+	"hawx.me/code/relme-auth/microformats"
 	"hawx.me/code/relme-auth/store"
 	"hawx.me/code/relme-auth/strategy"
 )
@@ -22,7 +23,10 @@ func Choose(authStore store.SessionStore, strategies strategy.Strategies) http.H
 
 func chooseProvider(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		me := r.FormValue("me")
+		var (
+			me       = r.FormValue("me")
+			clientID = r.FormValue("client_id")
+		)
 
 		verifiedLinks, err := relme.FindVerified(me)
 		if err != nil {
@@ -53,10 +57,23 @@ func chooseProvider(authStore store.SessionStore, strategies strategy.Strategies
 			})
 		}
 
+		clientName := clientID
+
+		clientInfoResp, err := http.Get(clientID)
+		if err == nil {
+			defer clientInfoResp.Body.Close()
+
+			clientName, _, err = microformats.HApp(clientInfoResp.Body)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
 		if err := chooseTmpl.Execute(w, chooseCtx{
-			ClientID: r.FormValue("client_id"),
-			Me:       me,
-			Methods:  methods,
+			ClientID:   clientID,
+			ClientName: clientName,
+			Me:         me,
+			Methods:    methods,
 		}); err != nil {
 			log.Println(err)
 		}
@@ -64,9 +81,10 @@ func chooseProvider(authStore store.SessionStore, strategies strategy.Strategies
 }
 
 type chooseCtx struct {
-	ClientID string
-	Me       string
-	Methods  []chooseCtxMethod
+	ClientID   string
+	ClientName string
+	Me         string
+	Methods    []chooseCtxMethod
 }
 
 type chooseCtxMethod struct {
@@ -233,7 +251,7 @@ const chooseHTML = `
 
     <div class="container">
       <header>
-        <h1>Sign-in to Example App</h1>
+        <h1>Sign-in to {{ .ClientName }}</h1>
         <h2>{{ .ClientID }}</h2>
       </header>
 
