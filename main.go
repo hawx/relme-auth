@@ -71,5 +71,7 @@ func main() {
 	})
 	route.Handle("/*rest", handler.Example())
 
+	route.Handle("/ws", handler.WebSocket(strategies, database))
+
 	serve.Serve(*port, *socket, route.Default)
 }

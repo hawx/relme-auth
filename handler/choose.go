@@ -1,15 +1,12 @@
 package handler
 
 import (
-	"errors"
 	"html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"time"
 
 	"hawx.me/code/mux"
-	"hawx.me/code/relme"
 	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/microformats"
 	"hawx.me/code/relme-auth/store"
@@ -33,113 +30,26 @@ func chooseProvider(authStore store.SessionStore, database data.Database, strate
 			me          = r.FormValue("me")
 			clientID    = r.FormValue("client_id")
 			redirectURI = r.FormValue("redirect_uri")
-			force       = r.FormValue("force")
 		)
 
-		methods, cachedAt, err := getMethods(me, clientID, redirectURI, strategies, database, force != "")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		client, err := getClient(clientID, database)
+		client, err := getClient(clientID, redirectURI, database)
 		if err != nil {
 			log.Println("error getting client info:", err)
 		}
 
-		forceQuery := r.URL.Query()
-		forceQuery.Set("force", "yes")
-
 		if err := chooseTmpl.Execute(w, chooseCtx{
-			ForceQuery: template.URL(forceQuery.Encode()),
 			ClientID:   client.ID,
 			ClientName: client.Name,
 			Me:         me,
-			CachedAt:   cachedAt.Format("2 Jan"),
-			Methods:    methods,
 		}); err != nil {
 			log.Println(err)
 		}
 	})
 }
 
-func getMethods(me string, clientID string, redirectURI string, strategies strategy.Strategies, database data.Database, skipCache bool) (methods []chooseCtxMethod, cachedAt time.Time, err error) {
-	cachedAt = time.Now().UTC()
-
-	if !skipCache {
-		if profile_, err_ := database.GetProfile(me); err_ == nil {
-			if profile_.UpdatedAt.After(cachedAt.Add(-profileExpiry)) {
-				log.Println("retrieved profile from cache")
-				cachedAt = profile_.UpdatedAt
-
-				for _, method := range profile_.Methods {
-					query := url.Values{
-						"me":           {me},
-						"provider":     {method.Provider},
-						"profile":      {method.Profile},
-						"client_id":    {clientID},
-						"redirect_uri": {redirectURI},
-					}
-
-					methods = append(methods, chooseCtxMethod{
-						Query:        template.URL(query.Encode()),
-						StrategyName: method.Provider,
-						ProfileURL:   method.Profile,
-					})
-				}
-
-				return
-			}
-		}
-	}
-
-	verifiedLinks, err := relme.FindVerified(me)
-	if err != nil {
-		err = errors.New("Something went wrong with the redirect, sorry")
-		return
-	}
-
-	found, ok := strategies.Allowed(verifiedLinks)
-	if !ok {
-		err = errors.New("No rel=\"me\" links on your profile match a known provider")
-		return
-	}
-
-	profile := data.Profile{
-		Me:        me,
-		UpdatedAt: time.Now().UTC(),
-		Methods:   []data.Method{},
-	}
-
-	for profileURL, strategy := range found {
-		query := url.Values{
-			"me":           {me},
-			"provider":     {strategy.Name()},
-			"profile":      {profileURL},
-			"client_id":    {clientID},
-			"redirect_uri": {redirectURI},
-		}
-
-		methods = append(methods, chooseCtxMethod{
-			Query:        template.URL(query.Encode()),
-			StrategyName: strategy.Name(),
-			ProfileURL:   profileURL,
-		})
-
-		profile.Methods = append(profile.Methods, data.Method{
-			Provider: strategy.Name(),
-			Profile:  profileURL,
-		})
-	}
-
-	err = database.CacheProfile(profile)
-
-	return
-}
-
-func getClient(clientID string, database data.Database) (client data.Client, err error) {
+func getClient(clientID, redirectURI string, database data.Database) (client data.Client, err error) {
 	if client_, err_ := database.GetClient(clientID); err_ == nil {
-		if client_.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
+		if client_.RedirectURI == redirectURI && client_.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
 			log.Println("retrieved client from cache")
 			return client_, err_
 		}
@@ -148,6 +58,7 @@ func getClient(clientID string, database data.Database) (client data.Client, err
 	client.ID = clientID
 	client.Name = clientID
 	client.UpdatedAt = time.Now().UTC()
+	client.RedirectURI = redirectURI
 
 	clientInfoResp, err := http.Get(clientID)
 	if err != nil {
@@ -164,18 +75,9 @@ func getClient(clientID string, database data.Database) (client data.Client, err
 }
 
 type chooseCtx struct {
-	ForceQuery template.URL
 	ClientID   string
 	ClientName string
 	Me         string
-	CachedAt   string
-	Methods    []chooseCtxMethod
-}
-
-type chooseCtxMethod struct {
-	Query        template.URL
-	StrategyName string
-	ProfileURL   string
 }
 
 const chooseHTML = `
@@ -329,6 +231,72 @@ const chooseHTML = `
         font-style: italic;
         margin: 2.6rem 0;
       }
+
+      .info.loading {
+        display: none;
+      }
+
+      /* https://projects.lukehaas.me/css-loaders/ */
+      .loader,
+      .loader:before,
+      .loader:after {
+        border-radius: 50%;
+        width: 2.5em;
+        height: 2.5em;
+        -webkit-animation-fill-mode: both;
+        animation-fill-mode: both;
+        -webkit-animation: load7 1.8s infinite ease-in-out;
+        animation: load7 1.8s infinite ease-in-out;
+      }
+      .loader {
+        color: #666666;
+        font-size: 10px;
+        margin: 80px auto;
+        position: relative;
+        text-indent: -9999em;
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        transform: translateZ(0);
+        -webkit-animation-delay: -0.16s;
+        animation-delay: -0.16s;
+      }
+      .loader:before,
+      .loader:after {
+        content: '';
+        position: absolute;
+        top: 0;
+      }
+      .loader:before {
+        left: -3.5em;
+        -webkit-animation-delay: -0.32s;
+        animation-delay: -0.32s;
+      }
+      .loader:after {
+        left: 3.5em;
+      }
+      @-webkit-keyframes load7 {
+        0%,
+        80%,
+        100% {
+          box-shadow: 0 2.5em 0 -1.3em;
+        }
+        40% {
+          box-shadow: 0 2.5em 0 0;
+        }
+      }
+      @keyframes load7 {
+        0%,
+        80%,
+        100% {
+          box-shadow: 0 2.5em 0 -1.3em;
+        }
+        40% {
+          box-shadow: 0 2.5em 0 0;
+        }
+      }
+      .loader.hide {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -342,14 +310,11 @@ const chooseHTML = `
 
       <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong></p>
 
-      <ul class="methods">
-        {{ range .Methods }}
-        <li><a class="btn" href="/auth/start?{{ .Query }}"><strong>{{ .StrategyName }}</strong> as {{ .ProfileURL }}</a></li>
-        {{ end }}
-      </ul>
+      <div class="loader"></div>
+      <ul class="methods"></ul>
 
-      <p class="info">
-        Results cached {{ .CachedAt }}. <a href="/auth?{{ .ForceQuery }}">Refresh</a>.
+      <p class="info loading">
+        Results cached <span class="cachedAt"></span>. <a id="refresh">Refresh</a>.
       </p>
 
       <footer>
@@ -359,6 +324,67 @@ const chooseHTML = `
     </div>
 
     <div class="fill"></div>
+
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+
+      const methods = document.querySelector('.methods');
+      const info = document.querySelector('.info');
+      const cachedAt = document.querySelector('.cachedAt');
+      const refresh = document.getElementById('refresh');
+      const loader = document.querySelector('.loader');
+
+      var socket = new WebSocket("ws://localhost:8080/ws");
+      socket.onopen = function (event) {
+        socket.send(JSON.stringify({
+          me: urlParams.get('me'),
+          clientID: urlParams.get('client_id'),
+          redirectURI: urlParams.get('redirect_uri'),
+          force: false,
+        }));
+      };
+
+      refresh.onclick = function() {
+        while (methods.firstChild) {
+          methods.removeChild(methods.firstChild);
+        }
+        info.classList.add('loading');
+        loader.classList.remove('hide');
+
+        socket.send(JSON.stringify({
+          me: urlParams.get('me'),
+          clientID: urlParams.get('client_id'),
+          redirectURI: urlParams.get('redirect_uri'),
+          force: true,
+        }));
+      };
+
+      socket.onmessage = function (event) {
+        const profile = JSON.parse(event.data);
+        loader.classList.add('hide');
+
+        cachedAt.textContent = profile.CachedAt;
+        info.classList.remove('loading');
+
+        for (const method of profile.Methods) {
+          const li = document.createElement('li');
+
+          const btn = document.createElement('a');
+          btn.classList.add('btn');
+          btn.href = '/auth/start?' + method.Query;
+
+          const name = document.createElement('strong');
+          name.textContent = method.StrategyName;
+
+          const asText = document.createTextNode(' as ' + method.ProfileURL);
+
+          btn.appendChild(name);
+          btn.appendChild(asText);
+          li.appendChild(btn);
+          methods.appendChild(li);
+        }
+      }
+    </script>
   </body>
 </html>
 `
