@@ -33,9 +33,10 @@ func chooseProvider(authStore store.SessionStore, database data.Database, strate
 			me          = r.FormValue("me")
 			clientID    = r.FormValue("client_id")
 			redirectURI = r.FormValue("redirect_uri")
+			force       = r.FormValue("force")
 		)
 
-		methods, cachedAt, err := getMethods(me, clientID, redirectURI, strategies, database)
+		methods, cachedAt, err := getMethods(me, clientID, redirectURI, strategies, database, force != "")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -46,7 +47,11 @@ func chooseProvider(authStore store.SessionStore, database data.Database, strate
 			log.Println("error getting client info:", err)
 		}
 
+		forceQuery := r.URL.Query()
+		forceQuery.Set("force", "yes")
+
 		if err := chooseTmpl.Execute(w, chooseCtx{
+			ForceQuery: template.URL(forceQuery.Encode()),
 			ClientID:   client.ID,
 			ClientName: client.Name,
 			Me:         me,
@@ -58,31 +63,33 @@ func chooseProvider(authStore store.SessionStore, database data.Database, strate
 	})
 }
 
-func getMethods(me string, clientID string, redirectURI string, strategies strategy.Strategies, database data.Database) (methods []chooseCtxMethod, cachedAt time.Time, err error) {
+func getMethods(me string, clientID string, redirectURI string, strategies strategy.Strategies, database data.Database, skipCache bool) (methods []chooseCtxMethod, cachedAt time.Time, err error) {
 	cachedAt = time.Now().UTC()
 
-	if profile_, err_ := database.GetProfile(me); err_ == nil {
-		if profile_.UpdatedAt.After(cachedAt.Add(-profileExpiry)) {
-			log.Println("retrieved profile from cache")
-			cachedAt = profile_.UpdatedAt
+	if !skipCache {
+		if profile_, err_ := database.GetProfile(me); err_ == nil {
+			if profile_.UpdatedAt.After(cachedAt.Add(-profileExpiry)) {
+				log.Println("retrieved profile from cache")
+				cachedAt = profile_.UpdatedAt
 
-			for _, method := range profile_.Methods {
-				query := url.Values{
-					"me":           {me},
-					"provider":     {method.Provider},
-					"profile":      {method.Profile},
-					"client_id":    {clientID},
-					"redirect_uri": {redirectURI},
+				for _, method := range profile_.Methods {
+					query := url.Values{
+						"me":           {me},
+						"provider":     {method.Provider},
+						"profile":      {method.Profile},
+						"client_id":    {clientID},
+						"redirect_uri": {redirectURI},
+					}
+
+					methods = append(methods, chooseCtxMethod{
+						Query:        template.URL(query.Encode()),
+						StrategyName: method.Provider,
+						ProfileURL:   method.Profile,
+					})
 				}
 
-				methods = append(methods, chooseCtxMethod{
-					Query:        template.URL(query.Encode()),
-					StrategyName: method.Provider,
-					ProfileURL:   method.Profile,
-				})
+				return
 			}
-
-			return
 		}
 	}
 
@@ -157,6 +164,7 @@ func getClient(clientID string, database data.Database) (client data.Client, err
 }
 
 type chooseCtx struct {
+	ForceQuery template.URL
 	ClientID   string
 	ClientName string
 	Me         string
@@ -341,7 +349,7 @@ const chooseHTML = `
       </ul>
 
       <p class="info">
-        Results cached {{ .CachedAt }}. <a href="#">Refresh</a>.
+        Results cached {{ .CachedAt }}. <a href="/auth?{{ .ForceQuery }}">Refresh</a>.
       </p>
 
       <footer>
