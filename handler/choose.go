@@ -1,78 +1,56 @@
 package handler
 
 import (
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme"
+	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/microformats"
 	"hawx.me/code/relme-auth/store"
 	"hawx.me/code/relme-auth/strategy"
 )
 
+const profileExpiry = 7 * 24 * time.Hour
+const clientExpiry = 30 * 24 * time.Hour
+
 // Choose finds, for the "me" parameter, all authentication providers that can be
 // used for authentication.
-func Choose(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
+func Choose(authStore store.SessionStore, database data.Database, strategies strategy.Strategies) http.Handler {
 	return mux.Method{
-		"GET": chooseProvider(authStore, strategies),
+		"GET": chooseProvider(authStore, database, strategies),
 	}
 }
 
-func chooseProvider(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
+func chooseProvider(authStore store.SessionStore, database data.Database, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			me       = r.FormValue("me")
-			clientID = r.FormValue("client_id")
+			me          = r.FormValue("me")
+			clientID    = r.FormValue("client_id")
+			redirectURI = r.FormValue("redirect_uri")
 		)
 
-		verifiedLinks, err := relme.FindVerified(me)
+		methods, cachedAt, err := getMethods(me, clientID, redirectURI, strategies, database)
 		if err != nil {
-			http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		found, ok := strategies.Allowed(verifiedLinks)
-		if !ok {
-			http.Error(w, "No rel=\"me\" links on your profile match a known provider", http.StatusBadRequest)
-			return
-		}
-
-		var methods []chooseCtxMethod
-		for profileURL, strategy := range found {
-			query := url.Values{
-				"me":           {me},
-				"provider":     {strategy.Name()},
-				"profile":      {profileURL},
-				"client_id":    {r.FormValue("client_id")},
-				"redirect_uri": {r.FormValue("redirect_uri")},
-			}
-
-			methods = append(methods, chooseCtxMethod{
-				Query:        template.URL(query.Encode()),
-				StrategyName: strategy.Name(),
-				ProfileURL:   profileURL,
-			})
-		}
-
-		clientName := clientID
-
-		clientInfoResp, err := http.Get(clientID)
-		if err == nil {
-			defer clientInfoResp.Body.Close()
-
-			clientName, _, err = microformats.HApp(clientInfoResp.Body)
-			if err != nil {
-				log.Println(err)
-			}
+		client, err := getClient(clientID, database)
+		if err != nil {
+			log.Println("error getting client info:", err)
 		}
 
 		if err := chooseTmpl.Execute(w, chooseCtx{
-			ClientID:   clientID,
-			ClientName: clientName,
+			ClientID:   client.ID,
+			ClientName: client.Name,
 			Me:         me,
+			CachedAt:   cachedAt.Format("2 Jan"),
 			Methods:    methods,
 		}); err != nil {
 			log.Println(err)
@@ -80,10 +58,109 @@ func chooseProvider(authStore store.SessionStore, strategies strategy.Strategies
 	})
 }
 
+func getMethods(me string, clientID string, redirectURI string, strategies strategy.Strategies, database data.Database) (methods []chooseCtxMethod, cachedAt time.Time, err error) {
+	cachedAt = time.Now().UTC()
+
+	if profile_, err_ := database.GetProfile(me); err_ == nil {
+		if profile_.UpdatedAt.After(cachedAt.Add(-profileExpiry)) {
+			log.Println("retrieved profile from cache")
+			cachedAt = profile_.UpdatedAt
+
+			for _, method := range profile_.Methods {
+				query := url.Values{
+					"me":           {me},
+					"provider":     {method.Provider},
+					"profile":      {method.Profile},
+					"client_id":    {clientID},
+					"redirect_uri": {redirectURI},
+				}
+
+				methods = append(methods, chooseCtxMethod{
+					Query:        template.URL(query.Encode()),
+					StrategyName: method.Provider,
+					ProfileURL:   method.Profile,
+				})
+			}
+
+			return
+		}
+	}
+
+	verifiedLinks, err := relme.FindVerified(me)
+	if err != nil {
+		err = errors.New("Something went wrong with the redirect, sorry")
+		return
+	}
+
+	found, ok := strategies.Allowed(verifiedLinks)
+	if !ok {
+		err = errors.New("No rel=\"me\" links on your profile match a known provider")
+		return
+	}
+
+	profile := data.Profile{
+		Me:        me,
+		UpdatedAt: time.Now().UTC(),
+		Methods:   []data.Method{},
+	}
+
+	for profileURL, strategy := range found {
+		query := url.Values{
+			"me":           {me},
+			"provider":     {strategy.Name()},
+			"profile":      {profileURL},
+			"client_id":    {clientID},
+			"redirect_uri": {redirectURI},
+		}
+
+		methods = append(methods, chooseCtxMethod{
+			Query:        template.URL(query.Encode()),
+			StrategyName: strategy.Name(),
+			ProfileURL:   profileURL,
+		})
+
+		profile.Methods = append(profile.Methods, data.Method{
+			Provider: strategy.Name(),
+			Profile:  profileURL,
+		})
+	}
+
+	err = database.CacheProfile(profile)
+
+	return
+}
+
+func getClient(clientID string, database data.Database) (client data.Client, err error) {
+	if client_, err_ := database.GetClient(clientID); err_ == nil {
+		if client_.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
+			log.Println("retrieved client from cache")
+			return client_, err_
+		}
+	}
+
+	client.ID = clientID
+	client.Name = clientID
+	client.UpdatedAt = time.Now().UTC()
+
+	clientInfoResp, err := http.Get(clientID)
+	if err != nil {
+		return
+	}
+	defer clientInfoResp.Body.Close()
+
+	if clientName, _, err_ := microformats.HApp(clientInfoResp.Body); err_ == nil {
+		client.Name = clientName
+	}
+
+	err = database.CacheClient(client)
+	return
+}
+
 type chooseCtx struct {
 	ClientID   string
 	ClientName string
 	Me         string
+	CachedAt   string
 	Methods    []chooseCtxMethod
 }
 
@@ -264,7 +341,7 @@ const chooseHTML = `
       </ul>
 
       <p class="info">
-        Results cached 24 October. <a href="#">Refresh</a>.
+        Results cached {{ .CachedAt }}. <a href="#">Refresh</a>.
       </p>
 
       <footer>

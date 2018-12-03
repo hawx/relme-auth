@@ -6,6 +6,7 @@ import (
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/config"
+	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/handler"
 	"hawx.me/code/relme-auth/store/memory"
 	"hawx.me/code/relme-auth/strategy"
@@ -18,6 +19,7 @@ func main() {
 		port       = flag.String("port", "8080", "Port to run on")
 		socket     = flag.String("socket", "", "Socket to run on")
 		configPath = flag.String("config", "./config.toml", "Path to config file")
+		dbPath     = flag.String("db", "./db", "Path to database")
 		useTrue    = flag.Bool("true", false, "Use the fake 'true' auth provider")
 	)
 	flag.Parse()
@@ -27,6 +29,13 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	database, err := data.Open(*dbPath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer database.Close()
 
 	authStore := memory.NewStore()
 	var strategies strategy.Strategies
@@ -54,7 +63,7 @@ func main() {
 	}
 
 	route.Handle("/auth", mux.Method{
-		"GET":  handler.Choose(authStore, strategies),
+		"GET":  handler.Choose(authStore, database, strategies),
 		"POST": handler.Verify(authStore),
 	})
 	route.Handle("/auth/start", mux.Method{
