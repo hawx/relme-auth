@@ -2,6 +2,7 @@ package memory
 
 import (
 	"crypto/rand"
+	"errors"
 	"sync"
 	"time"
 
@@ -12,13 +13,59 @@ type authStore struct {
 	mu         sync.Mutex
 	inProgress map[string]string
 	sessions   []*data.Session
+	profiles   map[string]data.Profile
+	clients    map[string]data.Client
 }
 
-func NewStore() *authStore {
+func New() data.Database {
 	return &authStore{
 		inProgress: map[string]string{},
 		sessions:   []*data.Session{},
+		profiles:   map[string]data.Profile{},
+		clients:    map[string]data.Client{},
 	}
+}
+
+func (s *authStore) Close() error {
+	return nil
+}
+
+func (s *authStore) CacheProfile(profile data.Profile) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.profiles[profile.Me] = profile
+	return nil
+}
+
+func (s *authStore) CacheClient(client data.Client) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.clients[client.ID] = client
+	return nil
+}
+
+func (s *authStore) GetProfile(me string) (data.Profile, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	profile, ok := s.profiles[me]
+	if !ok {
+		return profile, errors.New("no such profile")
+	}
+
+	return profile, nil
+}
+
+func (s *authStore) GetClient(clientID string) (data.Client, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	client, ok := s.clients[clientID]
+	if !ok {
+		return client, errors.New("no such client")
+	}
+
+	return client, nil
 }
 
 func (s *authStore) Save(session *data.Session) {

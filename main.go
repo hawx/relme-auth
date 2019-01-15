@@ -6,21 +6,59 @@ import (
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/config"
+	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/data/boltdb"
+	"hawx.me/code/relme-auth/data/memory"
 	"hawx.me/code/relme-auth/handler"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/route"
 	"hawx.me/code/serve"
 )
 
+func printHelp() {
+	fmt.Println(`Usage: relme-auth [options]
+
+  relme-auth is a web service for authenticating with 3rd party
+  auth providers.
+
+  The providers implemented are:
+   * GitHub
+   * Flickr
+   * Twitter
+
+ CONFIGURATION
+   --config PATH='./config.toml'
+     Configuration file to use, this defines the secrets for
+     communicating with 3rd party authentication providers.
+
+   --true
+     Use the fake 'true' authentication provider. This should
+     only be used locally for testing as it says everyone is
+     authenticated!
+
+ DATA
+   By default riviera runs with an in memory database.
+
+   --boltdb PATH
+      Use the boltdb file at the given path.
+
+ SERVE
+   --port PORT='8080'
+      Serve on given port.
+
+   --socket SOCK
+      Serve at given socket, instead.`)
+}
+
 func main() {
 	var (
 		port       = flag.String("port", "8080", "Port to run on")
 		socket     = flag.String("socket", "", "Socket to run on")
 		configPath = flag.String("config", "./config.toml", "Path to config file")
-		dbPath     = flag.String("db", "./db", "Path to database")
+		boltdbPath = flag.String("boltdb", "", "Path to database")
 		useTrue    = flag.Bool("true", false, "Use the fake 'true' auth provider")
 	)
+	flag.Usage = func() { printHelp() }
 	flag.Parse()
 
 	conf, err := config.Read(*configPath)
@@ -29,16 +67,19 @@ func main() {
 		return
 	}
 
-	database, err := boltdb.Open(*dbPath)
-	if err != nil {
-		fmt.Println(err)
-		return
+	var database data.Database
+	if *boltdbPath != "" {
+		database, err = boltdb.Open(*boltdbPath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	} else {
+		database = memory.New()
 	}
 	defer database.Close()
 
-	// authStore := memory.NewStore()
 	var strategies strategy.Strategies
-
 	if *useTrue {
 		trueStrategy := strategy.True()
 		strategies = strategy.Strategies{trueStrategy}
