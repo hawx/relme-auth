@@ -6,18 +6,17 @@ import (
 	"errors"
 	"net/url"
 
-	"hawx.me/code/relme-auth/store"
-
 	"golang.org/x/oauth2"
+	"hawx.me/code/relme-auth/data"
 )
 
 type authGitHub struct {
 	Conf   *oauth2.Config
-	Store  store.StrategyStore
+	Store  data.StrategyStore
 	ApiURI string
 }
 
-func GitHub(store store.StrategyStore, id, secret string) Strategy {
+func GitHub(store data.StrategyStore, id, secret string) Strategy {
 	conf := &oauth2.Config{
 		ClientID:     id,
 		ClientSecret: secret,

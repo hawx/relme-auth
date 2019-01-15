@@ -1,18 +1,17 @@
+// Package data defines the structures required for storing session state
+//
+// See subpackages for actual implementations
 package data
 
-import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"time"
+import "time"
 
-	"github.com/boltdb/bolt"
-)
-
-const (
-	profileBucket = "profiles"
-	clientBucket  = "clients"
-)
+type Database interface {
+	CacheProfile(Profile) error
+	CacheClient(Client) error
+	GetProfile(me string) (Profile, error)
+	GetClient(clientID string) (Client, error)
+	Close() error
+}
 
 // Profile stores a user's authentication methods, so they don't have to be
 // queried again.
@@ -38,95 +37,32 @@ type Client struct {
 	Name string
 }
 
-type Database interface {
-	CacheProfile(Profile) error
-	CacheClient(Client) error
-	GetProfile(me string) (Profile, error)
-	GetClient(clientID string) (Client, error)
-	Close() error
+// SessionStore is used by relme-auth to keep track of current user sessions
+// when initiating authentication or verifying a user's identity.
+type SessionStore interface {
+	Save(*Session)
+	Get(string) (Session, bool)
+	GetByCode(string) (Session, bool)
 }
 
-func Open(path string) (Database, error) {
-	db, err := bolt.Open(path, 0600, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucketIfNotExists([]byte(profileBucket)); err != nil {
-			return fmt.Errorf("create profile bucket: %s", err)
-		}
-
-		if _, err := tx.CreateBucketIfNotExists([]byte(clientBucket)); err != nil {
-			return fmt.Errorf("create client bucket: %s", err)
-		}
-
-		return nil
-	})
-
-	return &database{db: db}, err
+// StrategyStore is used by strategies to keep track of OAuthy type stuff
+// between redirect and callback.
+type StrategyStore interface {
+	Insert(link string) (state string, err error)
+	Set(key, value string) error
+	Claim(state string) (link string, ok bool)
 }
 
-type database struct{ db *bolt.DB }
-
-func (d *database) Close() error {
-	return d.db.Close()
+type Session struct {
+	Me          string
+	Provider    string
+	ProfileURI  string
+	ClientID    string
+	RedirectURI string
+	Code        string
+	CreatedAt   time.Time
 }
 
-func (d *database) CacheProfile(profile Profile) error {
-	return d.db.Update(func(tx *bolt.Tx) error {
-		v, err := json.Marshal(profile)
-		if err != nil {
-			return err
-		}
-
-		b := tx.Bucket([]byte(profileBucket))
-		return b.Put([]byte(profile.Me), v)
-	})
-}
-
-func (d *database) CacheClient(client Client) error {
-	return d.db.Update(func(tx *bolt.Tx) error {
-		v, err := json.Marshal(client)
-		if err != nil {
-			return err
-		}
-
-		b := tx.Bucket([]byte(clientBucket))
-		return b.Put([]byte(client.ID), v)
-	})
-}
-
-func (d *database) GetProfile(me string) (Profile, error) {
-	var profile Profile
-
-	err := d.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(profileBucket))
-		v := b.Get([]byte(me))
-		if len(v) == 0 {
-			return errors.New("no such profile")
-		}
-
-		err := json.Unmarshal(v, &profile)
-		return err
-	})
-
-	return profile, err
-}
-
-func (d *database) GetClient(clientID string) (Client, error) {
-	var client Client
-
-	err := d.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(clientBucket))
-		v := b.Get([]byte(clientID))
-		if len(v) == 0 {
-			return errors.New("no such client")
-		}
-
-		err := json.Unmarshal(v, &client)
-		return err
-	})
-
-	return client, err
+func (s Session) Expired() bool {
+	return time.Now().Add(-60 * time.Second).After(s.CreatedAt)
 }

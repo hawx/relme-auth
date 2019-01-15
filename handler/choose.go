@@ -9,7 +9,6 @@ import (
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/microformats"
-	"hawx.me/code/relme-auth/store"
 	"hawx.me/code/relme-auth/strategy"
 )
 
@@ -18,13 +17,13 @@ const clientExpiry = 30 * 24 * time.Hour
 
 // Choose finds, for the "me" parameter, all authentication providers that can be
 // used for authentication.
-func Choose(authStore store.SessionStore, database data.Database, strategies strategy.Strategies) http.Handler {
+func Choose(authStore data.SessionStore, database data.Database, strategies strategy.Strategies) http.Handler {
 	return mux.Method{
 		"GET": chooseProvider(authStore, database, strategies),
 	}
 }
 
-func chooseProvider(authStore store.SessionStore, database data.Database, strategies strategy.Strategies) http.Handler {
+func chooseProvider(authStore data.SessionStore, database data.Database, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			me          = r.FormValue("me")

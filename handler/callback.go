@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"hawx.me/code/relme-auth/store"
+	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/strategy"
 )
 
@@ -12,7 +12,7 @@ import (
 // user, then it will redirect to the "redirect_uri" that the authentication
 // flow was originally started with. A "code" parameter is returned which can be
 // verified as belonging to the authenticated user for a short period of time.
-func Callback(authStore store.SessionStore, strat strategy.Strategy) http.Handler {
+func Callback(authStore data.SessionStore, strat strategy.Strategy) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "form: "+err.Error(), http.StatusInternalServerError)

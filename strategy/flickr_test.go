@@ -9,9 +9,8 @@ import (
 	"testing"
 
 	"github.com/garyburd/go-oauth/oauth"
-
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/store/memory"
+	"hawx.me/code/relme-auth/data/memory"
 )
 
 const (

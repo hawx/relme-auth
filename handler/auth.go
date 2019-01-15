@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"hawx.me/code/relme-auth/store"
+	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/strategy"
 )
 
@@ -16,19 +16,23 @@ import (
 //   - profile: URL expected to be matched by the provider
 //   - client_id: ID/URL of the client that initiated authentication
 //   - redirect_uri: final URI to redirect to when auth is finished
-func Auth(authStore store.SessionStore, strategies strategy.Strategies) http.Handler {
+func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			me       = r.FormValue("me")
-			provider = r.FormValue("provider")
-			profile  = r.FormValue("profile")
-			clientID = r.FormValue("client_id")
-
+			me          = r.FormValue("me")
+			provider    = r.FormValue("provider")
+			profile     = r.FormValue("profile")
+			clientID    = r.FormValue("client_id")
 			redirectURI = r.FormValue("redirect_uri")
 
 			chosenStrategy strategy.Strategy
 			ok             bool
 		)
+
+		if redirectURI[:len(clientID)] != clientID {
+			http.Error(w, "redirect_uri is untrustworthy", http.StatusBadRequest)
+			return
+		}
 
 		for _, s := range strategies {
 			if s.Name() == provider {
@@ -49,7 +53,7 @@ func Auth(authStore store.SessionStore, strategies strategy.Strategies) http.Han
 			return
 		}
 
-		authStore.Save(&store.Session{
+		authStore.Save(&data.Session{
 			Me:          me,
 			ClientID:    clientID,
 			RedirectURI: redirectURI,

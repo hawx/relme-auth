@@ -5,29 +5,29 @@ import (
 	"sync"
 	"time"
 
-	"hawx.me/code/relme-auth/store"
+	"hawx.me/code/relme-auth/data"
 )
 
 type authStore struct {
 	mu         sync.Mutex
 	inProgress map[string]string
-	sessions   []*store.Session
+	sessions   []*data.Session
 }
 
 func NewStore() *authStore {
 	return &authStore{
 		inProgress: map[string]string{},
-		sessions:   []*store.Session{},
+		sessions:   []*data.Session{},
 	}
 }
 
-func (s *authStore) Save(session *store.Session) {
+func (s *authStore) Save(session *data.Session) {
 	session.CreatedAt = time.Now()
 	session.Code, _ = randomString(16)
 	s.sessions = append(s.sessions, session)
 }
 
-func (s *authStore) Get(me string) (session store.Session, ok bool) {
+func (s *authStore) Get(me string) (session data.Session, ok bool) {
 	for _, session := range s.sessions {
 		if session.Me == me {
 			return *session, true
@@ -37,7 +37,7 @@ func (s *authStore) Get(me string) (session store.Session, ok bool) {
 	return
 }
 
-func (s *authStore) GetByCode(code string) (session store.Session, ok bool) {
+func (s *authStore) GetByCode(code string) (session data.Session, ok bool) {
 	for _, session := range s.sessions {
 		if session.Code == code {
 			return *session, true

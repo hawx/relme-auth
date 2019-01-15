@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"hawx.me/code/relme-auth/store"
+	"hawx.me/code/relme-auth/data"
 )
 
 // Verify allows clients to check who a particular "code" belongs to, or whether
 // it is invalid.
-func Verify(authStore store.SessionStore) http.Handler {
+func Verify(authStore data.SessionStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code := r.FormValue("code")
 

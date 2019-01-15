@@ -6,19 +6,18 @@ import (
 	"net/http"
 	"net/url"
 
-	"hawx.me/code/relme-auth/store"
-
 	"github.com/garyburd/go-oauth/oauth"
+	"hawx.me/code/relme-auth/data"
 )
 
 type authTwitter struct {
 	Client      oauth.Client
 	CallbackURL string
-	Store       store.StrategyStore
+	Store       data.StrategyStore
 	ApiURI      string
 }
 
-func Twitter(store store.StrategyStore, id, secret string) Strategy {
+func Twitter(store data.StrategyStore, id, secret string) Strategy {
 	oauthClient := oauth.Client{
 		TemporaryCredentialRequestURI: "https://api.twitter.com/oauth/request_token",
 		ResourceOwnerAuthorizationURI: "https://api.twitter.com/oauth/authenticate",

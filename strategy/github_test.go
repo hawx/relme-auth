@@ -10,9 +10,8 @@ import (
 	"testing"
 
 	"golang.org/x/oauth2"
-
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/store/memory"
+	"hawx.me/code/relme-auth/data/memory"
 )
 
 func TestGitHubMatch(t *testing.T) {

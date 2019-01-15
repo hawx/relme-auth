@@ -6,9 +6,9 @@ import (
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/config"
-	"hawx.me/code/relme-auth/data"
+	"hawx.me/code/relme-auth/data/boltdb"
+	"hawx.me/code/relme-auth/data/memory"
 	"hawx.me/code/relme-auth/handler"
-	"hawx.me/code/relme-auth/store/memory"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/route"
 	"hawx.me/code/serve"
@@ -30,7 +30,7 @@ func main() {
 		return
 	}
 
-	database, err := data.Open(*dbPath)
+	database, err := boltdb.Open(*dbPath)
 	if err != nil {
 		fmt.Println(err)
 		return
