@@ -17,13 +17,13 @@ const clientExpiry = 30 * 24 * time.Hour
 
 // Choose finds, for the "me" parameter, all authentication providers that can be
 // used for authentication.
-func Choose(authStore data.SessionStore, database data.Database, strategies strategy.Strategies) http.Handler {
+func Choose(authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies) http.Handler {
 	return mux.Method{
 		"GET": chooseProvider(authStore, database, strategies),
 	}
 }
 
-func chooseProvider(authStore data.SessionStore, database data.Database, strategies strategy.Strategies) http.Handler {
+func chooseProvider(authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			me          = r.FormValue("me")
@@ -46,7 +46,7 @@ func chooseProvider(authStore data.SessionStore, database data.Database, strateg
 	})
 }
 
-func getClient(clientID, redirectURI string, database data.Database) (client data.Client, err error) {
+func getClient(clientID, redirectURI string, database data.CacheStore) (client data.Client, err error) {
 	if client_, err_ := database.GetClient(clientID); err_ == nil {
 		if client_.RedirectURI == redirectURI && client_.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
 			log.Println("retrieved client from cache")

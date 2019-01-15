@@ -5,12 +5,22 @@ package data
 
 import "time"
 
+// A Database is everything that should be implemented for subpackages. I know,
+// this isn't very Go...
 type Database interface {
+	SessionStore
+	StrategyStore
+	CacheStore
+	Close() error
+}
+
+// A CacheStore allows caching for user and client info speeding up the app when
+// requests are made for the same things.
+type CacheStore interface {
 	CacheProfile(Profile) error
 	CacheClient(Client) error
 	GetProfile(me string) (Profile, error)
 	GetClient(clientID string) (Client, error)
-	Close() error
 }
 
 // Profile stores a user's authentication methods, so they don't have to be
@@ -22,6 +32,8 @@ type Profile struct {
 	Methods []Method
 }
 
+// Method is a way a user can authenticate, it contains the name of a 3rd party
+// provider and the expected profile URL with that provider.
 type Method struct {
 	Provider string
 	Profile  string
@@ -53,6 +65,8 @@ type StrategyStore interface {
 	Claim(state string) (link string, ok bool)
 }
 
+// Session contains all of the information needed to keep track of OAuth
+// requests/responses with a 3rd party.
 type Session struct {
 	Me          string
 	Provider    string
@@ -63,6 +77,7 @@ type Session struct {
 	CreatedAt   time.Time
 }
 
+// Expired returns true if the Session was created over 60 seconds ago.
 func (s Session) Expired() bool {
 	return time.Now().Add(-60 * time.Second).After(s.CreatedAt)
 }

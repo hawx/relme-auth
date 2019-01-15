@@ -34,13 +34,13 @@ func (c *Conn) send(msg profileResponse) error {
 
 type WebSocketServer struct {
 	strategies strategy.Strategies
-	database   data.Database
+	database   data.CacheStore
 
 	mu          sync.RWMutex
 	connections map[*Conn]struct{}
 }
 
-func WebSocket(strategies strategy.Strategies, database data.Database) http.Handler {
+func WebSocket(strategies strategy.Strategies, database data.CacheStore) http.Handler {
 	return &WebSocketServer{
 		strategies:  strategies,
 		database:    database,

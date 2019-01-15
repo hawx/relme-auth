@@ -7,7 +7,6 @@ import (
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/config"
 	"hawx.me/code/relme-auth/data/boltdb"
-	"hawx.me/code/relme-auth/data/memory"
 	"hawx.me/code/relme-auth/handler"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/route"
@@ -37,19 +36,19 @@ func main() {
 	}
 	defer database.Close()
 
-	authStore := memory.NewStore()
+	// authStore := memory.NewStore()
 	var strategies strategy.Strategies
 
 	if *useTrue {
 		trueStrategy := strategy.True()
 		strategies = strategy.Strategies{trueStrategy}
 
-		route.Handle("/oauth/callback/true", handler.Callback(authStore, trueStrategy))
+		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy))
 
 	} else {
-		flickrStrategy := strategy.Flickr(authStore, conf.Flickr.Id, conf.Flickr.Secret)
-		gitHubStrategy := strategy.GitHub(authStore, conf.GitHub.Id, conf.GitHub.Secret)
-		twitterStrategy := strategy.Twitter(authStore, conf.Twitter.Id, conf.Twitter.Secret)
+		flickrStrategy := strategy.Flickr(database, conf.Flickr.Id, conf.Flickr.Secret)
+		gitHubStrategy := strategy.GitHub(database, conf.GitHub.Id, conf.GitHub.Secret)
+		twitterStrategy := strategy.Twitter(database, conf.Twitter.Id, conf.Twitter.Secret)
 
 		strategies = strategy.Strategies{
 			flickrStrategy,
@@ -57,17 +56,17 @@ func main() {
 			twitterStrategy,
 		}
 
-		route.Handle("/oauth/callback/flickr", handler.Callback(authStore, flickrStrategy))
-		route.Handle("/oauth/callback/github", handler.Callback(authStore, gitHubStrategy))
-		route.Handle("/oauth/callback/twitter", handler.Callback(authStore, twitterStrategy))
+		route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy))
+		route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy))
+		route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy))
 	}
 
 	route.Handle("/auth", mux.Method{
-		"GET":  handler.Choose(authStore, database, strategies),
-		"POST": handler.Verify(authStore),
+		"GET":  handler.Choose(database, database, strategies),
+		"POST": handler.Verify(database),
 	})
 	route.Handle("/auth/start", mux.Method{
-		"GET": handler.Auth(authStore, strategies),
+		"GET": handler.Auth(database, strategies),
 	})
 	route.Handle("/*rest", handler.Example())
 
