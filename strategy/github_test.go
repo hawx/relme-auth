@@ -15,7 +15,7 @@ import (
 )
 
 func TestGitHubMatch(t *testing.T) {
-	gitHub := GitHub(memory.NewStore(), id, secret)
+	gitHub := GitHub(memory.New(), id, secret)
 
 	testCases := []string{
 		"https://github.com/somebody",
@@ -33,7 +33,7 @@ func TestGitHubMatch(t *testing.T) {
 }
 
 func TestGitHubNotMatch(t *testing.T) {
-	gitHub := GitHub(memory.NewStore(), id, secret)
+	gitHub := GitHub(memory.New(), id, secret)
 
 	testCases := []string{
 		"https://www.github.com/somebody",

@@ -19,7 +19,7 @@ const (
 )
 
 func TestFlickrMatch(t *testing.T) {
-	flickr := Flickr(memory.NewStore(), id, secret)
+	flickr := Flickr(memory.New(), id, secret)
 
 	testCases := []string{
 		"https://www.flickr.com/somebody",
@@ -37,7 +37,7 @@ func TestFlickrMatch(t *testing.T) {
 }
 
 func TestFlickrNotMatch(t *testing.T) {
-	flickr := Flickr(memory.NewStore(), id, secret)
+	flickr := Flickr(memory.New(), id, secret)
 
 	testCases := []string{
 		"https://www.flickrz.com/somebody",
@@ -115,7 +115,7 @@ func TestFlickrAuthFlow(t *testing.T) {
 			},
 		},
 		CallbackURL: "",
-		Store:       memory.NewStore(),
+		Store:       memory.New(),
 		ApiKey:      id,
 		ApiURI:      server.URL + "/services/rest",
 	}

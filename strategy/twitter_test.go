@@ -14,7 +14,7 @@ import (
 )
 
 func TestTwitterMatch(t *testing.T) {
-	twitter := Twitter(memory.NewStore(), id, secret)
+	twitter := Twitter(memory.New(), id, secret)
 
 	testCases := []string{
 		"https://twitter.com/somebody",
@@ -32,7 +32,7 @@ func TestTwitterMatch(t *testing.T) {
 }
 
 func TestTwitterNotMatch(t *testing.T) {
-	twitter := Twitter(memory.NewStore(), id, secret)
+	twitter := Twitter(memory.New(), id, secret)
 
 	testCases := []string{
 		"https://www.twitter.com/somebody",
@@ -109,7 +109,7 @@ func TestTwitterAuthFlow(t *testing.T) {
 			},
 		},
 		CallbackURL: "",
-		Store:       memory.NewStore(),
+		Store:       memory.New(),
 		ApiURI:      server.URL + "/1.1",
 	}
 

@@ -71,7 +71,7 @@ func testPage(link string) string {
 func TestAuth(t *testing.T) {
 	var rURL, sURL string
 
-	authStore := memory.NewStore()
+	authStore := memory.New()
 	strat := &fakeStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +114,7 @@ func TestAuth(t *testing.T) {
 func TestAuthWithEvilRedirect(t *testing.T) {
 	var rURL, sURL string
 
-	authStore := memory.NewStore()
+	authStore := memory.New()
 	strat := &fakeStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +156,7 @@ func TestAuthWithEvilRedirect(t *testing.T) {
 func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	var rURL, sURL string
 
-	authStore := memory.NewStore()
+	authStore := memory.New()
 	strat := &falseStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
