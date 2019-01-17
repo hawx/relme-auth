@@ -44,10 +44,6 @@ want to try it out locally,
    secret = "..."
    ```
 
-3. Generate a set of keys using `ssh-keygen` in some local folder, say `./credentials`.
-
-4. Now run it with `$ relme-auth --private-key ./credentials/id_rsa`.
-
-5. Go to `http://localhost:8080` and try signing-in with your domain. If
-   everything works you will get a nice JWT printed to the screen (obviously
+3. Go to `http://localhost:8080` and try signing-in with your domain. If
+   everything works you will get your domain printed to the screen (obviously
    this will eventually become something more useful).
