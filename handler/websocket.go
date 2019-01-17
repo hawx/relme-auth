@@ -17,7 +17,21 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-type Conn struct {
+// WebSocket returns a http.Handler that handles websocket connections. The
+// client can request a set of authentication methods for a user.
+func WebSocket(strategies strategy.Strategies, database data.CacheStore) http.Handler {
+	return &webSocketServer{
+		strategies:  strategies,
+		database:    database,
+		connections: map[*conn]struct{}{},
+	}
+}
+
+func (s *webSocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	websocket.Handler(s.serve).ServeHTTP(w, r)
+}
+
+type conn struct {
 	ID  string
 	Err error
 	ws  *websocket.Conn
@@ -28,32 +42,20 @@ type profileResponse struct {
 	Methods  []chooseCtxMethod
 }
 
-func (c *Conn) send(msg profileResponse) error {
+func (c *conn) send(msg profileResponse) error {
 	return websocket.JSON.Send(c.ws, msg)
 }
 
-type WebSocketServer struct {
+type webSocketServer struct {
 	strategies strategy.Strategies
 	database   data.CacheStore
 
 	mu          sync.RWMutex
-	connections map[*Conn]struct{}
+	connections map[*conn]struct{}
 }
 
-func WebSocket(strategies strategy.Strategies, database data.CacheStore) http.Handler {
-	return &WebSocketServer{
-		strategies:  strategies,
-		database:    database,
-		connections: map[*Conn]struct{}{},
-	}
-}
-
-func (s *WebSocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	websocket.Handler(s.serve).ServeHTTP(w, r)
-}
-
-func (s *WebSocketServer) addConnection(ws *websocket.Conn) *Conn {
-	conn := &Conn{
+func (s *webSocketServer) addConnection(ws *websocket.Conn) *conn {
+	conn := &conn{
 		ID:  "",
 		Err: nil,
 		ws:  ws,
@@ -66,13 +68,13 @@ func (s *WebSocketServer) addConnection(ws *websocket.Conn) *Conn {
 	return conn
 }
 
-func (s *WebSocketServer) removeConnection(conn *Conn) {
+func (s *webSocketServer) removeConnection(conn *conn) {
 	s.mu.Lock()
 	delete(s.connections, conn)
 	s.mu.Unlock()
 }
 
-func (s *WebSocketServer) serve(ws *websocket.Conn) {
+func (s *webSocketServer) serve(ws *websocket.Conn) {
 	conn := s.addConnection(ws)
 	defer s.removeConnection(conn)
 
@@ -88,7 +90,7 @@ type profileRequest struct {
 	Force       bool
 }
 
-func (s *WebSocketServer) serveConnection(conn *Conn) error {
+func (s *webSocketServer) serveConnection(conn *conn) error {
 	// on connect
 	log.Println("connected")
 
@@ -118,10 +120,8 @@ type chooseCtxMethod struct {
 	ProfileURL   string
 }
 
-func (s *WebSocketServer) getMethodsR(request profileRequest) (methods []chooseCtxMethod, cachedAt time.Time, err error) {
+func (s *webSocketServer) getMethodsR(request profileRequest) (methods []chooseCtxMethod, cachedAt time.Time, err error) {
 	cachedAt = time.Now().UTC()
-
-	<-time.After(5 * time.Second)
 
 	if !request.Force {
 		if profile_, err_ := s.database.GetProfile(request.Me); err_ == nil {
