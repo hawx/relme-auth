@@ -62,8 +62,8 @@ func Example() http.Handler {
 			"client_id":    {"http://localhost:8080/"},
 			"redirect_uri": {"http://localhost:8080/callback"},
 		})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err != nil || resp.StatusCode != 200 {
+			http.Error(w, "could not authenticate", http.StatusInternalServerError)
 			return
 		}
 
@@ -71,13 +71,13 @@ func Example() http.Handler {
 
 		var v exampleResponse
 		if err = json.NewDecoder(resp.Body).Decode(&v); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "response had a weird body", http.StatusInternalServerError)
 			return
 		}
 
 		session, err := store.Get(r, "example-session")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "can't set cookies...", http.StatusInternalServerError)
 			return
 		}
 
@@ -90,7 +90,7 @@ func Example() http.Handler {
 	mux.HandleFunc("/success", func(w http.ResponseWriter, r *http.Request) {
 		session, err := store.Get(r, "example-session")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "can't get cookies...", http.StatusInternalServerError)
 			return
 		}
 

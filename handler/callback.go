@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"hawx.me/code/relme-auth/data"
@@ -15,16 +16,18 @@ import (
 func Callback(authStore data.SessionStore, strat strategy.Strategy) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, "form: "+err.Error(), http.StatusInternalServerError)
+			log.Println("Callback: ParseForm: ", err)
+			http.Error(w, "the request was bad", http.StatusBadRequest)
 			return
 		}
 
 		userProfileURL, err := strat.Callback(r.Form)
 		if err != nil {
 			if err == strategy.ErrUnauthorized {
-				http.Error(w, "unauthorized: "+err.Error(), http.StatusUnauthorized)
+				http.Error(w, "the chosen provider says you are unauthorized", http.StatusUnauthorized)
 			} else {
-				http.Error(w, "something: "+err.Error(), http.StatusInternalServerError)
+				log.Println("Callback: strat.Callback: ", err)
+				http.Error(w, "something went wrong with the chosen provider, maybe try again with a different choice?", http.StatusInternalServerError)
 			}
 			return
 		}
