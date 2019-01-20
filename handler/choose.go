@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"hawx.me/code/mux"
@@ -17,13 +18,13 @@ const clientExpiry = 30 * 24 * time.Hour
 
 // Choose finds, for the "me" parameter, all authentication providers that can be
 // used for authentication.
-func Choose(authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies) http.Handler {
+func Choose(baseURL string, authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies) http.Handler {
 	return mux.Method{
-		"GET": chooseProvider(authStore, database, strategies),
+		"GET": chooseProvider(baseURL, authStore, database, strategies),
 	}
 }
 
-func chooseProvider(authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies) http.Handler {
+func chooseProvider(baseURL string, authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			me          = r.FormValue("me")
@@ -37,13 +38,22 @@ func chooseProvider(authStore data.SessionStore, database data.CacheStore, strat
 		}
 
 		if err := chooseTmpl.Execute(w, chooseCtx{
-			ClientID:   client.ID,
-			ClientName: client.Name,
-			Me:         me,
+			WebSocketURL: wsify(baseURL) + "/ws",
+			ClientID:     client.ID,
+			ClientName:   client.Name,
+			Me:           me,
 		}); err != nil {
 			log.Println(err)
 		}
 	})
+}
+
+func wsify(s string) string {
+	if strings.HasPrefix(s, "http://") {
+		return "ws://" + strings.TrimPrefix(s, "http://")
+	}
+
+	return "wss://" + strings.TrimPrefix(s, "https://")
 }
 
 func getClient(clientID, redirectURI string, database data.CacheStore) (client data.Client, err error) {
@@ -74,9 +84,10 @@ func getClient(clientID, redirectURI string, database data.CacheStore) (client d
 }
 
 type chooseCtx struct {
-	ClientID   string
-	ClientName string
-	Me         string
+	WebSocketURL string
+	ClientID     string
+	ClientName   string
+	Me           string
 }
 
 const chooseHTML = `
@@ -333,7 +344,7 @@ const chooseHTML = `
       const refresh = document.getElementById('refresh');
       const loader = document.querySelector('.loader');
 
-      var socket = new WebSocket("ws://localhost:8080/ws");
+      var socket = new WebSocket("{{ .WebSocketURL }}");
       socket.onopen = function (event) {
         socket.send(JSON.stringify({
           me: urlParams.get('me'),

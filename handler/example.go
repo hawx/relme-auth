@@ -12,13 +12,11 @@ import (
 
 // Example implmenets a basic site using the authentication flow provided by
 // this package.
-func Example() http.Handler {
+func Example(baseURL string) http.Handler {
 	mux := http.NewServeMux()
 	store := sessions.NewCookieStore([]byte("something-very-secret"))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		thisURL := "http://localhost:8080"
-
 		fmt.Fprintf(w, `
 <!DOCTYPE html>
 <html>
@@ -51,16 +49,16 @@ func Example() http.Handler {
     </form>
   </body>
 </html>
-`, thisURL)
+`, baseURL)
 	})
 
 	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		code := r.FormValue("code")
 
-		resp, err := http.PostForm("http://localhost:8080/auth", url.Values{
+		resp, err := http.PostForm(baseURL+"/auth", url.Values{
 			"code":         {code},
-			"client_id":    {"http://localhost:8080/"},
-			"redirect_uri": {"http://localhost:8080/callback"},
+			"client_id":    {baseURL + "/"},
+			"redirect_uri": {baseURL + "/callback"},
 		})
 		if err != nil || resp.StatusCode != 200 {
 			http.Error(w, "could not authenticate", http.StatusInternalServerError)
@@ -84,7 +82,7 @@ func Example() http.Handler {
 		session.Values["me"] = v.Me
 		session.Save(r, w)
 
-		http.Redirect(w, r, "http://localhost:8080/success", http.StatusFound)
+		http.Redirect(w, r, baseURL+"/success", http.StatusFound)
 	})
 
 	mux.HandleFunc("/success", func(w http.ResponseWriter, r *http.Request) {

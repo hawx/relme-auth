@@ -17,7 +17,7 @@ type authTwitter struct {
 	ApiURI      string
 }
 
-func Twitter(store data.StrategyStore, id, secret string) Strategy {
+func Twitter(baseURL string, store data.StrategyStore, id, secret string) Strategy {
 	oauthClient := oauth.Client{
 		TemporaryCredentialRequestURI: "https://api.twitter.com/oauth/request_token",
 		ResourceOwnerAuthorizationURI: "https://api.twitter.com/oauth/authenticate",
@@ -30,7 +30,7 @@ func Twitter(store data.StrategyStore, id, secret string) Strategy {
 
 	return &authTwitter{
 		Client:      oauthClient,
-		CallbackURL: "http://localhost:8080/oauth/callback/twitter",
+		CallbackURL: baseURL + "/oauth/callback/twitter",
 		Store:       store,
 		ApiURI:      "https://api.twitter.com/1.1",
 	}

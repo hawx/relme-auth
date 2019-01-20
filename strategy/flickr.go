@@ -18,7 +18,7 @@ type authFlickr struct {
 	ApiURI      string
 }
 
-func Flickr(store data.StrategyStore, id, secret string) Strategy {
+func Flickr(baseURL string, store data.StrategyStore, id, secret string) Strategy {
 	oauthClient := oauth.Client{
 		TemporaryCredentialRequestURI: "https://www.flickr.com/services/oauth/request_token",
 		ResourceOwnerAuthorizationURI: "https://www.flickr.com/services/oauth/authorize",
@@ -31,7 +31,7 @@ func Flickr(store data.StrategyStore, id, secret string) Strategy {
 
 	return &authFlickr{
 		Client:      oauthClient,
-		CallbackURL: "http://localhost:8080/oauth/callback/flickr",
+		CallbackURL: baseURL + "/oauth/callback/flickr",
 		Store:       store,
 		ApiKey:      id,
 		ApiURI:      "https://api.flickr.com/services/rest",

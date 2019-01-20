@@ -2,11 +2,15 @@ package strategy
 
 import "net/url"
 
-type authTrue struct{}
+type authTrue struct {
+	baseURL string
+}
 
 // True should only be used for testing purposes, it says that everyone is authenticated!
-func True() Strategy {
-	return authTrue{}
+func True(baseURL string) Strategy {
+	return authTrue{
+		baseURL: baseURL,
+	}
 }
 
 func (authTrue) Name() string {
@@ -17,8 +21,8 @@ func (authTrue) Match(me *url.URL) bool {
 	return true
 }
 
-func (authTrue) Redirect(expectedURL string) (redirectURL string, err error) {
-	redirectURL = "http://localhost:8080/oauth/callback/true?" +
+func (t authTrue) Redirect(expectedURL string) (redirectURL string, err error) {
+	redirectURL = t.baseURL + "/oauth/callback/true?" +
 		url.Values{"expected": {expectedURL}}.Encode()
 
 	return redirectURL, nil

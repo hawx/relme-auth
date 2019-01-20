@@ -31,6 +31,9 @@ func printHelp() {
      Configuration file to use, this defines the secrets for
      communicating with 3rd party authentication providers.
 
+   --base-url URL='http://localhost:8080'
+     Where this app is going to be accessible from.
+
    --true
      Use the fake 'true' authentication provider. This should
      only be used locally for testing as it says everyone is
@@ -54,6 +57,7 @@ func main() {
 	var (
 		port       = flag.String("port", "8080", "Port to run on")
 		socket     = flag.String("socket", "", "Socket to run on")
+		baseURL    = flag.String("base-url", "http://localhost:8080", "Where this is running")
 		configPath = flag.String("config", "./config.toml", "Path to config file")
 		boltdbPath = flag.String("boltdb", "", "Path to database")
 		useTrue    = flag.Bool("true", false, "Use the fake 'true' auth provider")
@@ -81,15 +85,15 @@ func main() {
 
 	var strategies strategy.Strategies
 	if *useTrue {
-		trueStrategy := strategy.True()
+		trueStrategy := strategy.True(*baseURL)
 		strategies = strategy.Strategies{trueStrategy}
 
 		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy))
 
 	} else {
-		flickrStrategy := strategy.Flickr(database, conf.Flickr.Id, conf.Flickr.Secret)
+		flickrStrategy := strategy.Flickr(*baseURL, database, conf.Flickr.Id, conf.Flickr.Secret)
 		gitHubStrategy := strategy.GitHub(database, conf.GitHub.Id, conf.GitHub.Secret)
-		twitterStrategy := strategy.Twitter(database, conf.Twitter.Id, conf.Twitter.Secret)
+		twitterStrategy := strategy.Twitter(*baseURL, database, conf.Twitter.Id, conf.Twitter.Secret)
 
 		strategies = strategy.Strategies{
 			flickrStrategy,
@@ -103,13 +107,13 @@ func main() {
 	}
 
 	route.Handle("/auth", mux.Method{
-		"GET":  handler.Choose(database, database, strategies),
+		"GET":  handler.Choose(*baseURL, database, database, strategies),
 		"POST": handler.Verify(database),
 	})
 	route.Handle("/auth/start", mux.Method{
 		"GET": handler.Auth(database, strategies),
 	})
-	route.Handle("/*rest", handler.Example())
+	route.Handle("/*rest", handler.Example(*baseURL))
 
 	route.Handle("/ws", handler.WebSocket(strategies, database))
 
