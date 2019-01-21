@@ -185,8 +185,19 @@ const chooseHTML = `
         margin: 1.3rem 0;
       }
 
+      li.error, li.unsupported {
+        color: silver;
+      }
+
       strong {
         font-weight: bold;
+      }
+
+      .error-msg {
+        margin: 1.3rem 0;
+        padding: .6rem 1rem;
+        border-radius: .2rem;
+        background: rgba(255, 59, 93, .1);
       }
 
       a {
@@ -320,8 +331,8 @@ const chooseHTML = `
 
       <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong></p>
 
-      <div class="loader"></div>
       <ul class="methods"></ul>
+      <div class="loader"></div>
 
       <p class="info loading">
         Results cached <span class="cachedAt"></span>. <a id="refresh">Refresh</a>.
@@ -369,30 +380,114 @@ const chooseHTML = `
         }));
       };
 
+      const elements = {};
+
       socket.onmessage = function (event) {
         const profile = JSON.parse(event.data);
-        loader.classList.add('hide');
 
-        cachedAt.textContent = profile.CachedAt;
-        info.classList.remove('loading');
+        if (profile.Type) {
+          switch (profile.Type) {
+            case 'error':
+              if (profile.Link === '') {
+                showError(methods);
+                return;
+              } else {
+                toError(elements[profile.Link], 'error');
+              }
+              break;
+            case 'found':
+              elements[profile.Link] = renderText(methods, profile.Link);
+              break;
+            case 'not-supported':
+              toError(elements[profile.Link], 'unsupported');
+              break;
+            case 'unverified':
+              methods.removeChild(elements[profile.Link]);
+              break;
+            case 'verified':
+              elements[profile.Link] = toMethod(elements[profile.Link], profile.Method);
+              break;
+            case 'done':
+              loader.classList.add('hide');
+              break;
+          }
+        } else {
+          loader.classList.add('hide');
 
-        for (const method of profile.Methods) {
-          const li = document.createElement('li');
+          cachedAt.textContent = profile.CachedAt;
+          info.classList.remove('loading');
 
-          const btn = document.createElement('a');
-          btn.classList.add('btn');
-          btn.href = '/auth/start?' + method.Query;
-
-          const name = document.createElement('strong');
-          name.textContent = method.StrategyName;
-
-          const asText = document.createTextNode(' as ' + method.ProfileURL);
-
-          btn.appendChild(name);
-          btn.appendChild(asText);
-          li.appendChild(btn);
-          methods.appendChild(li);
+          for (const method of profile.Methods) {
+            renderMethod(methods, method);
+          }
         }
+      }
+
+      function showError(root) {
+        const p = document.createElement('p');
+        const text = document.createTextNode('Something went wrong while trying to retrieve possible authentication methods.');
+
+        p.appendChild(text);
+        p.classList.add('error-msg');
+        root.appendChild(p);
+        loader.classList.add('hide');
+      }
+
+      function renderMethod(root, method) {
+        const li = document.createElement('li');
+
+        const btn = document.createElement('a');
+        btn.classList.add('btn');
+        btn.href = '/auth/start?' + method.Query;
+
+        const name = document.createElement('strong');
+        name.textContent = method.StrategyName;
+
+        const asText = document.createTextNode(' as ' + method.ProfileURL);
+
+        btn.appendChild(name);
+        btn.appendChild(asText);
+        li.appendChild(btn);
+        root.appendChild(li);
+        return li;
+      }
+
+      function renderText(root, link) {
+        const li = document.createElement('li');
+        const text = document.createTextNode(link);
+
+        li.appendChild(text);
+        root.appendChild(li);
+        return li;
+      }
+
+      function toError(li, errorClass) {
+        const errorText = errorClass === 'unsupported'
+                        ? document.createTextNode(' is not supported for authentication')
+                        : document.createTextNode(' could not be retrieved');
+
+        li.classList.add(errorClass);
+        li.appendChild(errorText);
+      }
+
+      function toMethod(li, method) {
+        while (li.firstChild) {
+          li.removeChild(li.firstChild);
+        }
+
+        const btn = document.createElement('a');
+        btn.classList.add('btn');
+        btn.href = '/auth/start?' + method.Query;
+
+        const name = document.createElement('strong');
+        name.textContent = method.StrategyName;
+
+        const asText = document.createTextNode(' as ' + method.ProfileURL);
+
+        btn.appendChild(name);
+        btn.appendChild(asText);
+        li.appendChild(btn);
+        return li;
       }
     </script>
   </body>
