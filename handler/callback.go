@@ -3,6 +3,7 @@ package handler
 import (
 	"log"
 	"net/http"
+	"net/url"
 
 	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/strategy"
@@ -38,6 +39,11 @@ func Callback(authStore data.SessionStore, strat strategy.Strategy) http.Handler
 			return
 		}
 
-		http.Redirect(w, r, session.RedirectURI+"?code="+session.Code, http.StatusFound)
+		query := url.Values{
+			"code":  {session.Code},
+			"state": {session.State},
+		}
+
+		http.Redirect(w, r, session.RedirectURI+"?"+query.Encode(), http.StatusFound)
 	})
 }

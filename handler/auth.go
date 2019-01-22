@@ -22,14 +22,19 @@ func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Hand
 			me          = r.FormValue("me")
 			provider    = r.FormValue("provider")
 			profile     = r.FormValue("profile")
-			clientID    = r.FormValue("client_id")
 			redirectURI = r.FormValue("redirect_uri")
 
 			chosenStrategy strategy.Strategy
 			ok             bool
 		)
 
-		if redirectURI[:len(clientID)] != clientID {
+		session, ok := authStore.Get(me)
+		if !ok {
+			http.Error(w, "you need to start at the start", http.StatusBadRequest)
+			return
+		}
+
+		if redirectURI[:len(session.ClientID)] != session.ClientID {
 			http.Error(w, "redirect_uri is untrustworthy", http.StatusBadRequest)
 			return
 		}
@@ -53,13 +58,10 @@ func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Hand
 			return
 		}
 
-		authStore.Save(&data.Session{
-			Me:          me,
-			ClientID:    clientID,
-			RedirectURI: redirectURI,
-			Provider:    provider,
-			ProfileURI:  profile,
-		})
+		session.Provider = provider
+		session.ProfileURI = profile
+
+		authStore.Update(session)
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
 }

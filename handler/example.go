@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
+	"hawx.me/code/relme-auth/data"
 )
 
 // Example implmenets a basic site using the authentication flow provided by
@@ -17,6 +18,16 @@ func Example(baseURL string) http.Handler {
 	store := sessions.NewCookieStore([]byte("something-very-secret"))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		session, err := store.Get(r, "example-session")
+		if err != nil {
+			http.Error(w, "can't get cookies...", http.StatusInternalServerError)
+			return
+		}
+
+		state, _ := data.RandomString(64)
+		session.Values["state"] = state
+		session.Save(r, w)
+
 		fmt.Fprintf(w, `
 <!DOCTYPE html>
 <html>
@@ -46,14 +57,27 @@ func Example(baseURL string) http.Handler {
       <p><button type="submit">Sign In</button></p>
       <input type="hidden" name="client_id" value="%[1]s/" />
       <input type="hidden" name="redirect_uri" value="%[1]s/callback" />
+      <input type="hidden" name="state" value="%[2]s" />
     </form>
   </body>
 </html>
-`, baseURL)
+`, baseURL, state)
 	})
 
 	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+		session, err := store.Get(r, "example-session")
+		if err != nil {
+			http.Error(w, "can't get cookies...", http.StatusInternalServerError)
+			return
+		}
+
 		code := r.FormValue("code")
+		state := r.FormValue("state")
+
+		if state != session.Values["state"] {
+			http.Error(w, "state did not match", http.StatusBadRequest)
+			return
+		}
 
 		resp, err := http.PostForm(baseURL+"/auth", url.Values{
 			"code":         {code},
@@ -70,12 +94,6 @@ func Example(baseURL string) http.Handler {
 		var v exampleResponse
 		if err = json.NewDecoder(resp.Body).Decode(&v); err != nil {
 			http.Error(w, "response had a weird body", http.StatusInternalServerError)
-			return
-		}
-
-		session, err := store.Get(r, "example-session")
-		if err != nil {
-			http.Error(w, "can't set cookies...", http.StatusInternalServerError)
 			return
 		}
 

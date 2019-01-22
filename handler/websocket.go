@@ -155,7 +155,6 @@ func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profi
 			"me":           {request.Me},
 			"provider":     {method.Provider},
 			"profile":      {method.Profile},
-			"client_id":    {request.ClientID},
 			"redirect_uri": {request.RedirectURI},
 		}
 
@@ -206,7 +205,6 @@ func (s *webSocketServer) readAllEvents(conn *conn, request profileRequest, prof
 				"me":           {request.Me},
 				"provider":     {strategy.Name()},
 				"profile":      {event.Link},
-				"client_id":    {request.ClientID},
 				"redirect_uri": {request.RedirectURI},
 			}
 

@@ -30,7 +30,15 @@ func chooseProvider(baseURL string, authStore data.SessionStore, database data.C
 			me          = r.FormValue("me")
 			clientID    = r.FormValue("client_id")
 			redirectURI = r.FormValue("redirect_uri")
+			state       = r.FormValue("state")
 		)
+
+		authStore.Save(&data.Session{
+			Me:          me,
+			ClientID:    clientID,
+			RedirectURI: redirectURI,
+			State:       state,
+		})
 
 		client, err := getClient(clientID, redirectURI, database)
 		if err != nil {

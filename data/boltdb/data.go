@@ -1,7 +1,6 @@
 package boltdb
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -107,8 +106,22 @@ func (d *database) GetClient(clientID string) (client data.Client, err error) {
 
 func (d *database) Save(session *data.Session) {
 	session.CreatedAt = time.Now()
-	session.Code, _ = randomString(16)
+	session.Code, _ = data.RandomString(16)
 
+	d.db.Update(func(tx *bolt.Tx) error {
+		v, err := json.Marshal(session)
+		if err != nil {
+			return err
+		}
+
+		b := tx.Bucket([]byte(sessionBucket))
+		b.Put([]byte(session.Me), v)
+		b.Put([]byte(session.Code), v)
+		return nil
+	})
+}
+
+func (d *database) Update(session data.Session) {
 	d.db.Update(func(tx *bolt.Tx) error {
 		v, err := json.Marshal(session)
 		if err != nil {
@@ -153,7 +166,7 @@ func (d *database) GetByCode(code string) (session data.Session, ok bool) {
 }
 
 func (d *database) Insert(link string) (state string, err error) {
-	state, err = randomString(64)
+	state, err = data.RandomString(64)
 	if err != nil {
 		return
 	}
@@ -186,23 +199,4 @@ func (d *database) Claim(state string) (link string, ok bool) {
 	}
 
 	return link, true
-}
-
-const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
-
-func randomString(n int) (string, error) {
-	bytes, err := randomBytes(n)
-	if err != nil {
-		return "", err
-	}
-	for i, b := range bytes {
-		bytes[i] = letters[b%byte(len(letters))]
-	}
-	return string(bytes), nil
-}
-
-func randomBytes(length int) (b []byte, err error) {
-	b = make([]byte, length)
-	_, err = rand.Read(b)
-	return
 }

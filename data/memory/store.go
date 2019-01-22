@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"crypto/rand"
 	"errors"
 	"sync"
 	"time"
@@ -70,8 +69,17 @@ func (s *authStore) GetClient(clientID string) (data.Client, error) {
 
 func (s *authStore) Save(session *data.Session) {
 	session.CreatedAt = time.Now()
-	session.Code, _ = randomString(16)
+	session.Code, _ = data.RandomString(16)
 	s.sessions = append(s.sessions, session)
+}
+
+func (s *authStore) Update(session data.Session) {
+	for _, found := range s.sessions {
+		if found.Me == session.Me {
+			found = &session
+			return
+		}
+	}
 }
 
 func (s *authStore) Get(me string) (session data.Session, ok bool) {
@@ -95,7 +103,7 @@ func (s *authStore) GetByCode(code string) (session data.Session, ok bool) {
 }
 
 func (s *authStore) Insert(link string) (state string, err error) {
-	state, err = randomString(64)
+	state, err = data.RandomString(64)
 	if err != nil {
 		return
 	}
@@ -124,24 +132,5 @@ func (s *authStore) Claim(state string) (link string, ok bool) {
 		delete(s.inProgress, state)
 	}
 
-	return
-}
-
-const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
-
-func randomString(n int) (string, error) {
-	bytes, err := randomBytes(n)
-	if err != nil {
-		return "", err
-	}
-	for i, b := range bytes {
-		bytes[i] = letters[b%byte(len(letters))]
-	}
-	return string(bytes), nil
-}
-
-func randomBytes(length int) (b []byte, err error) {
-	b = make([]byte, length)
-	_, err = rand.Read(b)
 	return
 }

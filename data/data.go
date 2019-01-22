@@ -3,7 +3,10 @@
 // See subpackages for actual implementations
 package data
 
-import "time"
+import (
+	"crypto/rand"
+	"time"
+)
 
 // A Database is everything that should be implemented for subpackages. I know,
 // this isn't very Go...
@@ -53,6 +56,7 @@ type Client struct {
 // when initiating authentication or verifying a user's identity.
 type SessionStore interface {
 	Save(*Session)
+	Update(Session)
 	Get(string) (Session, bool)
 	GetByCode(string) (Session, bool)
 }
@@ -74,10 +78,30 @@ type Session struct {
 	ClientID    string
 	RedirectURI string
 	Code        string
+	State       string
 	CreatedAt   time.Time
 }
 
 // Expired returns true if the Session was created over 60 seconds ago.
 func (s Session) Expired() bool {
 	return time.Now().Add(-60 * time.Second).After(s.CreatedAt)
+}
+
+const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
+
+func RandomString(n int) (string, error) {
+	bytes, err := randomBytes(n)
+	if err != nil {
+		return "", err
+	}
+	for i, b := range bytes {
+		bytes[i] = letters[b%byte(len(letters))]
+	}
+	return string(bytes), nil
+}
+
+func randomBytes(length int) (b []byte, err error) {
+	b = make([]byte, length)
+	_, err = rand.Read(b)
+	return
 }
