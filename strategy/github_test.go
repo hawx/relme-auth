@@ -60,9 +60,7 @@ func TestGitHubAuthFlow(t *testing.T) {
 	)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		if r.Method == "POST" && r.URL.Path == "/oauth/access_token" &&
-			r.PostFormValue("client_id") == id &&
 			r.PostFormValue("code") == code {
 
 			w.Write([]byte(url.Values{

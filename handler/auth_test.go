@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"hawx.me/code/assert"
+	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/data/memory"
 	"hawx.me/code/relme-auth/strategy"
 )
@@ -72,6 +73,7 @@ func TestAuth(t *testing.T) {
 	var rURL, sURL string
 
 	authStore := memory.New()
+
 	strat := &fakeStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -95,12 +97,20 @@ func TestAuth(t *testing.T) {
 		},
 	}
 
+	authStore.Save(&data.Session{
+		Me:          s.URL,
+		ClientID:    "https://example.com/",
+		RedirectURI: "https://example.com/redirect",
+		State:       "shared state",
+	})
+
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me":           {s.URL},
 		"provider":     {strat.Name()},
 		"profile":      {"https://me.example.com"},
 		"client_id":    {"https://example.com/"},
 		"redirect_uri": {"https://example.com/redirect"},
+		"state":        {"shared state"}, // TODO: test with bad state and stuff
 	}.Encode(), nil)
 	assert.Nil(t, err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

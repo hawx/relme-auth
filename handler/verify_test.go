@@ -18,6 +18,8 @@ type fakeSessionStore struct {
 
 func (s *fakeSessionStore) Save(session *data.Session) {}
 
+func (s *fakeSessionStore) Update(session data.Session) {}
+
 func (s *fakeSessionStore) Get(id string) (data.Session, bool) {
 	return s.Session, true
 }
