@@ -4,6 +4,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/boltdb/bolt v1.3.1 h1:JQmyP4ZBrce+ZQu0dY660FMfatumYDLun9hBCUVIkF4=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/garyburd/go-oauth v0.0.0-20140708041717-e63dca786bb0 h1:+CqJ+5yFUQfDHcPnj1sAbOloESDbE2axmOpdUwmnwEg=
+github.com/garyburd/go-oauth v0.0.0-20140708041717-e63dca786bb0/go.mod h1:HfkOCN6fkKKaPSAeNq/er3xObxTW4VLeY6UUK895gLQ=
 github.com/garyburd/go-oauth v0.0.0-20180319155456-bca2e7f09a17 h1:GOfMz6cRgTJ9jWV0qAezv642OhPnKEG7gtUjJSdStHE=
 github.com/garyburd/go-oauth v0.0.0-20180319155456-bca2e7f09a17/go.mod h1:HfkOCN6fkKKaPSAeNq/er3xObxTW4VLeY6UUK895gLQ=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
@@ -24,6 +26,8 @@ golang.org/x/oauth2 v0.0.0-20190115181402-5dab4167f31c/go.mod h1:gOpvHmFTYa4Iltr
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 google.golang.org/appengine v1.4.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
+hawx.me/code/assert v0.0.0-20150803185601-4570da094475 h1:Bj8b81kYHaxzLu9dRxyRKrmZTujQzD5ccWkUTHUdpBg=
+hawx.me/code/assert v0.0.0-20150803185601-4570da094475/go.mod h1:T9mMMImeViZqsnBMFwbc0TbTlDb+bwAPF0PUJpjam6s=
 hawx.me/code/mux v0.0.0-20171229202905-76b5c781b7be h1:9VsLoSnY4fuT3s3FGN0FfvLyxUBCf0fTTp83IPkWmvs=
 hawx.me/code/mux v0.0.0-20171229202905-76b5c781b7be/go.mod h1:giDiKi08+l32ySywBkUVYkqQWuJgTLbK+RYR9qbvNw8=
 hawx.me/code/relme v0.0.0-20180107164645-bb6ab74470f5 h1:VVWKF3RJ/hbaG7Ujbd2/ezIBfhNB+l5shrVWmniNlUs=
