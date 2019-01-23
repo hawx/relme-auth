@@ -52,6 +52,8 @@ func (strategies Strategies) Find(verifiedLinks []string) (found Strategy, expec
 	return
 }
 
+// IsAllowed checks whether a strategy exists for the profile link that can be
+// used to authenticate against it.
 func (strategies Strategies) IsAllowed(link string) (found Strategy, ok bool) {
 	linkURL, err := url.Parse(link)
 	if err != nil {
@@ -65,29 +67,6 @@ func (strategies Strategies) IsAllowed(link string) (found Strategy, ok bool) {
 	}
 
 	return
-}
-
-// Allowed checks every profile in verifiedLinks against the strategies
-// returning a map of profile URL to strategy that can be used to authenticate
-// against it.
-func (strategies Strategies) Allowed(verifiedLinks []string) (found map[string]Strategy, any bool) {
-	found = map[string]Strategy{}
-
-	for _, link := range verifiedLinks {
-		linkURL, err := url.Parse(link)
-		if err != nil {
-			continue
-		}
-
-		for _, strategy := range strategies {
-			if strategy.Match(linkURL) {
-				found[link] = strategy
-				any = true
-			}
-		}
-	}
-
-	return found, any
 }
 
 func urlsEqual(a, b string) bool {

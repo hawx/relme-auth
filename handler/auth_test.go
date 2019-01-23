@@ -110,7 +110,7 @@ func TestAuth(t *testing.T) {
 		"profile":      {"https://me.example.com"},
 		"client_id":    {"https://example.com/"},
 		"redirect_uri": {"https://example.com/redirect"},
-		"state":        {"shared state"}, // TODO: test with bad state and stuff
+		"state":        {"shared state"},
 	}.Encode(), nil)
 	assert.Nil(t, err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

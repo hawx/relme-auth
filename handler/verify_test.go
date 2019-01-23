@@ -20,8 +20,12 @@ func (s *fakeSessionStore) Save(session *data.Session) {}
 
 func (s *fakeSessionStore) Update(session data.Session) {}
 
-func (s *fakeSessionStore) Get(id string) (data.Session, bool) {
-	return s.Session, true
+func (s *fakeSessionStore) Get(me string) (data.Session, bool) {
+	if me == s.Session.Me {
+		return s.Session, true
+	}
+
+	return data.Session{}, false
 }
 
 func (s *fakeSessionStore) GetByCode(code string) (data.Session, bool) {
