@@ -46,3 +46,51 @@ func TestCacheStore(t *testing.T) {
 		})
 	}
 }
+
+func TestSessionStore(t *testing.T) {
+	tmpfile, _ := ioutil.TempFile("", "boltdb")
+	defer os.Remove(tmpfile.Name())
+
+	db, _ := boltdb.Open(tmpfile.Name())
+
+	stores := map[string]data.SessionStore{
+		"memory": memory.New(),
+		"boltdb": db,
+	}
+
+	for name, store := range stores {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			originalSession := data.Session{
+				Me:          "me",
+				RedirectURI: "https://example.com/callback",
+			}
+			store.Save(&originalSession)
+
+			_, ok := store.Get("fake")
+			assert.False(ok)
+
+			gotSession, ok := store.Get("me")
+			assert.True(ok)
+			assert.Equal("https://example.com/callback", gotSession.RedirectURI)
+
+			gotSession.Provider = "service"
+			gotSession.Code = "1234"
+			store.Update(gotSession)
+
+			gotAgainSession, ok := store.Get("me")
+			assert.True(ok)
+			assert.Equal("https://example.com/callback", gotAgainSession.RedirectURI)
+			assert.Equal("service", gotAgainSession.Provider)
+
+			_, ok = store.GetByCode("999")
+			assert.False(ok)
+
+			gotByCodeSession, ok := store.GetByCode("1234")
+			assert.True(ok)
+			assert.Equal("https://example.com/callback", gotByCodeSession.RedirectURI)
+			assert.Equal("service", gotByCodeSession.Provider)
+		})
+	}
+}

@@ -76,7 +76,7 @@ func (s *authStore) Save(session *data.Session) {
 func (s *authStore) Update(session data.Session) {
 	for _, found := range s.sessions {
 		if found.Me == session.Me {
-			found = &session
+			*found = session
 			return
 		}
 	}
