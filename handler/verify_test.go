@@ -12,30 +12,6 @@ import (
 	"hawx.me/code/relme-auth/data"
 )
 
-type fakeSessionStore struct {
-	Session data.Session
-}
-
-func (s *fakeSessionStore) Save(session *data.Session) {}
-
-func (s *fakeSessionStore) Update(session data.Session) {}
-
-func (s *fakeSessionStore) Get(me string) (data.Session, bool) {
-	if me == s.Session.Me {
-		return s.Session, true
-	}
-
-	return data.Session{}, false
-}
-
-func (s *fakeSessionStore) GetByCode(code string) (data.Session, bool) {
-	if code == s.Session.Code {
-		return s.Session, true
-	}
-
-	return data.Session{}, false
-}
-
 func TestVerify(t *testing.T) {
 	assert := assert.New(t)
 

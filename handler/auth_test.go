@@ -13,49 +13,6 @@ import (
 	"hawx.me/code/relme-auth/strategy"
 )
 
-type fakeStrategy struct {
-	match        *url.URL
-	expectedLink string
-	form         url.Values
-}
-
-func (fakeStrategy) Name() string {
-	return "fake"
-}
-
-func (s *fakeStrategy) Match(me *url.URL) bool {
-	s.match = me
-	return true
-}
-
-func (s *fakeStrategy) Redirect(expectedLink string) (redirectURL string, err error) {
-	s.expectedLink = expectedLink
-	return "https://example.com/redirect", nil
-}
-
-func (s *fakeStrategy) Callback(form url.Values) (string, error) {
-	s.form = form
-	return "me", nil
-}
-
-type falseStrategy struct{}
-
-func (falseStrategy) Name() string {
-	return "false"
-}
-
-func (falseStrategy) Match(me *url.URL) bool {
-	return false
-}
-
-func (falseStrategy) Redirect(expectedLink string) (redirectURL string, err error) {
-	return "https://example.com/redirect", nil
-}
-
-func (falseStrategy) Callback(form url.Values) (string, error) {
-	return "me", nil
-}
-
 func testPage(link string) string {
 	return `
 <!doctype html>

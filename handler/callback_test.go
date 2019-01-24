@@ -38,3 +38,60 @@ func TestCallback(t *testing.T) {
 	assert.Equal(t, http.StatusFound, resp.StatusCode)
 	assert.Equal(t, "http://example.com/callback?code=my-code&state=my-state", resp.Header.Get("Location"))
 }
+
+func TestCallbackWhenSessionDoesNotExist(t *testing.T) {
+	s := httptest.NewServer(Callback(&fakeSessionStore{}, &fakeStrategy{}))
+	defer s.Close()
+
+	form := url.Values{
+		"yes": {"ok"},
+	}
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+}
+
+func TestCallbackWhenProviderSaysTheyAreUnauthorized(t *testing.T) {
+	store := &fakeSessionStore{
+		Session: data.Session{
+			Me:          "me",
+			Code:        "my-code",
+			State:       "my-state",
+			RedirectURI: "http://example.com/callback",
+		},
+	}
+
+	s := httptest.NewServer(Callback(store, &unauthorizedStrategy{}))
+	defer s.Close()
+
+	form := url.Values{
+		"yes": {"ok"},
+	}
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+func TestCallbackWhenProviderErrors(t *testing.T) {
+	store := &fakeSessionStore{
+		Session: data.Session{
+			Me:          "me",
+			Code:        "my-code",
+			State:       "my-state",
+			RedirectURI: "http://example.com/callback",
+		},
+	}
+
+	s := httptest.NewServer(Callback(store, &errorStrategy{}))
+	defer s.Close()
+
+	form := url.Values{
+		"yes": {"ok"},
+	}
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+}
