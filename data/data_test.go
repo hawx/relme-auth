@@ -94,3 +94,42 @@ func TestSessionStore(t *testing.T) {
 		})
 	}
 }
+
+func TestStrategyStore(t *testing.T) {
+	tmpfile, _ := ioutil.TempFile("", "boltdb")
+	defer os.Remove(tmpfile.Name())
+
+	db, _ := boltdb.Open(tmpfile.Name())
+
+	stores := map[string]data.StrategyStore{
+		"memory": memory.New(),
+		"boltdb": db,
+	}
+
+	for name, store := range stores {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			_, ok := store.Claim("something")
+			assert.False(ok)
+
+			state, err := store.Insert("http://example.com")
+			assert.Nil(err)
+
+			link, ok := store.Claim(state)
+			assert.True(ok)
+			assert.Equal("http://example.com", link)
+
+			_, ok = store.Claim(state)
+			assert.False(ok)
+
+			assert.Nil(store.Set("keys", "values"))
+			link, ok = store.Claim("keys")
+			assert.True(ok)
+			assert.Equal("values", link)
+
+			_, ok = store.Claim("keys")
+			assert.False(ok)
+		})
+	}
+}

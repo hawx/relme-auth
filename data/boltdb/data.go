@@ -198,5 +198,5 @@ func (d *database) Claim(state string) (link string, ok bool) {
 		return "", false
 	}
 
-	return link, true
+	return link, link != ""
 }
