@@ -43,6 +43,7 @@ func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Hand
 			if s.Name() == provider {
 				chosenStrategy = s
 				ok = true
+				break
 			}
 		}
 
