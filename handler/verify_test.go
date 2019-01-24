@@ -38,6 +38,32 @@ func TestVerify(t *testing.T) {
 	assert.Equal(v.Me, session.Me)
 }
 
+func TestVerifyWithExpiredSession(t *testing.T) {
+	assert := assert.New(t)
+
+	session := data.Session{
+		ClientID:    "http://client.example.com",
+		RedirectURI: "http://done.example.com",
+		Me:          "it is me",
+		CreatedAt:   time.Now().Add(-60 * time.Second),
+		Code:        "1234",
+	}
+
+	s := httptest.NewServer(Verify(&fakeSessionStore{Session: session}))
+	defer s.Close()
+
+	form := url.Values{"code": {session.Code}, "client_id": {session.ClientID}, "redirect_uri": {session.RedirectURI}}
+	resp, err := http.PostForm(s.URL, form)
+	assert.Nil(err)
+	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+
+	var v struct {
+		Error string `json:"error"`
+	}
+	json.NewDecoder(resp.Body).Decode(&v)
+	assert.Equal(v.Error, "invalid_request")
+}
+
 func TestVerifyWithBadForm(t *testing.T) {
 	assert := assert.New(t)
 
