@@ -86,24 +86,28 @@ func main() {
 	var strategies strategy.Strategies
 	if *useTrue {
 		trueStrategy := strategy.True(*baseURL)
-		strategies = strategy.Strategies{trueStrategy}
+		strategies = append(strategies, trueStrategy)
 
 		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy))
 
 	} else {
-		flickrStrategy := strategy.Flickr(*baseURL, database, conf.Flickr.Id, conf.Flickr.Secret)
-		gitHubStrategy := strategy.GitHub(database, conf.GitHub.Id, conf.GitHub.Secret)
-		twitterStrategy := strategy.Twitter(*baseURL, database, conf.Twitter.Id, conf.Twitter.Secret)
-
-		strategies = strategy.Strategies{
-			flickrStrategy,
-			gitHubStrategy,
-			twitterStrategy,
+		if conf.Flickr != nil {
+			flickrStrategy := strategy.Flickr(*baseURL, database, conf.Flickr.Id, conf.Flickr.Secret)
+			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy))
+			strategies = append(strategies, flickrStrategy)
 		}
 
-		route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy))
-		route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy))
-		route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy))
+		if conf.GitHub != nil {
+			gitHubStrategy := strategy.GitHub(database, conf.GitHub.Id, conf.GitHub.Secret)
+			route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy))
+			strategies = append(strategies, gitHubStrategy)
+		}
+
+		if conf.Twitter != nil {
+			twitterStrategy := strategy.Twitter(*baseURL, database, conf.Twitter.Id, conf.Twitter.Secret)
+			route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy))
+			strategies = append(strategies, twitterStrategy)
+		}
 	}
 
 	route.Handle("/auth", mux.Method{

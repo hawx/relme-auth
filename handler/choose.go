@@ -389,6 +389,7 @@ const chooseHTML = `
       };
 
       const elements = {};
+      let anyVerified = false;
 
       socket.onmessage = function (event) {
         const profile = JSON.parse(event.data);
@@ -414,9 +415,15 @@ const chooseHTML = `
               break;
             case 'verified':
               elements[profile.Link] = toMethod(elements[profile.Link], profile.Method);
+              anyVerified = true;
               break;
             case 'done':
               loader.classList.add('hide');
+              if (!anyVerified) {
+                const errorText = document.createTextNode("Sorry, you aren't able to use any of the supported authentication providers.");
+                methods.classList.add('info');
+                methods.appendChild(errorText);
+              }
               break;
           }
         } else {
