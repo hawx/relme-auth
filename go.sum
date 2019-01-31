@@ -3,6 +3,8 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/boltdb/bolt v1.3.1 h1:JQmyP4ZBrce+ZQu0dY660FMfatumYDLun9hBCUVIkF4=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
+github.com/coreos/go-systemd v0.0.0-20181031085051-9002847aa142 h1:3jFq2xL4ZajGK4aZY8jz+DAF0FHjI51BXjjSwCzS1Dk=
+github.com/coreos/go-systemd v0.0.0-20181031085051-9002847aa142/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/garyburd/go-oauth v0.0.0-20140708041717-e63dca786bb0 h1:+CqJ+5yFUQfDHcPnj1sAbOloESDbE2axmOpdUwmnwEg=
 github.com/garyburd/go-oauth v0.0.0-20140708041717-e63dca786bb0/go.mod h1:HfkOCN6fkKKaPSAeNq/er3xObxTW4VLeY6UUK895gLQ=
@@ -36,3 +38,7 @@ hawx.me/code/route v1.0.0 h1:oSH04y0xTXUY5dflvRyUYl+yqs5J/lDvbOwMJc80sYY=
 hawx.me/code/route v1.0.0/go.mod h1:SKWPgx9IKsK2Yy66xj1bSRBOTMwR6kFQcLMjgajaeAc=
 hawx.me/code/serve v0.0.0-20151208092840-f3356a42ab53 h1:zSgtF8CX8/vq6mjZQxkGDx7moHRdVuAHzxTHDOedy+c=
 hawx.me/code/serve v0.0.0-20151208092840-f3356a42ab53/go.mod h1:MtxvmBUsGC/lpv+Cm8ahRYThl5NfRxQ24+v3aEdMb7Q=
+hawx.me/code/serve v0.0.0-20190131190106-dc7e513a075c h1:RefdidYN4t0GfnW5f/ChBoemR45r6hBz1MWWU4N9CZo=
+hawx.me/code/serve v0.0.0-20190131190106-dc7e513a075c/go.mod h1:MtxvmBUsGC/lpv+Cm8ahRYThl5NfRxQ24+v3aEdMb7Q=
+hawx.me/code/serve v0.0.0-20190131190342-bf7bf94a0ec4 h1:bVfFkl76nedCJ/zKc7thBcqQkuaEVzyLJEIVb93tORQ=
+hawx.me/code/serve v0.0.0-20190131190342-bf7bf94a0ec4/go.mod h1:3Nhu3uATqipwDDYpeaS/SEIBvC2vbO0hdqYmHffpwRU=
