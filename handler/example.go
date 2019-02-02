@@ -328,7 +328,7 @@ const welcomePage = `<!DOCTYPE html>
           <li>To authenticate with your Twitter account add a link to your profile on your homepage.
             <pre><code>&lt;a rel="me" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;</code></pre>
             Or if you don't want the link to be visible.
-            <pre><code>&lt;link rel="me" href="https://twitter.com/YOU"/link&gt;</code></pre>
+            <pre><code>&lt;link rel="me" href="https://twitter.com/YOU" /&gt;</code></pre>
           </li>
           <li>Make sure your Twitter profile has a link back to your homepage.</li>
         </ol>{{ end }}
@@ -343,14 +343,14 @@ const welcomePage = `<!DOCTYPE html>
 
         <h2>Redirect a user to relme-auth</h2>
         <p>The first step is to send a user to relme-auth so they can choose how
-          to authenticate. This is a simple redirect to <code>/auth</code> with
+          to authenticate. This is a simple redirect to <code>{{ .ThisURI }}/auth</code> with
           a few query parameters:</p>
         <dl>
           <dt><code>me=</code></dt>
           <dd>The web address of the user who is logging in.</dd>
           <dt><code>client_id=</code></dt>
-          <dd>The URL to the site they are logging in to. This <em>should</em> be marked up with <code>h-app</code> to provide a <code>p-name</code> to
-            display. You are also able to whitelist a <code>redirect_uri</code> if it is not hosted at the same domain.</dd>
+          <dd>The URL to the site they are logging in to. This <em>should</em> be marked up with <a href="https://www.w3.org/TR/indieauth/#application-information"><code>h-app</code></a> to provide a name to
+            display. You are also able to whitelist a <a href="https://www.w3.org/TR/indieauth/#redirect-url"><code>redirect_uri</code></a> if it is not hosted at the same domain.</dd>
           <dt><code>redirect_uri=</code></dt>
           <dd>Where to send the user after they have authenticated.</dd>
           <dt><code>state=</code></dt>
@@ -371,7 +371,7 @@ const welcomePage = `<!DOCTYPE html>
           code you recieved. In return you will get the web address for the
           authenticated user.</p>
 
-        <pre><code>POST https://{{ .ThisURI }}/auth HTTP/1.1
+        <pre><code>POST {{ .ThisURI }}/auth HTTP/1.1
 Content-Type: application/x-www-form-urlencoded;charset=UTF-8
 Accept: application/json
 
