@@ -12,5 +12,5 @@ require (
 	hawx.me/code/mux v0.0.0-20171229202905-76b5c781b7be
 	hawx.me/code/relme v0.0.0-20180107164645-bb6ab74470f5
 	hawx.me/code/route v1.0.0
-	hawx.me/code/serve v0.0.0-20151208092840-f3356a42ab53
+	hawx.me/code/serve v0.0.0-20190131190342-bf7bf94a0ec4
 )
