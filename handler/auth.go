@@ -17,7 +17,6 @@ import (
 //   - me: URL originally entered of who we are trying to authenticate
 //   - provider: 3rd party authentication provider that was chosen
 //   - profile: URL expected to be matched by the provider
-//   - client_id: ID/URL of the client that initiated authentication
 //   - redirect_uri: final URI to redirect to when auth is finished
 func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

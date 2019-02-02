@@ -117,7 +117,7 @@ func main() {
 	route.Handle("/auth/start", mux.Method{
 		"GET": handler.Auth(database, strategies),
 	})
-	route.Handle("/*rest", handler.Example(*baseURL))
+	route.Handle("/*rest", handler.Example(*baseURL, conf))
 
 	route.Handle("/ws", handler.WebSocket(strategies, database))
 
