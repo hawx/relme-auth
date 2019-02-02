@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -26,13 +25,24 @@ func Example(baseURL string, conf config.Config) http.Handler {
 			return
 		}
 
-		state, _ := data.RandomString(64)
-		session.Values["state"] = state
-		session.Save(r, w)
+		var me string
+		meValue, ok := session.Values["me"]
+		if ok {
+			me, ok = meValue.(string)
+		}
+
+		var state string
+		if !ok {
+			state, _ = data.RandomString(64)
+			session.Values["state"] = state
+			session.Save(r, w)
+		}
 
 		welcomeTmpl.Execute(w, welcomeCtx{
 			ThisURI:    baseURL,
 			State:      state,
+			Me:         me,
+			LoggedIn:   ok,
 			HasFlickr:  conf.Flickr != nil,
 			HasGitHub:  conf.GitHub != nil,
 			HasTwitter: conf.Twitter != nil,
@@ -75,45 +85,20 @@ func Example(baseURL string, conf config.Config) http.Handler {
 		session.Values["me"] = v.Me
 		session.Save(r, w)
 
-		http.Redirect(w, r, baseURL+"/success", http.StatusFound)
+		http.Redirect(w, r, baseURL, http.StatusFound)
 	})
 
-	mux.HandleFunc("/success", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/sign-out", func(w http.ResponseWriter, r *http.Request) {
 		session, err := store.Get(r, "example-session")
 		if err != nil {
 			http.Error(w, "can't get cookies...", http.StatusInternalServerError)
 			return
 		}
 
-		fmt.Fprintf(w, `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Example site</title>
-    <style>
-      body {
-        font: 16px/1.3 sans-serif;
-        margin: 2rem;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Example site</h1>
-    <p>You are signed-in as <a href="%[1]s">%[1]s</a>.</p>
-  </body>
-</html>
-`, session.Values["me"])
-	})
+		delete(session.Values, "me")
+		session.Save(r, w)
 
-	mux.HandleFunc("/failure", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `
-<!DOCTYPE html>
-<html>
-<body>
-  <p>Something went wrong when trying to sign-in.</p>
-</body>
-</html>
-`)
+		http.Redirect(w, r, baseURL, http.StatusFound)
 	})
 
 	return context.ClearHandler(mux)
@@ -126,6 +111,8 @@ type exampleResponse struct {
 type welcomeCtx struct {
 	ThisURI    string
 	State      string
+	Me         string
+	LoggedIn   bool
 	HasFlickr  bool
 	HasGitHub  bool
 	HasTwitter bool
@@ -223,8 +210,8 @@ const welcomePage = `<!DOCTYPE html>
         flex-direction: column;
         justify-content: space-around;
         text-align: center;
-        background: rgb(210, 210, 210);
-        border-bottom: 1px solid rgb(170, 170, 170)
+        background: rgb(240, 240, 240);
+        border-bottom: 1px solid rgb(210, 210, 210)
       }
 
       header h1 {
@@ -275,7 +262,7 @@ const welcomePage = `<!DOCTYPE html>
       code {
         font: .9rem/1.3 monospace;
       }
-
+      strong { font-weight: bold; }
       dl {
         margin-top: 1rem;
       }
@@ -290,7 +277,12 @@ const welcomePage = `<!DOCTYPE html>
         <h1 class="p-name">relme-auth</h1>
         <h2>Sign in with your domain</h2>
 
-        <p>Try signing in to this site:</p>
+        {{ if .LoggedIn }}
+        <p>You are logged in as <strong>{{ .Me }}</strong>.</p>
+        <form action="/sign-out" method="post">
+          <button type="submit">Sign Out</button>
+        </form>
+        {{ end }}{{ if not .LoggedIn }}<p>Try signing in to this site:</p>
 
         <form action="/auth" method="get">
           <div class="field">
@@ -300,7 +292,7 @@ const welcomePage = `<!DOCTYPE html>
           <input type="hidden" name="client_id" value="{{ .ThisURI }}/" />
           <input type="hidden" name="redirect_uri" value="{{ .ThisURI }}/callback" />
           <input type="hidden" name="state" value="{{ .State }}" />
-        </form>
+        </form>{{ end }}
       </div>
     </header>
 
