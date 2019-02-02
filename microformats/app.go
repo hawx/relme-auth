@@ -3,6 +3,7 @@ package microformats
 import (
 	"errors"
 	"io"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -37,4 +38,32 @@ func HApp(r io.Reader) (name string, url string, err error) {
 	}
 
 	return
+}
+
+func RedirectURIs(r io.Reader) []string {
+	var whitelist []string
+
+	root, err := html.Parse(r)
+	if err != nil {
+		return whitelist
+	}
+
+	redirectLinks := searchAll(root, func(node *html.Node) bool {
+		if node.Type == html.ElementNode && node.Data == "link" {
+			rels := strings.Fields(getAttr(node, "rel"))
+			for _, rel := range rels {
+				if rel == "redirect_uri" {
+					return true
+				}
+			}
+		}
+
+		return false
+	})
+
+	for _, node := range redirectLinks {
+		whitelist = append(whitelist, getAttr(node, "href"))
+	}
+
+	return whitelist
 }

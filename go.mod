@@ -6,6 +6,7 @@ require (
 	github.com/garyburd/go-oauth v0.0.0-20140708041717-e63dca786bb0
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/sessions v1.1.3
+	github.com/peterhellberg/link v1.0.0
 	golang.org/x/net v0.0.0-20190119204137-ed066c81e75e
 	golang.org/x/oauth2 v0.0.0-20190115181402-5dab4167f31c
 	hawx.me/code/assert v0.0.0-20150803185601-4570da094475
