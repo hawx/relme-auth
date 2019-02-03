@@ -125,6 +125,7 @@ const welcomePage = `<!DOCTYPE html>
   <head>
     <meta charset="utf-8" />
     <title>relme-auth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       /* http://meyerweb.com/eric/tools/css/reset/
          v2.0 | 20110126
@@ -187,6 +188,13 @@ const welcomePage = `<!DOCTYPE html>
             display: grid;
             grid-template-areas: "header header" "users developers" "footer footer";
           }
+
+          #users .container {
+            margin-right: 0;
+          }
+          #developers .container {
+            margin-left: 0;
+          }
         }
       }
 
@@ -237,10 +245,21 @@ const welcomePage = `<!DOCTYPE html>
         margin-right: 5px;
       }
 
+      @media screen and (max-width: 30rem) {
+        .field {
+          display: block;
+        }
+
+        .field input {
+          margin-bottom: .5rem;
+          margin-right: 0;
+        }
+      }
+
       .container {
-        max-width: 50rem;
+        max-width: 40rem;
         margin: 0 auto;
-        padding: 2rem 4rem;
+        padding: 2rem;
       }
 
       section h1 {
