@@ -288,6 +288,10 @@ const welcomePage = `<!DOCTYPE html>
       dd {
         margin-bottom: 1rem;
       }
+
+      p + p {
+        margin-top: 1rem;
+      }
     </style>
   </head>
   <body>
@@ -351,6 +355,19 @@ const welcomePage = `<!DOCTYPE html>
           </li>
           <li>Make sure your Twitter profile has a link back to your homepage.</li>
         </ol>{{ end }}
+
+        <div>
+          <h2>Choosing auth providers</h2>
+
+          <p>You may want to mark some links up with <code>rel="me"</code>, but
+            not want to consider them for authentication. You can choose which
+            will be considered by using <code>rel="authn me"</code> instead.</p>
+
+          <p>In the following example only Twitter would be shown as an option.</p>
+
+          <pre><code>&lt;a rel="me authn" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;
+&lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;</code></pre>
+        </div>
       </div>
     </section>
 

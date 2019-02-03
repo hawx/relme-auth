@@ -25,6 +25,8 @@ golang.org/x/net v0.0.0-20180724234803-3673e40ba225/go.mod h1:mL1N/T3taQHkDXs73r
 golang.org/x/net v0.0.0-20190108225652-1e06a53dbb7e/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20190119204137-ed066c81e75e h1:MDa3fSUp6MdYHouVmCCNz/zaH2a6CRcxY3VhT/K3C5Q=
 golang.org/x/net v0.0.0-20190119204137-ed066c81e75e/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
+golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3 h1:ulvT7fqt0yHWzpJwI57MezWnYDVpCAYBVuYst/L+fAY=
+golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/oauth2 v0.0.0-20190115181402-5dab4167f31c h1:pcBdqVcrlT+A3i+tWsOROFONQyey9tisIQHI4xqVGLg=
 golang.org/x/oauth2 v0.0.0-20190115181402-5dab4167f31c/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
@@ -36,6 +38,8 @@ hawx.me/code/mux v0.0.0-20171229202905-76b5c781b7be h1:9VsLoSnY4fuT3s3FGN0FfvLyx
 hawx.me/code/mux v0.0.0-20171229202905-76b5c781b7be/go.mod h1:giDiKi08+l32ySywBkUVYkqQWuJgTLbK+RYR9qbvNw8=
 hawx.me/code/relme v0.0.0-20180107164645-bb6ab74470f5 h1:VVWKF3RJ/hbaG7Ujbd2/ezIBfhNB+l5shrVWmniNlUs=
 hawx.me/code/relme v0.0.0-20180107164645-bb6ab74470f5/go.mod h1:eyYzYsyP8yWQeB52w0NQO9EzGtX4uK/Sqx5FLmYXo14=
+hawx.me/code/relme v1.0.0 h1:VGU4k+w2SsKXNYmZGdDI+w6fURR2Kxi8T1QmCvfmgR4=
+hawx.me/code/relme v1.0.0/go.mod h1:znKr1fbq2Xh9abCOkktQzvNCiaEy4IXsBt4EvCCYqE4=
 hawx.me/code/route v1.0.0 h1:oSH04y0xTXUY5dflvRyUYl+yqs5J/lDvbOwMJc80sYY=
 hawx.me/code/route v1.0.0/go.mod h1:SKWPgx9IKsK2Yy66xj1bSRBOTMwR6kFQcLMjgajaeAc=
 hawx.me/code/serve v0.0.0-20151208092840-f3356a42ab53 h1:zSgtF8CX8/vq6mjZQxkGDx7moHRdVuAHzxTHDOedy+c=

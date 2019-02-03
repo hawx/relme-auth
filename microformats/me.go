@@ -23,7 +23,7 @@ func Me(profile string) <-chan Event {
 	eventCh := make(chan Event)
 
 	go func() {
-		profileLinks, err := relme.Find(profile)
+		profileLinks, err := relme.FindAuth(profile)
 		if err != nil {
 			eventCh <- Event{Type: Error, Err: err}
 			close(eventCh)
