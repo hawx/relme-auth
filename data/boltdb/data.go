@@ -131,6 +131,9 @@ func (d *database) Update(session data.Session) {
 		b := tx.Bucket([]byte(sessionBucket))
 		b.Put([]byte(session.Me), v)
 		b.Put([]byte(session.Code), v)
+		if session.Token != "" {
+			b.Put([]byte(session.Token), v)
+		}
 		return nil
 	})
 }
@@ -163,6 +166,40 @@ func (d *database) GetByCode(code string) (session data.Session, ok bool) {
 	})
 
 	return
+}
+
+func (d *database) GetByToken(token string) (session data.Session, ok bool) {
+	d.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(sessionBucket))
+		v := b.Get([]byte(token))
+		if len(v) == 0 {
+			return nil
+		}
+
+		ok = true
+		return json.Unmarshal(v, &session)
+	})
+
+	return
+}
+
+func (d *database) RevokeByToken(token string) {
+	d.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(sessionBucket))
+		v := b.Get([]byte(token))
+		if len(v) == 0 {
+			return nil
+		}
+
+		var session data.Session
+		if err := json.Unmarshal(v, &session); err == nil {
+			b.Delete([]byte(token))
+			b.Delete([]byte(session.Code))
+			b.Delete([]byte(session.Me))
+		}
+
+		return nil
+	})
 }
 
 func (d *database) Insert(link string) (state string, err error) {

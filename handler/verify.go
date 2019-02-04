@@ -19,7 +19,7 @@ func Verify(authStore data.SessionStore) http.Handler {
 		}
 
 		session, ok := authStore.GetByCode(code)
-		if !ok {
+		if !ok || session.ResponseType != "id" {
 			writeJSONError(w, "invalid_request", "The code provided was not valid", http.StatusBadRequest)
 			return
 		}

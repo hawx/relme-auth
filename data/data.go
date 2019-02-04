@@ -59,6 +59,8 @@ type SessionStore interface {
 	Update(Session)
 	Get(string) (Session, bool)
 	GetByCode(string) (Session, bool)
+	GetByToken(string) (Session, bool)
+	RevokeByToken(string)
 }
 
 // StrategyStore is used by strategies to keep track of OAuthy type stuff
@@ -72,14 +74,17 @@ type StrategyStore interface {
 // Session contains all of the information needed to keep track of OAuth
 // requests/responses with a 3rd party.
 type Session struct {
-	Me          string
-	Provider    string
-	ProfileURI  string
-	ClientID    string
-	RedirectURI string
-	Code        string
-	State       string
-	CreatedAt   time.Time
+	ResponseType string
+	Me           string
+	Provider     string
+	ProfileURI   string
+	ClientID     string
+	RedirectURI  string
+	Scopes       []string
+	Code         string
+	Token        string
+	State        string
+	CreatedAt    time.Time
 }
 
 // Expired returns true if the Session was created over 60 seconds ago.

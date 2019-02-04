@@ -101,3 +101,17 @@ func (s *fakeSessionStore) GetByCode(code string) (data.Session, bool) {
 
 	return data.Session{}, false
 }
+
+func (s *fakeSessionStore) GetByToken(token string) (data.Session, bool) {
+	if token == s.Session.Token {
+		return s.Session, true
+	}
+
+	return data.Session{}, false
+}
+
+func (s *fakeSessionStore) RevokeByToken(token string) {
+	if token == s.Session.Token {
+		s.Session = data.Session{}
+	}
+}

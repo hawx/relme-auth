@@ -27,18 +27,48 @@ func Choose(baseURL string, authStore data.SessionStore, database data.CacheStor
 func chooseProvider(baseURL string, authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			me          = r.FormValue("me")
-			clientID    = r.FormValue("client_id")
-			redirectURI = r.FormValue("redirect_uri")
-			state       = r.FormValue("state")
+			me           = r.FormValue("me")
+			clientID     = r.FormValue("client_id")
+			redirectURI  = r.FormValue("redirect_uri")
+			state        = r.FormValue("state")
+			responseType = r.FormValue("response_type")
+			scope        = r.FormValue("scope")
 		)
 
-		authStore.Save(&data.Session{
-			Me:          me,
-			ClientID:    clientID,
-			RedirectURI: redirectURI,
-			State:       state,
-		})
+		if responseType == "" {
+			responseType = "id"
+		}
+
+		switch responseType {
+		case "id":
+			authStore.Save(&data.Session{
+				Me:           me,
+				ClientID:     clientID,
+				RedirectURI:  redirectURI,
+				State:        state,
+				ResponseType: responseType,
+			})
+
+		case "code":
+			scopes := strings.Fields(scope)
+			if len(scopes) == 0 {
+				http.Error(w, "At least one scope must be provided", http.StatusBadRequest)
+				return
+			}
+
+			authStore.Save(&data.Session{
+				Me:           me,
+				ClientID:     clientID,
+				RedirectURI:  redirectURI,
+				State:        state,
+				ResponseType: responseType,
+				Scopes:       scopes,
+			})
+
+		default:
+			http.Error(w, "Unknown response_type", http.StatusInternalServerError)
+			return
+		}
 
 		client, err := getClient(clientID, redirectURI, database)
 		if err != nil {

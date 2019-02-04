@@ -70,6 +70,7 @@ func (s *authStore) GetClient(clientID string) (data.Client, error) {
 func (s *authStore) Save(session *data.Session) {
 	session.CreatedAt = time.Now()
 	session.Code, _ = data.RandomString(16)
+	session.Token, _ = data.RandomString(32)
 	s.sessions = append(s.sessions, session)
 }
 
@@ -98,6 +99,30 @@ func (s *authStore) GetByCode(code string) (session data.Session, ok bool) {
 			return *session, true
 		}
 	}
+
+	return
+}
+
+func (s *authStore) GetByToken(token string) (session data.Session, ok bool) {
+	for _, session := range s.sessions {
+		if session.Token == token {
+			return *session, true
+		}
+	}
+
+	return
+}
+
+func (s *authStore) RevokeByToken(token string) {
+	var idx int
+	for i, session := range s.sessions {
+		if session.Token == token {
+			idx = i
+			break
+		}
+	}
+
+	s.sessions = append(s.sessions[:idx], s.sessions[idx+1:]...)
 
 	return
 }

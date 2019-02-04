@@ -77,6 +77,7 @@ func TestSessionStore(t *testing.T) {
 
 			gotSession.Provider = "service"
 			gotSession.Code = "1234"
+			gotSession.Token = "abc"
 			store.Update(gotSession)
 
 			gotAgainSession, ok := store.Get("me")
@@ -91,6 +92,16 @@ func TestSessionStore(t *testing.T) {
 			assert.True(ok)
 			assert.Equal("https://example.com/callback", gotByCodeSession.RedirectURI)
 			assert.Equal("service", gotByCodeSession.Provider)
+
+			gotByTokenSession, ok := store.GetByToken("abc")
+			assert.True(ok)
+			assert.Equal("https://example.com/callback", gotByTokenSession.RedirectURI)
+			assert.Equal("service", gotByTokenSession.Provider)
+
+			store.RevokeByToken("abc")
+
+			_, ok = store.GetByToken("abc")
+			assert.False(ok)
 		})
 	}
 }
