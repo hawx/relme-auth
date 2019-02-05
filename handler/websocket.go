@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -109,7 +108,7 @@ func (s *webSocketServer) serveConnection(conn *conn) error {
 }
 
 type chooseCtxMethod struct {
-	Query        template.URL
+	Query        string
 	StrategyName string
 	ProfileURL   string
 }
@@ -159,7 +158,7 @@ func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profi
 		}
 
 		methods = append(methods, chooseCtxMethod{
-			Query:        template.URL(query.Encode()),
+			Query:        query.Encode(),
 			StrategyName: method.Provider,
 			ProfileURL:   method.Profile,
 		})
@@ -188,6 +187,33 @@ func (s *webSocketServer) readAllEvents(conn *conn, request profileRequest, prof
 			}
 
 			conn.send(eventResponse{Type: "error", Link: event.Link})
+
+		case microformats.PGP:
+			if strategy, ok := s.strategies.IsAllowed("pgp"); ok {
+
+				query := url.Values{
+					"me":           {request.Me},
+					"provider":     {strategy.Name()},
+					"profile":      {event.Link},
+					"redirect_uri": {request.RedirectURI},
+				}
+
+				conn.send(eventResponse{
+					Type: "pgp",
+					Link: event.Link,
+					Method: chooseCtxMethod{
+						Query:        query.Encode(),
+						StrategyName: "pgp",
+						ProfileURL:   event.Link,
+					},
+				})
+
+				profile.Methods = append(profile.Methods, data.Method{
+					Provider: strategy.Name(),
+					Profile:  event.Link,
+				})
+			}
+
 		case microformats.Found:
 			if _, ok := s.strategies.IsAllowed(event.Link); ok {
 				conn.send(eventResponse{Type: "found", Link: event.Link})
@@ -208,7 +234,7 @@ func (s *webSocketServer) readAllEvents(conn *conn, request profileRequest, prof
 				}
 
 				conn.send(eventResponse{Type: "verified", Link: event.Link, Method: chooseCtxMethod{
-					Query:        template.URL(query.Encode()),
+					Query:        query.Encode(),
 					StrategyName: strategy.Name(),
 					ProfileURL:   event.Link,
 				}})

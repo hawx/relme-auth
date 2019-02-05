@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"net/http"
 
 	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
@@ -106,6 +107,10 @@ func main() {
 		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy))
 
 	} else {
+		pgpStrategy := strategy.PGP(database, *baseURL, "")
+		route.Handle("/oauth/callback/pgp", handler.Callback(database, pgpStrategy))
+		strategies = append(strategies, pgpStrategy)
+
 		if conf.Flickr != nil {
 			flickrStrategy := strategy.Flickr(*baseURL, database, conf.Flickr.Id, conf.Flickr.Secret)
 			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy))
@@ -132,7 +137,9 @@ func main() {
 	route.Handle("/auth/start", mux.Method{
 		"GET": handler.Auth(database, strategies),
 	})
+
 	route.Handle("/token", handler.Token(database))
+	route.Handle("/pgp/authorize", handler.PGP(templates))
 
 	if *exampleSecret != "" {
 		exampleSessionStore := sessions.NewCookieStore([]byte(*exampleSecret))
@@ -143,6 +150,7 @@ func main() {
 	}
 
 	route.Handle("/ws", handler.WebSocket(strategies, database))
+	route.Handle("/public/*path", http.StripPrefix("/public", http.FileServer(http.Dir("web/static"))))
 
 	serve.Serve(*port, *socket, context.ClearHandler(route.Default))
 }

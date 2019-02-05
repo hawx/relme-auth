@@ -2,6 +2,11 @@ package strategy
 
 import (
 	"bytes"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 
@@ -11,48 +16,165 @@ import (
 	"hawx.me/code/relme-auth/data/memory"
 )
 
-func TestPGP(t *testing.T) {
-	assert := assert.New(t)
+func TestPGPMatch(t *testing.T) {
+	pgp := PGP(memory.New(), "", id)
 
-	private, _ := os.Open("private.asc")
-	defer private.Close()
-	keyRing, _ := openpgp.ReadArmoredKeyRing(private)
+	parsed, err := url.Parse("pgp")
+	assert.Nil(t, err)
+	assert.True(t, pgp.Match(parsed))
+}
 
-	strategy := PGP(memory.New())
+func TestPGPNotMatch(t *testing.T) {
+	pgp := PGP(memory.New(), "", id)
 
-	challenge := strategy.Challenge("https://example.com")
+	testCases := []string{
+		"what",
+		"example.com",
+		"https://example.com/somebody",
+	}
 
-	signedMsg := bytes.NewBuffer(nil)
-	dec, err := clearsign.Encode(signedMsg, keyRing[0].PrivateKey, nil)
-	if assert.Nil(err) {
-		dec.Write([]byte(challenge))
-		dec.Close()
-
-		me, err := strategy.Verify("https://example.com", signedMsg.String())
-		assert.Nil(err)
-		assert.Equal("https://example.com", me)
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc, func(t *testing.T) {
+			parsed, err := url.Parse(tc)
+			assert.Nil(t, err)
+			assert.False(t, pgp.Match(parsed))
+		})
 	}
 }
 
-func TestPGPWithWrongKey(t *testing.T) {
+func TestPGPAuthFlow(t *testing.T) {
+	const (
+		state       = "randomstatestring"
+		accessToken = "the-access-key"
+	)
+
 	assert := assert.New(t)
 
-	private, _ := os.Open("other_private.asc")
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer server.Close()
+
+	public, _ := os.Open("public.asc")
+	defer public.Close()
+
+	key := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, public)
+	}))
+	defer key.Close()
+
+	expectedURL := key.URL
+
+	store := &pgpStore{
+		State: state,
+	}
+
+	pgp := &authPGP{
+		AuthURL:  server.URL + "/oauth/authorize",
+		ClientID: id,
+		Store:    store,
+	}
+
+	// 1. Redirect
+	redirectURL, err := pgp.Redirect(expectedURL)
+	assert.Nil(err)
+
+	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?challenge=%s&client_id=%s&state=%s", server.URL, store.Challenge, id, state)
+	assert.Equal(expectedRedirectURL, redirectURL)
+
+	// 2. Callback
+	profileURL, err := pgp.Callback(url.Values{
+		"state":  {state},
+		"signed": {sign(store.Challenge, "private.asc")},
+	})
+	assert.Nil(err)
+	assert.Equal(expectedURL, profileURL)
+}
+
+func TestPGPAuthFlowWithBadKey(t *testing.T) {
+	const (
+		state       = "randomstatestring"
+		accessToken = "the-access-key"
+	)
+
+	assert := assert.New(t)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer server.Close()
+
+	public, _ := os.Open("public.asc")
+	defer public.Close()
+
+	key := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, public)
+	}))
+	defer key.Close()
+
+	expectedURL := key.URL
+
+	store := &pgpStore{
+		State: state,
+	}
+
+	pgp := &authPGP{
+		AuthURL:  server.URL + "/oauth/authorize",
+		ClientID: id,
+		Store:    store,
+	}
+
+	// 1. Redirect
+	redirectURL, err := pgp.Redirect(expectedURL)
+	assert.Nil(err)
+
+	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?challenge=%s&client_id=%s&state=%s", server.URL, store.Challenge, id, state)
+	assert.Equal(expectedRedirectURL, redirectURL)
+
+	// 2. Callback
+	profileURL, err := pgp.Callback(url.Values{
+		"state":  {state},
+		"signed": {sign("abcde", "other_private.asc")},
+	})
+	assert.Equal(ErrUnauthorized, err)
+	assert.Equal("", profileURL)
+}
+
+type pgpStore struct {
+	State     string
+	Challenge string
+	Link      string
+}
+
+func (s *pgpStore) Insert(link string) (state string, err error) {
+	s.Link = link
+
+	return s.State, nil
+}
+
+func (s *pgpStore) Set(key, value string) error {
+	s.Link = key
+	s.Challenge = value
+	return nil
+}
+
+func (s *pgpStore) Claim(state string) (link string, ok bool) {
+	if state == s.State {
+		return s.Link, true
+	}
+	if state == s.Link {
+		return s.Challenge, true
+	}
+
+	return "", false
+}
+
+func sign(challenge, key string) string {
+	private, _ := os.Open(key)
 	defer private.Close()
 	keyRing, _ := openpgp.ReadArmoredKeyRing(private)
 
-	strategy := PGP(memory.New())
-
-	challenge := strategy.Challenge("https://example.com")
-
 	signedMsg := bytes.NewBuffer(nil)
-	dec, err := clearsign.Encode(signedMsg, keyRing[0].PrivateKey, nil)
-	if assert.Nil(err) {
-		dec.Write([]byte(challenge))
-		dec.Close()
+	dec, _ := clearsign.Encode(signedMsg, keyRing[0].PrivateKey, nil)
+	dec.Write([]byte(challenge))
+	dec.Close()
 
-		me, err := strategy.Verify("https://example.com", signedMsg.String())
-		assert.Equal(ErrUnauthorized, err)
-		assert.Equal("", me)
-	}
+	return signedMsg.String()
 }

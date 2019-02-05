@@ -29,6 +29,7 @@ func testPage(link string) string {
 func TestAuth(t *testing.T) {
 	var rURL, sURL string
 
+	assert := assert.New(t)
 	authStore := memory.New()
 
 	strat := &fakeStrategy{}
@@ -69,18 +70,19 @@ func TestAuth(t *testing.T) {
 		"redirect_uri": {"https://example.com/redirect"},
 		"state":        {"shared state"},
 	}.Encode(), nil)
-	assert.Nil(t, err)
+	assert.Nil(err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
-	assert.Nil(t, err)
+	assert.Nil(err)
 
-	assert.Equal(t, "https://example.com/redirect", resp.Header.Get("Location"))
+	assert.Equal("https://example.com/redirect", resp.Header.Get("Location"))
 }
 
 func TestAuthWithEvilRedirect(t *testing.T) {
 	var rURL, sURL string
 
+	assert := assert.New(t)
 	authStore := memory.New()
 	strat := &fakeStrategy{}
 
@@ -119,17 +121,18 @@ func TestAuthWithEvilRedirect(t *testing.T) {
 		"client_id":    {"https://example.com/"},
 		"redirect_uri": {"https://not.example.com/redirect"},
 	}.Encode(), nil)
-	assert.Nil(t, err)
+	assert.Nil(err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Nil(err)
+	assert.Equal(http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestAuthWithEvilRedirectThatIsWhitelistedInHeader(t *testing.T) {
 	var rURL, sURL string
 
+	assert := assert.New(t)
 	authStore := memory.New()
 	strat := &fakeStrategy{}
 
@@ -173,17 +176,18 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInHeader(t *testing.T) {
 		"client_id":    {c.URL},
 		"redirect_uri": {"https://example.com/redirect"},
 	}.Encode(), nil)
-	assert.Nil(t, err)
+	assert.Nil(err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
-	assert.Nil(t, err)
-	assert.Equal(t, "https://example.com/redirect", resp.Header.Get("Location"))
+	assert.Nil(err)
+	assert.Equal("https://example.com/redirect", resp.Header.Get("Location"))
 }
 
 func TestAuthWithEvilRedirectThatIsWhitelistedInLink(t *testing.T) {
 	var rURL, sURL string
 
+	assert := assert.New(t)
 	authStore := memory.New()
 	strat := &fakeStrategy{}
 
@@ -231,17 +235,18 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInLink(t *testing.T) {
 		"client_id":    {c.URL},
 		"redirect_uri": {"https://example.com/redirect"},
 	}.Encode(), nil)
-	assert.Nil(t, err)
+	assert.Nil(err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
-	assert.Nil(t, err)
-	assert.Equal(t, "https://example.com/redirect", resp.Header.Get("Location"))
+	assert.Nil(err)
+	assert.Equal("https://example.com/redirect", resp.Header.Get("Location"))
 }
 
 func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	var rURL, sURL string
 
+	assert := assert.New(t)
 	authStore := memory.New()
 	strat := &falseStrategy{}
 
@@ -269,10 +274,10 @@ func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me": {s.URL},
 	}.Encode(), nil)
-	assert.Nil(t, err)
+	assert.Nil(err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Nil(err)
+	assert.Equal(http.StatusBadRequest, resp.StatusCode)
 }

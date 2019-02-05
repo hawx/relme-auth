@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>relme-auth</title>
+    <link rel="stylesheet" href="/public/choose.css" />
+  </head>
+  <body>
+    <div class="fill"></div>
+
+    <div class="container">
+      <header>
+        <h1>PGP: Sign this challenge</h1>
+      </header>
+
+      <p>Sign the following challenge</p>
+      <textarea name="challenge" readonly>{{ .Challenge }}</textarea>
+
+      <p>For example</p>
+      <pre><code>echo '{{ .Challenge }}' | gpg --clearsign --armor</code></pre>
+
+      <form action="/oauth/callback/pgp" method="post">
+        <label for="signed">Signed challenge</label>
+        <textarea id="signed" name="signed"></textarea>
+        <button type="submit">Submit</button>
+        <input type="hidden" name="state" value="{{ .State }}" />
+      </form>
+
+      <footer>
+        This is <a href="https://github.com/hawx/relme-auth">relme-auth</a>, an
+        app that allows you to sign-in to websites by delegating to
+        authentication providers using <code>rel=me</code> links on your
+        homepage and other sites. <a href="https://indieauth.com/setup">Learn more</a>.
+      </footer>
+    </div>
+
+    <div class="fill"></div>
+  </body>
+</html>

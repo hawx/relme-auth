@@ -16,6 +16,7 @@ const (
 	Found
 	Verified
 	Unverified
+	PGP
 )
 
 type Event struct {
@@ -29,13 +30,16 @@ func Me(profile string) <-chan Event {
 	client := RelMe{Client: http.DefaultClient}
 
 	go func() {
-		profileLinks, err := client.FindAuth(profile)
+		profileLinks, pgpkey, err := client.FindAuth(profile)
 		if err != nil {
 			eventCh <- Event{Type: Error, Err: err}
 			close(eventCh)
 			return
 		}
 
+		if pgpkey != "" {
+			eventCh <- Event{Type: PGP, Link: pgpkey}
+		}
 		for _, link := range profileLinks {
 			eventCh <- Event{Type: Found, Link: link}
 		}
@@ -66,7 +70,7 @@ type RelMe struct {
 // authn"/> elements on the page that also link back to the profile, if none
 // exist it fallsback to using hrefs in <a rel="me"/> elements as FindVerified
 // does.
-func (me *RelMe) FindAuth(profile string) (links []string, err error) {
+func (me *RelMe) FindAuth(profile string) (links []string, pgpkey string, err error) {
 	req, err := http.NewRequest("GET", profile, nil)
 	if err != nil {
 		return
@@ -78,7 +82,7 @@ func (me *RelMe) FindAuth(profile string) (links []string, err error) {
 	}
 	defer resp.Body.Close()
 
-	return parseLinks(resp.Body, isRelAuthn, isRelMe)
+	return parseProfileLinks(profile, resp.Body)
 }
 
 // Find takes a profile URL and returns a list of all hrefs in <a rel="me"/>
@@ -95,7 +99,7 @@ func (me *RelMe) Find(profile string) (links []string, err error) {
 	}
 	defer resp.Body.Close()
 
-	return parseLinks(resp.Body, isRelMe)
+	return parseLinks(resp.Body)
 }
 
 // LinksTo takes a remote profile URL and checks whether any of the hrefs in <a
@@ -204,20 +208,95 @@ func follow(remote *url.URL) (redirects []string, err error) {
 	return
 }
 
-func parseLinks(r io.Reader, preds ...func(*html.Node) bool) (links []string, err error) {
+func parseProfileLinks(profile string, r io.Reader) (links []string, pgpkey string, err error) {
 	root, err := html.Parse(r)
 	if err != nil {
 		return
 	}
 
-	for _, pred := range preds {
-		rels := searchAll(root, pred)
+	pgpkey, keyWasAuthn := findPGPKey(profile, root)
+	if keyWasAuthn {
+		// only find authn me links
+		rels := searchAll(root, isRelAuthn)
 		for _, node := range rels {
 			links = append(links, getAttr(node, "href"))
 		}
-		if len(links) > 0 {
-			return
+		return
+	}
+
+	rels := searchAll(root, isRelAuthn)
+	for _, node := range rels {
+		links = append(links, getAttr(node, "href"))
+	}
+	// don't return the key as it wasn't authn
+	if len(links) > 0 {
+		return links, "", nil
+	}
+
+	rels = searchAll(root, isRelMe)
+	for _, node := range rels {
+		links = append(links, getAttr(node, "href"))
+	}
+	return
+}
+
+func parseLinks(r io.Reader) (links []string, err error) {
+	root, err := html.Parse(r)
+	if err != nil {
+		return
+	}
+
+	rels := searchAll(root, isRelMe)
+	for _, node := range rels {
+		links = append(links, getAttr(node, "href"))
+	}
+	if len(links) > 0 {
+		return
+	}
+
+	return
+}
+
+func findPGPKey(profile string, root *html.Node) (key string, wasAuthn bool) {
+	searchAll(root, func(node *html.Node) bool {
+		if node.Type == html.ElementNode && node.Data == "a" {
+			var hasKey, hasAuthn bool
+
+			rels := strings.Fields(getAttr(node, "rel"))
+			for _, rel := range rels {
+				if rel == "pgpkey" {
+					hasKey = true
+				}
+				if rel == "authn" {
+					hasAuthn = true
+				}
+				if hasKey && hasAuthn {
+					key = getAttr(node, "href")
+					wasAuthn = true
+					return true
+				}
+			}
+
+			if hasKey {
+				key = getAttr(node, "href")
+				wasAuthn = hasAuthn
+				return true
+			}
 		}
+
+		return false
+	})
+
+	if key != "" {
+		profileURL, err := url.Parse(profile)
+		if err != nil {
+			return "", false
+		}
+		abspgpkey, err := profileURL.Parse(key)
+		if err != nil {
+			return "", false
+		}
+		key = abspgpkey.String()
 	}
 
 	return

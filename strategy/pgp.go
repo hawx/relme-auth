@@ -2,9 +2,10 @@ package strategy
 
 import (
 	"bytes"
-	"crypto/rand"
 	"errors"
-	"os"
+	"log"
+	"net/http"
+	"net/url"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/clearsign"
@@ -12,12 +13,16 @@ import (
 )
 
 type authPGP struct {
-	Store data.StrategyStore
+	AuthURL  string
+	ClientID string
+	Store    data.StrategyStore
 }
 
-func PGP(store data.StrategyStore) *authPGP {
+func PGP(store data.StrategyStore, baseURI, id string) Strategy {
 	return &authPGP{
-		Store: store,
+		AuthURL:  baseURI + "/pgp/authorize",
+		ClientID: id,
+		Store:    store,
 	}
 }
 
@@ -25,60 +30,68 @@ func (authPGP) Name() string {
 	return "pgp"
 }
 
-func (strategy *authPGP) Challenge(me string) string {
-	s, _ := randomString(20)
-
-	strategy.Store.Set(me, s)
-	return s
+func (authPGP) Match(me *url.URL) bool {
+	return me.String() == "pgp"
 }
 
-func (strategy *authPGP) Verify(me string, signed string) (string, error) {
-	challenge, ok := strategy.Store.Claim(me)
+func (strategy *authPGP) Redirect(expectedLink string) (redirectURL string, err error) {
+	state, err := strategy.Store.Insert(expectedLink)
+	if err != nil {
+		return "", err
+	}
+	challenge, _ := data.RandomString(40)
+	if err := strategy.Store.Set(expectedLink, challenge); err != nil {
+		return "", err
+	}
+
+	query := url.Values{
+		"client_id": {strategy.ClientID},
+		"state":     {state},
+		"challenge": {challenge},
+	}
+
+	return strategy.AuthURL + "?" + query.Encode(), nil
+}
+
+func (strategy *authPGP) Callback(form url.Values) (string, error) {
+	expectedURL, ok := strategy.Store.Claim(form.Get("state"))
+	if !ok {
+		return "", errors.New("How did you get here?")
+	}
+	challenge, ok := strategy.Store.Claim(expectedURL)
 	if !ok {
 		return "", errors.New("How did you get here?")
 	}
 
-	public, err := os.Open("public.asc")
-	if err != nil {
-		return "", errors.New("could not get file: " + err.Error())
+	if err := verify(expectedURL, form.Get("signed"), challenge); err != nil {
+		log.Println(err)
+		return "", ErrUnauthorized
 	}
-	keyRing, err := openpgp.ReadArmoredKeyRing(public)
+
+	return expectedURL, nil
+}
+
+func verify(keyURL, signed, challenge string) error {
+	resp, err := http.Get(keyURL)
 	if err != nil {
-		return "", errors.New("could not read key: " + err.Error())
+		return errors.New("could not get file: " + err.Error())
+	}
+	defer resp.Body.Close()
+
+	keyRing, err := openpgp.ReadArmoredKeyRing(resp.Body)
+	if err != nil {
+		return errors.New("could not read key: " + err.Error())
 	}
 
 	blk, rest := clearsign.Decode([]byte(signed))
 	if len(rest) != 0 {
-		return "", ErrUnauthorized
+		return errors.New("more data than expected")
 	}
 
-	if !bytes.Equal(blk.Bytes, []byte(challenge)) {
-		return "", ErrUnauthorized
+	if blk == nil || !bytes.Equal(blk.Bytes, []byte(challenge)) {
+		return errors.New("challenge not correct")
 	}
 
 	_, err = openpgp.CheckDetachedSignature(keyRing, bytes.NewBuffer(blk.Bytes), blk.ArmoredSignature.Body)
-	if err != nil {
-		return "", ErrUnauthorized
-	}
-
-	return me, nil
-}
-
-const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
-
-func randomString(n int) (string, error) {
-	bytes, err := randomBytes(n)
-	if err != nil {
-		return "", err
-	}
-	for i, b := range bytes {
-		bytes[i] = letters[b%byte(len(letters))]
-	}
-	return string(bytes), nil
-}
-
-func randomBytes(length int) (b []byte, err error) {
-	b = make([]byte, length)
-	_, err = rand.Read(b)
-	return
+	return err
 }

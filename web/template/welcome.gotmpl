@@ -204,6 +204,19 @@
         <p>You can log in to this site without creating a new account! Instead make sure one (or more) of
           the methods below is setup.</p>
 
+        <h2 id="pgp">PGP</h2>
+        <ol>
+          <li>To authenticate with your PGP key add a link to your public key on your homepage.
+            <pre><code>&lt;a rel="pgpkey" href="/key.asc"&gt;Key&lt;/a&gt;</code></pre>
+            Or if you don't want the link to be visible.
+            <pre><code>&lt;link rel="pgpkey" href="/key.asc" /&gt;</code></pre>
+          </li>
+          <li>
+            Sign the challenge when presented.
+            <pre><code>echo 'CHALLENGE' | gpg --clearsign --armor</code></pre>
+          </li>
+        </ol>
+
         {{ if .HasFlickr }}<h2 id="flickr">Flickr</h2>
         <ol>
           <li>To authenticate with your Flickr account add a link to your profile on your homepage.
