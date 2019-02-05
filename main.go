@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"html/template"
 
+	"github.com/gorilla/context"
+	"github.com/gorilla/sessions"
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/config"
 	"hawx.me/code/relme-auth/data"
@@ -34,6 +37,10 @@ func printHelp() {
    --base-url URL='http://localhost:8080'
      Where this app is going to be accessible from.
 
+   --example-secret SECRET
+     This sets the secret used for sessions made by the example
+     site. If left unset then no example site will be served.
+
    --true
      Use the fake 'true' authentication provider. This should
      only be used locally for testing as it says everyone is
@@ -55,12 +62,14 @@ func printHelp() {
 
 func main() {
 	var (
-		port       = flag.String("port", "8080", "Port to run on")
-		socket     = flag.String("socket", "", "Socket to run on")
-		baseURL    = flag.String("base-url", "http://localhost:8080", "Where this is running")
-		configPath = flag.String("config", "./config.toml", "Path to config file")
-		boltdbPath = flag.String("boltdb", "", "Path to database")
-		useTrue    = flag.Bool("true", false, "Use the fake 'true' auth provider")
+		port          = flag.String("port", "8080", "Port to run on")
+		socket        = flag.String("socket", "", "Socket to run on")
+		baseURL       = flag.String("base-url", "http://localhost:8080", "Where this is running")
+		configPath    = flag.String("config", "./config.toml", "Path to config file")
+		boltdbPath    = flag.String("boltdb", "", "Path to database")
+		exampleSecret = flag.String("example-secret", "", "Session secret for example site")
+		useTrue       = flag.Bool("true", false, "Use the fake 'true' auth provider")
+		webPath       = flag.String("web-path", "web", "Path to web/ directory")
 	)
 	flag.Usage = func() { printHelp() }
 	flag.Parse()
@@ -82,6 +91,12 @@ func main() {
 		database = memory.New()
 	}
 	defer database.Close()
+
+	templates, err := template.ParseGlob(*webPath + "/template/*")
+	if err != nil {
+		fmt.Println("could not load templates:", err)
+		return
+	}
 
 	var strategies strategy.Strategies
 	if *useTrue {
@@ -111,16 +126,23 @@ func main() {
 	}
 
 	route.Handle("/auth", mux.Method{
-		"GET":  handler.Choose(*baseURL, database, database, strategies),
+		"GET":  handler.Choose(*baseURL, database, database, strategies, templates),
 		"POST": handler.Verify(database),
 	})
 	route.Handle("/auth/start", mux.Method{
 		"GET": handler.Auth(database, strategies),
 	})
 	route.Handle("/token", handler.Token(database))
-	route.Handle("/*rest", handler.Example(*baseURL, conf))
+
+	if *exampleSecret != "" {
+		exampleSessionStore := sessions.NewCookieStore([]byte(*exampleSecret))
+
+		route.Handle("/", handler.Example(*baseURL, conf, exampleSessionStore, templates))
+		route.Handle("/callback", handler.ExampleCallback(*baseURL, exampleSessionStore))
+		route.Handle("/sign-out", handler.ExampleSignOut(*baseURL, exampleSessionStore))
+	}
 
 	route.Handle("/ws", handler.WebSocket(strategies, database))
 
-	serve.Serve(*port, *socket, route.Default)
+	serve.Serve(*port, *socket, context.ClearHandler(route.Default))
 }
