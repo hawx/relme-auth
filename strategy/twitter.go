@@ -14,9 +14,10 @@ type authTwitter struct {
 	Client      oauth.Client
 	CallbackURL string
 	Store       data.StrategyStore
-	ApiURI      string
+	APIURI      string
 }
 
+// Twitter provides a strategy for authenticating with https://twitter.com.
 func Twitter(baseURL string, store data.StrategyStore, id, secret string) Strategy {
 	oauthClient := oauth.Client{
 		TemporaryCredentialRequestURI: "https://api.twitter.com/oauth/request_token",
@@ -32,7 +33,7 @@ func Twitter(baseURL string, store data.StrategyStore, id, secret string) Strate
 		Client:      oauthClient,
 		CallbackURL: baseURL + "/oauth/callback/twitter",
 		Store:       store,
-		ApiURI:      "https://api.twitter.com/1.1",
+		APIURI:      "https://api.twitter.com/1.1",
 	}
 }
 
@@ -65,7 +66,7 @@ func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 	oauthToken := form.Get("oauth_token")
 	expectedSecret, ok := strategy.Store.Claim(oauthToken)
 	if !ok {
-		return "", errors.New("Unknown oauth_token")
+		return "", errors.New("unknown oauth_token")
 	}
 
 	tempCred := &oauth.Credentials{
@@ -74,10 +75,10 @@ func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 	}
 	tokenCred, _, err := strategy.Client.RequestToken(http.DefaultClient, tempCred, form.Get("oauth_verifier"))
 	if err != nil {
-		return "", errors.New("Error getting request token, " + err.Error())
+		return "", errors.New("error getting request token, " + err.Error())
 	}
 
-	resp, err := strategy.Client.Get(http.DefaultClient, tokenCred, strategy.ApiURI+"/account/verify_credentials.json", nil)
+	resp, err := strategy.Client.Get(http.DefaultClient, tokenCred, strategy.APIURI+"/account/verify_credentials.json", nil)
 	if err != nil {
 		return "", err
 	}

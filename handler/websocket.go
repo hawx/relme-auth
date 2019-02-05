@@ -46,8 +46,10 @@ type eventResponse struct {
 	Method chooseCtxMethod
 }
 
-func (c *conn) send(msg interface{}) error {
-	return websocket.JSON.Send(c.ws, msg)
+func (c *conn) send(msg interface{}) {
+	if err := websocket.JSON.Send(c.ws, msg); err != nil {
+		log.Println("handler/websocket failed to send message:", err)
+	}
 }
 
 type webSocketServer struct {
@@ -101,8 +103,25 @@ func (s *webSocketServer) serveConnection(conn *conn) error {
 			return err
 		}
 
-		if err := s.getMethodsR(msg, conn); err != nil {
-			log.Println("handler/websocket failed to retrieve methods:", err)
+		if profile, ok := s.canUseCache(msg); ok {
+			s.getFromCache(conn, msg, profile)
+			continue
+		}
+
+		profile := data.Profile{
+			Me:        msg.Me,
+			UpdatedAt: time.Now().UTC(),
+			Methods:   []data.Method{},
+		}
+
+		if err := s.readAllEvents(conn, msg, &profile); err != nil {
+			log.Println("handler/websocket failed to read all events:", err)
+			continue
+		}
+		conn.send(eventResponse{Type: "done"})
+
+		if err := s.database.CacheProfile(profile); err != nil {
+			log.Println("handler/websocket failed to cache profile:", err)
 		}
 	}
 }
@@ -111,25 +130,6 @@ type chooseCtxMethod struct {
 	Query        string
 	StrategyName string
 	ProfileURL   string
-}
-
-func (s *webSocketServer) getMethodsR(request profileRequest, conn *conn) error {
-	if profile, ok := s.canUseCache(request); ok {
-		return s.getFromCache(conn, request, profile)
-	}
-
-	profile := data.Profile{
-		Me:        request.Me,
-		UpdatedAt: time.Now().UTC(),
-		Methods:   []data.Method{},
-	}
-
-	if err := s.readAllEvents(conn, request, &profile); err != nil {
-		return err
-	}
-	conn.send(eventResponse{Type: "done"})
-
-	return s.database.CacheProfile(profile)
 }
 
 func (s *webSocketServer) canUseCache(request profileRequest) (profile data.Profile, ok bool) {
@@ -145,7 +145,7 @@ func (s *webSocketServer) canUseCache(request profileRequest) (profile data.Prof
 	return profile, profile.UpdatedAt.After(time.Now().Add(-profileExpiry))
 }
 
-func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profile data.Profile) error {
+func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profile data.Profile) {
 	var methods []chooseCtxMethod
 	cachedAt := profile.UpdatedAt
 
@@ -164,7 +164,7 @@ func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profi
 		})
 	}
 
-	return conn.send(profileResponse{
+	conn.send(profileResponse{
 		CachedAt: cachedAt.Format("2 Jan"),
 		Methods:  methods,
 	})

@@ -16,6 +16,7 @@ type authStore struct {
 	clients    map[string]data.Client
 }
 
+// New returns an empty in memory database.
 func New() data.Database {
 	return &authStore{
 		inProgress: map[string]string{},

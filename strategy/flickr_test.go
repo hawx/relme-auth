@@ -115,8 +115,8 @@ func TestFlickrAuthFlow(t *testing.T) {
 		},
 		CallbackURL: "",
 		Store:       new(fakeStore),
-		ApiKey:      id,
-		ApiURI:      server.URL + "/services/rest",
+		APIKey:      id,
+		APIURI:      server.URL + "/services/rest",
 	}
 
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s&perms=read", server.URL, tempToken)

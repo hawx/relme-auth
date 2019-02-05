@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"html/template"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -13,7 +13,7 @@ import (
 
 // Example implements a basic site using the authentication flow provided by
 // this package.
-func Example(baseURL string, conf config.Config, store sessions.Store, templates *template.Template) http.HandlerFunc {
+func Example(baseURL string, conf config.Config, store sessions.Store, templates tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := store.Get(r, "example-session")
 		if err != nil {
@@ -31,10 +31,12 @@ func Example(baseURL string, conf config.Config, store sessions.Store, templates
 		if !ok {
 			state, _ = data.RandomString(64)
 			session.Values["state"] = state
-			session.Save(r, w)
+			if err := session.Save(r, w); err != nil {
+				log.Println("handler/example could not save session:", err)
+			}
 		}
 
-		templates.ExecuteTemplate(w, "welcome.gotmpl", welcomeCtx{
+		if err := templates.ExecuteTemplate(w, "welcome.gotmpl", welcomeCtx{
 			ThisURI:    baseURL,
 			State:      state,
 			Me:         me,
@@ -42,10 +44,14 @@ func Example(baseURL string, conf config.Config, store sessions.Store, templates
 			HasFlickr:  conf.Flickr != nil,
 			HasGitHub:  conf.GitHub != nil,
 			HasTwitter: conf.Twitter != nil,
-		})
+		}); err != nil {
+			log.Println("handler/example failed to write template:", err)
+		}
 	}
 }
 
+// ExampleCallback implements the authentication callback for Example. It
+// verifies the code, then sets the value of "me" in a session cookie.
 func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := store.Get(r, "example-session")
@@ -81,12 +87,15 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 		}
 
 		session.Values["me"] = v.Me
-		session.Save(r, w)
+		if err := session.Save(r, w); err != nil {
+			log.Println("handler/example could not save session:", err)
+		}
 
 		http.Redirect(w, r, baseURL, http.StatusFound)
 	}
 }
 
+// ExampleSignOut removes the value of "me" from the session cookie.
 func ExampleSignOut(baseURL string, store sessions.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := store.Get(r, "example-session")
@@ -96,7 +105,9 @@ func ExampleSignOut(baseURL string, store sessions.Store) http.HandlerFunc {
 		}
 
 		delete(session.Values, "me")
-		session.Save(r, w)
+		if err := session.Save(r, w); err != nil {
+			log.Println("handler/example could not save session:", err)
+		}
 
 		http.Redirect(w, r, baseURL, http.StatusFound)
 	}

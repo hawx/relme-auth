@@ -35,13 +35,13 @@ func TestAuth(t *testing.T) {
 	strat := &fakeStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(sURL))
+		fmt.Fprint(w, testPage(sURL))
 	}))
 	defer r.Close()
 	rURL = r.URL
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(rURL))
+		fmt.Fprint(w, testPage(rURL))
 	}))
 	defer s.Close()
 	sURL = s.URL
@@ -87,13 +87,13 @@ func TestAuthWithEvilRedirect(t *testing.T) {
 	strat := &fakeStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(sURL))
+		fmt.Fprint(w, testPage(sURL))
 	}))
 	defer r.Close()
 	rURL = r.URL
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(rURL))
+		fmt.Fprint(w, testPage(rURL))
 	}))
 	defer s.Close()
 	sURL = s.URL
@@ -142,13 +142,13 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInHeader(t *testing.T) {
 	defer c.Close()
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(sURL))
+		fmt.Fprint(w, testPage(sURL))
 	}))
 	defer r.Close()
 	rURL = r.URL
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(rURL))
+		fmt.Fprint(w, testPage(rURL))
 	}))
 	defer s.Close()
 	sURL = s.URL
@@ -192,7 +192,7 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInLink(t *testing.T) {
 	strat := &fakeStrategy{}
 
 	c := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, `<html>
+		fmt.Fprint(w, `<html>
 <head>
 <link rel="redirect_uri" href="https://example.com/redirect" />
 </head>
@@ -201,13 +201,13 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInLink(t *testing.T) {
 	defer c.Close()
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(sURL))
+		fmt.Fprint(w, testPage(sURL))
 	}))
 	defer r.Close()
 	rURL = r.URL
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(rURL))
+		fmt.Fprint(w, testPage(rURL))
 	}))
 	defer s.Close()
 	sURL = s.URL
@@ -251,13 +251,13 @@ func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	strat := &falseStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(sURL))
+		fmt.Fprint(w, testPage(sURL))
 	}))
 	defer r.Close()
 	rURL = r.URL
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, testPage(rURL))
+		fmt.Fprint(w, testPage(rURL))
 	}))
 	defer s.Close()
 	sURL = s.URL

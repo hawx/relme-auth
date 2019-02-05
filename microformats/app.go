@@ -8,8 +8,8 @@ import (
 	"golang.org/x/net/html"
 )
 
-// NoAppErr is used to signal when no app microformat exists.
-var NoAppErr = errors.New("no h-x-app or h-app could be found")
+// ErrNoApp is used to signal when no app microformat exists.
+var ErrNoApp = errors.New("no h-x-app or h-app could be found")
 
 // HApp attempts to find the name and url provided by the h-app or h-x-app
 // microformat.
@@ -21,7 +21,7 @@ func HApp(r io.Reader) (name string, url string, err error) {
 
 	hApp := searchAll(root, hasEitherClass("h-x-app", "h-app"))
 	if len(hApp) == 0 {
-		err = NoAppErr
+		err = ErrNoApp
 		return
 	}
 
@@ -40,6 +40,7 @@ func HApp(r io.Reader) (name string, url string, err error) {
 	return
 }
 
+// RedirectURIs finds whitelisted redirect_uris from the Reader.
 func RedirectURIs(r io.Reader) []string {
 	var whitelist []string
 

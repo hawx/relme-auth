@@ -7,7 +7,7 @@ import (
 
 // PGP creates a http.Handler that serves a random challenge for the user to
 // clearsign.
-func PGP(templates Templates) http.HandlerFunc {
+func PGP(templates tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			clientID  = r.FormValue("client_id")

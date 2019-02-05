@@ -95,9 +95,9 @@ func wsify(s string) string {
 }
 
 func getClient(clientID, redirectURI string, database data.CacheStore) (client data.Client, err error) {
-	if client_, err_ := database.GetClient(clientID); err_ == nil {
-		if client_.RedirectURI == redirectURI && client_.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
-			return client_, err_
+	if foundClient, ferr := database.GetClient(clientID); ferr == nil {
+		if foundClient.RedirectURI == redirectURI && foundClient.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
+			return foundClient, ferr
 		}
 	}
 
@@ -112,7 +112,7 @@ func getClient(clientID, redirectURI string, database data.CacheStore) (client d
 	}
 	defer clientInfoResp.Body.Close()
 
-	if clientName, _, err_ := microformats.HApp(clientInfoResp.Body); err_ == nil {
+	if clientName, _, okerr := microformats.HApp(clientInfoResp.Body); okerr == nil {
 		client.Name = clientName
 	}
 

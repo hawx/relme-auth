@@ -13,9 +13,10 @@ import (
 type authGitHub struct {
 	Conf   *oauth2.Config
 	Store  data.StrategyStore
-	ApiURI string
+	APIURI string
 }
 
+// GitHub provides a strategy for authenticating with https://github.com.
 func GitHub(store data.StrategyStore, id, secret string) Strategy {
 	conf := &oauth2.Config{
 		ClientID:     id,
@@ -30,7 +31,7 @@ func GitHub(store data.StrategyStore, id, secret string) Strategy {
 	return &authGitHub{
 		Conf:   conf,
 		Store:  store,
-		ApiURI: "https://api.github.com",
+		APIURI: "https://api.github.com",
 	}
 }
 
@@ -54,7 +55,7 @@ func (strategy *authGitHub) Redirect(expectedLink string) (redirectURL string, e
 func (strategy *authGitHub) Callback(form url.Values) (string, error) {
 	expectedURL, ok := strategy.Store.Claim(form.Get("state"))
 	if !ok {
-		return "", errors.New("How did you get here?")
+		return "", errors.New("how did you get here?")
 	}
 
 	ctx := context.Background()
@@ -65,7 +66,7 @@ func (strategy *authGitHub) Callback(form url.Values) (string, error) {
 	}
 
 	client := strategy.Conf.Client(ctx, tok)
-	resp, err := client.Get(strategy.ApiURI + "/user")
+	resp, err := client.Get(strategy.APIURI + "/user")
 	if err != nil {
 		return "", err
 	}

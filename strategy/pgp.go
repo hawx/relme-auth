@@ -17,6 +17,7 @@ type authPGP struct {
 	Store    data.StrategyStore
 }
 
+// PGP provides a strategy for authenticating with a pgpkey.
 func PGP(store data.StrategyStore, baseURI, id string) Strategy {
 	return &authPGP{
 		AuthURL:  baseURI + "/pgp/authorize",
@@ -38,7 +39,10 @@ func (strategy *authPGP) Redirect(expectedLink string) (redirectURL string, err 
 	if err != nil {
 		return "", err
 	}
-	challenge, _ := data.RandomString(40)
+	challenge, err := data.RandomString(40)
+	if err != nil {
+		return "", err
+	}
 	if err := strategy.Store.Set(expectedLink, challenge); err != nil {
 		return "", err
 	}
@@ -55,11 +59,11 @@ func (strategy *authPGP) Redirect(expectedLink string) (redirectURL string, err 
 func (strategy *authPGP) Callback(form url.Values) (string, error) {
 	expectedURL, ok := strategy.Store.Claim(form.Get("state"))
 	if !ok {
-		return "", errors.New("How did you get here?")
+		return "", errors.New("how did you get here?")
 	}
 	challenge, ok := strategy.Store.Claim(expectedURL)
 	if !ok {
-		return "", errors.New("How did you get here?")
+		return "", errors.New("how did you get here?")
 	}
 
 	if err := verify(expectedURL, form.Get("signed"), challenge); err != nil {

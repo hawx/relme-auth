@@ -88,7 +88,7 @@ func TestGitHubAuthFlow(t *testing.T) {
 			},
 		},
 		Store:  &oneStore{State: state},
-		ApiURI: server.URL,
+		APIURI: server.URL,
 	}
 
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?access_type=offline&client_id=%s&response_type=code&state=%s", server.URL, id, state)

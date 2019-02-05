@@ -83,5 +83,5 @@ func TestHAppParseWhenNoApp(t *testing.T) {
 	r := strings.NewReader("")
 
 	_, _, err := HApp(r)
-	assert.Equal(t, NoAppErr, err)
+	assert.Equal(t, ErrNoApp, err)
 }

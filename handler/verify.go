@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"hawx.me/code/relme-auth/data"
@@ -38,9 +39,11 @@ func Verify(authStore data.SessionStore) http.Handler {
 			return
 		}
 
-		json.NewEncoder(w).Encode(verifyCodeResponse{
+		if err := json.NewEncoder(w).Encode(verifyCodeResponse{
 			Me: session.Me,
-		})
+		}); err != nil {
+			log.Println("handler/verify failed to write response:", err)
+		}
 	})
 }
 
@@ -55,8 +58,10 @@ type jsonError struct {
 
 func writeJSONError(w http.ResponseWriter, error string, description string, statusCode int) {
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(jsonError{
+	if err := json.NewEncoder(w).Encode(jsonError{
 		Error:       error,
 		Description: description,
-	})
+	}); err != nil {
+		log.Println("handler/verify failed to write response:", err)
+	}
 }

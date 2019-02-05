@@ -109,7 +109,7 @@ func TestTwitterAuthFlow(t *testing.T) {
 		},
 		CallbackURL: "",
 		Store:       new(fakeStore),
-		ApiURI:      server.URL + "/1.1",
+		APIURI:      server.URL + "/1.1",
 	}
 
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s", server.URL, tempToken)

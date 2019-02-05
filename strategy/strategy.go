@@ -2,17 +2,19 @@ package strategy
 
 import (
 	"errors"
-	"fmt"
 	"net/url"
 	"strings"
 )
 
 var (
-	ErrUnauthorized = errors.New("You are not the user you told me you were")
+	// ErrUnauthorized is returned when a the user was not authenticated
+	ErrUnauthorized = errors.New("you are not the user you told me you were")
 )
 
+// Strategies is a list of Strategy.
 type Strategies []Strategy
 
+// Strategy is something that can provide authentication for a user.
 type Strategy interface {
 	// Name returns a unique lowercase alpha string naming the Strategy. This will
 	// be passed around as the "provider" parameter.
@@ -31,25 +33,6 @@ type Strategy interface {
 	// with the OAuth provider is different to the user attempting to authenticate
 	// with relme-auth.
 	Callback(form url.Values) (string, error)
-}
-
-// Find iterates through the list of verifiedLinks to profiles checking if there
-// is a strategy that can be used to authenticate against it, the first strategy
-// that is matched is returned.
-func (strategies Strategies) Find(verifiedLinks []string) (found Strategy, expectedLink string, ok bool) {
-	for _, link := range verifiedLinks {
-		fmt.Printf("me=%s\n", link)
-		linkURL, _ := url.Parse(link)
-
-		for _, strategy := range strategies {
-			if strategy.Match(linkURL) {
-				fmt.Printf("Can authenticate with %s\n", link)
-				return strategy, link, true
-			}
-		}
-	}
-
-	return
 }
 
 // IsAllowed checks whether a strategy exists for the profile link that can be

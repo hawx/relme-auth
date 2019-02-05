@@ -114,21 +114,21 @@ func main() {
 
 		if conf.Flickr != nil {
 			flickrDatabase, _ := database.Strategy("flickr")
-			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.Id, conf.Flickr.Secret)
+			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.ID, conf.Flickr.Secret)
 			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy))
 			strategies = append(strategies, flickrStrategy)
 		}
 
 		if conf.GitHub != nil {
 			gitHubDatabase, _ := database.Strategy("github")
-			gitHubStrategy := strategy.GitHub(gitHubDatabase, conf.GitHub.Id, conf.GitHub.Secret)
+			gitHubStrategy := strategy.GitHub(gitHubDatabase, conf.GitHub.ID, conf.GitHub.Secret)
 			route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy))
 			strategies = append(strategies, gitHubStrategy)
 		}
 
 		if conf.Twitter != nil {
 			twitterDatabase, _ := database.Strategy("twitter")
-			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.Id, conf.Twitter.Secret)
+			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.ID, conf.Twitter.Secret)
 			route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy))
 			strategies = append(strategies, twitterStrategy)
 		}

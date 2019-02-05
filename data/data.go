@@ -94,6 +94,7 @@ func (s Session) Expired() bool {
 
 const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
 
+// RandomString produces a random string of n characters.
 func RandomString(n int) (string, error) {
 	bytes, err := randomBytes(n)
 	if err != nil {

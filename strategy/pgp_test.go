@@ -43,11 +43,6 @@ func TestPGPNotMatch(t *testing.T) {
 }
 
 func TestPGPAuthFlow(t *testing.T) {
-	const (
-		state       = "randomstatestring"
-		accessToken = "the-access-key"
-	)
-
 	assert := assert.New(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -61,6 +56,7 @@ func TestPGPAuthFlow(t *testing.T) {
 	}))
 	defer key.Close()
 
+	state := "randomstatestring"
 	expectedURL := key.URL
 
 	store := &pgpStore{
@@ -90,11 +86,6 @@ func TestPGPAuthFlow(t *testing.T) {
 }
 
 func TestPGPAuthFlowWithBadKey(t *testing.T) {
-	const (
-		state       = "randomstatestring"
-		accessToken = "the-access-key"
-	)
-
 	assert := assert.New(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -109,6 +100,7 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 	defer key.Close()
 
 	expectedURL := key.URL
+	state := "randomstatestring"
 
 	store := &pgpStore{
 		State: state,

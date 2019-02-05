@@ -17,6 +17,7 @@ const (
 	stateBucket   = "states"
 )
 
+// Open returns the bolt database at the path specified, or creates a new one.
 func Open(path string) (data.Database, error) {
 	db, err := bolt.Open(path, 0600, nil)
 	if err != nil {

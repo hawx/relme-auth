@@ -9,25 +9,35 @@ import (
 	"golang.org/x/net/html"
 )
 
+// EventType defines what has occured.
 type EventType uint
 
 const (
+	// Error means something went wrong when trying to request a URL.
 	Error EventType = iota
+	// Found means a new link has been found that could be used for
+	// authentication.
 	Found
+	// Verified means a link has been confirmed as usable for authentication.
 	Verified
+	// Unverified means a previously found link can't be used for authentication.
 	Unverified
+	// PGP means a pgpkey has been found that can be used for authentication.
 	PGP
 )
 
+// Event is emitted by Me as new links are found and verified.
 type Event struct {
 	Type EventType
 	Link string
 	Err  error
 }
 
+// Me requests profile, then finds all links that can be used to authenticate
+// the user.
 func Me(profile string) <-chan Event {
 	eventCh := make(chan Event)
-	client := RelMe{Client: http.DefaultClient}
+	client := relMe{Client: http.DefaultClient}
 
 	go func() {
 		profileLinks, pgpkey, err := client.FindAuth(profile)
@@ -62,7 +72,7 @@ func Me(profile string) <-chan Event {
 	return eventCh
 }
 
-type RelMe struct {
+type relMe struct {
 	Client *http.Client
 }
 
@@ -70,7 +80,7 @@ type RelMe struct {
 // authn"/> elements on the page that also link back to the profile, if none
 // exist it fallsback to using hrefs in <a rel="me"/> elements as FindVerified
 // does.
-func (me *RelMe) FindAuth(profile string) (links []string, pgpkey string, err error) {
+func (me *relMe) FindAuth(profile string) (links []string, pgpkey string, err error) {
 	req, err := http.NewRequest("GET", profile, nil)
 	if err != nil {
 		return
@@ -87,7 +97,7 @@ func (me *RelMe) FindAuth(profile string) (links []string, pgpkey string, err er
 
 // Find takes a profile URL and returns a list of all hrefs in <a rel="me"/>
 // elements on the page.
-func (me *RelMe) Find(profile string) (links []string, err error) {
+func (me *relMe) Find(profile string) (links []string, err error) {
 	req, err := http.NewRequest("GET", profile, nil)
 	if err != nil {
 		return
@@ -104,7 +114,7 @@ func (me *RelMe) Find(profile string) (links []string, err error) {
 
 // LinksTo takes a remote profile URL and checks whether any of the hrefs in <a
 // rel="me"/> elements match the test URL.
-func (me *RelMe) LinksTo(remote, test string) (ok bool, err error) {
+func (me *relMe) LinksTo(remote, test string) (ok bool, err error) {
 	testURL, err := url.Parse(test)
 	if err != nil {
 		return
