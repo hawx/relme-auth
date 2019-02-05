@@ -7,6 +7,7 @@ require (
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/sessions v1.1.3
 	github.com/peterhellberg/link v1.0.0
+	golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
 	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/oauth2 v0.0.0-20190115181402-5dab4167f31c
 	hawx.me/code/assert v0.0.0-20150803185601-4570da094475
