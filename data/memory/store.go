@@ -127,7 +127,16 @@ func (s *authStore) RevokeByToken(token string) {
 	return
 }
 
-func (s *authStore) Insert(link string) (state string, err error) {
+type strategyStore struct {
+	mu         sync.Mutex
+	inProgress map[string]string
+}
+
+func (s *authStore) Strategy(name string) (data.StrategyStore, error) {
+	return &strategyStore{inProgress: map[string]string{}}, nil
+}
+
+func (s *strategyStore) Insert(link string) (state string, err error) {
 	state, err = data.RandomString(64)
 	if err != nil {
 		return
@@ -140,7 +149,7 @@ func (s *authStore) Insert(link string) (state string, err error) {
 	return
 }
 
-func (s *authStore) Set(key, value string) error {
+func (s *strategyStore) Set(key, value string) error {
 	s.mu.Lock()
 	s.inProgress[key] = value
 	s.mu.Unlock()
@@ -148,7 +157,7 @@ func (s *authStore) Set(key, value string) error {
 	return nil
 }
 
-func (s *authStore) Claim(state string) (link string, ok bool) {
+func (s *strategyStore) Claim(state string) (link string, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

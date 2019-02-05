@@ -36,10 +36,6 @@ func Open(path string) (data.Database, error) {
 			return fmt.Errorf("create client bucket: %s", err)
 		}
 
-		if _, err := tx.CreateBucketIfNotExists([]byte(stateBucket)); err != nil {
-			return fmt.Errorf("create client bucket: %s", err)
-		}
-
 		return nil
 	})
 
@@ -201,30 +197,48 @@ func (d *database) RevokeByToken(token string) {
 	})
 }
 
-func (d *database) Insert(link string) (state string, err error) {
+type strategyStore struct {
+	db     *bolt.DB
+	bucket []byte
+}
+
+func (d *database) Strategy(name string) (data.StrategyStore, error) {
+	bucket := []byte(stateBucket + "/" + name)
+
+	err := d.db.Update(func(tx *bolt.Tx) error {
+		if _, err := tx.CreateBucketIfNotExists(bucket); err != nil {
+			return fmt.Errorf("create %s bucket: %s", bucket, err)
+		}
+		return nil
+	})
+
+	return &strategyStore{db: d.db, bucket: bucket}, err
+}
+
+func (s *strategyStore) Insert(link string) (state string, err error) {
 	state, err = data.RandomString(64)
 	if err != nil {
 		return
 	}
 
-	err = d.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(stateBucket))
+	err = s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(s.bucket)
 		return b.Put([]byte(state), []byte(link))
 	})
 
 	return
 }
 
-func (d *database) Set(key, value string) error {
-	return d.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(stateBucket))
+func (s *strategyStore) Set(key, value string) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(s.bucket)
 		return b.Put([]byte(key), []byte(value))
 	})
 }
 
-func (d *database) Claim(state string) (link string, ok bool) {
-	err := d.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(stateBucket))
+func (s *strategyStore) Claim(state string) (link string, ok bool) {
+	err := s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(s.bucket)
 
 		link = string(b.Get([]byte(state)))
 		return b.Delete([]byte(state))

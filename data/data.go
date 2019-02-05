@@ -12,7 +12,7 @@ import (
 // this isn't very Go...
 type Database interface {
 	SessionStore
-	StrategyStore
+	Strategy(name string) (StrategyStore, error)
 	CacheStore
 	Close() error
 }

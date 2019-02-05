@@ -111,10 +111,13 @@ func TestStrategyStore(t *testing.T) {
 	defer os.Remove(tmpfile.Name())
 
 	db, _ := boltdb.Open(tmpfile.Name())
+	dbS, _ := db.Strategy("cool")
+
+	memS, _ := memory.New().Strategy("cool")
 
 	stores := map[string]data.StrategyStore{
-		"memory": memory.New(),
-		"boltdb": db,
+		"memory": memS,
+		"boltdb": dbS,
 	}
 
 	for name, store := range stores {

@@ -107,24 +107,28 @@ func main() {
 		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy))
 
 	} else {
-		pgpStrategy := strategy.PGP(database, *baseURL, "")
+		pgpDatabase, _ := database.Strategy("pgp")
+		pgpStrategy := strategy.PGP(pgpDatabase, *baseURL, "")
 		route.Handle("/oauth/callback/pgp", handler.Callback(database, pgpStrategy))
 		strategies = append(strategies, pgpStrategy)
 
 		if conf.Flickr != nil {
-			flickrStrategy := strategy.Flickr(*baseURL, database, conf.Flickr.Id, conf.Flickr.Secret)
+			flickrDatabase, _ := database.Strategy("flickr")
+			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.Id, conf.Flickr.Secret)
 			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy))
 			strategies = append(strategies, flickrStrategy)
 		}
 
 		if conf.GitHub != nil {
-			gitHubStrategy := strategy.GitHub(database, conf.GitHub.Id, conf.GitHub.Secret)
+			gitHubDatabase, _ := database.Strategy("github")
+			gitHubStrategy := strategy.GitHub(gitHubDatabase, conf.GitHub.Id, conf.GitHub.Secret)
 			route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy))
 			strategies = append(strategies, gitHubStrategy)
 		}
 
 		if conf.Twitter != nil {
-			twitterStrategy := strategy.Twitter(*baseURL, database, conf.Twitter.Id, conf.Twitter.Secret)
+			twitterDatabase, _ := database.Strategy("twitter")
+			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.Id, conf.Twitter.Secret)
 			route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy))
 			strategies = append(strategies, twitterStrategy)
 		}

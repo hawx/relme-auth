@@ -10,7 +10,6 @@ import (
 
 	"github.com/garyburd/go-oauth/oauth"
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data/memory"
 )
 
 const (
@@ -19,7 +18,7 @@ const (
 )
 
 func TestFlickrMatch(t *testing.T) {
-	flickr := Flickr("", memory.New(), id, secret)
+	flickr := Flickr("", new(fakeStore), id, secret)
 
 	testCases := []string{
 		"https://www.flickr.com/somebody",
@@ -37,7 +36,7 @@ func TestFlickrMatch(t *testing.T) {
 }
 
 func TestFlickrNotMatch(t *testing.T) {
-	flickr := Flickr("", memory.New(), id, secret)
+	flickr := Flickr("", new(fakeStore), id, secret)
 
 	testCases := []string{
 		"https://www.flickrz.com/somebody",
@@ -115,7 +114,7 @@ func TestFlickrAuthFlow(t *testing.T) {
 			},
 		},
 		CallbackURL: "",
-		Store:       memory.New(),
+		Store:       new(fakeStore),
 		ApiKey:      id,
 		ApiURI:      server.URL + "/services/rest",
 	}

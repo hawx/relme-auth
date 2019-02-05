@@ -13,11 +13,10 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/clearsign"
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data/memory"
 )
 
 func TestPGPMatch(t *testing.T) {
-	pgp := PGP(memory.New(), "", id)
+	pgp := PGP(new(fakeStore), "", id)
 
 	parsed, err := url.Parse("pgp")
 	assert.Nil(t, err)
@@ -25,7 +24,7 @@ func TestPGPMatch(t *testing.T) {
 }
 
 func TestPGPNotMatch(t *testing.T) {
-	pgp := PGP(memory.New(), "", id)
+	pgp := PGP(new(fakeStore), "", id)
 
 	testCases := []string{
 		"what",
