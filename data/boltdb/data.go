@@ -107,6 +107,7 @@ func (d *database) GetClient(clientID string) (client data.Client, err error) {
 func (d *database) Save(session *data.Session) {
 	session.CreatedAt = time.Now()
 	session.Code, _ = data.RandomString(16)
+	session.Token, _ = data.RandomString(32)
 
 	d.db.Update(func(tx *bolt.Tx) error {
 		v, err := json.Marshal(session)
@@ -131,9 +132,7 @@ func (d *database) Update(session data.Session) {
 		b := tx.Bucket([]byte(sessionBucket))
 		b.Put([]byte(session.Me), v)
 		b.Put([]byte(session.Code), v)
-		if session.Token != "" {
-			b.Put([]byte(session.Token), v)
-		}
+		b.Put([]byte(session.Token), v)
 		return nil
 	})
 }
