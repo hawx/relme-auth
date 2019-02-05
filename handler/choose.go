@@ -72,7 +72,7 @@ func chooseProvider(baseURL string, authStore data.SessionStore, database data.C
 
 		client, err := getClient(clientID, redirectURI, database)
 		if err != nil {
-			log.Println("error getting client info:", err)
+			log.Println("handler/choose failed to get client:", err)
 		}
 
 		if err := templates.ExecuteTemplate(w, "choose.gotmpl", chooseCtx{
@@ -81,7 +81,7 @@ func chooseProvider(baseURL string, authStore data.SessionStore, database data.C
 			ClientName:   client.Name,
 			Me:           me,
 		}); err != nil {
-			log.Println(err)
+			log.Println("handler/choose failed to write template:", err)
 		}
 	})
 }
@@ -97,7 +97,6 @@ func wsify(s string) string {
 func getClient(clientID, redirectURI string, database data.CacheStore) (client data.Client, err error) {
 	if client_, err_ := database.GetClient(clientID); err_ == nil {
 		if client_.RedirectURI == redirectURI && client_.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
-			log.Println("retrieved client from cache")
 			return client_, err_
 		}
 	}

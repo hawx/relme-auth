@@ -3,7 +3,6 @@ package strategy
 import (
 	"bytes"
 	"errors"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -64,7 +63,6 @@ func (strategy *authPGP) Callback(form url.Values) (string, error) {
 	}
 
 	if err := verify(expectedURL, form.Get("signed"), challenge); err != nil {
-		log.Println(err)
 		return "", ErrUnauthorized
 	}
 

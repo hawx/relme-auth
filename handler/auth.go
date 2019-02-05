@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"net/url"
 
@@ -53,7 +52,6 @@ func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Hand
 			http.Error(w, "No rel=\"me\" links on your profile match a known provider", http.StatusBadRequest)
 			return
 		}
-		log.Println("Authenticating", me, "using", provider)
 
 		redirectURL, err := chosenStrategy.Redirect(me)
 		if err != nil {

@@ -20,7 +20,7 @@ func PGP(templates Templates) http.HandlerFunc {
 			State:     state,
 			Challenge: challenge,
 		}); err != nil {
-			log.Println(err)
+			log.Println("handler/pgp failed to write template:", err)
 		}
 	}
 }

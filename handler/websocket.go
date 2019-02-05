@@ -83,7 +83,7 @@ func (s *webSocketServer) serve(ws *websocket.Conn) {
 	defer s.removeConnection(conn)
 
 	if err := s.serveConnection(conn); err != io.EOF {
-		log.Println(err)
+		log.Println("handler/websocket failed to serve connection:", err)
 	}
 }
 
@@ -102,7 +102,7 @@ func (s *webSocketServer) serveConnection(conn *conn) error {
 		}
 
 		if err := s.getMethodsR(msg, conn); err != nil {
-			log.Println(msg, err)
+			log.Println("handler/websocket failed to retrieve methods:", err)
 		}
 	}
 }

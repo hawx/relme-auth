@@ -17,7 +17,7 @@ import (
 func Callback(authStore data.SessionStore, strat strategy.Strategy) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			log.Println("Callback: ParseForm: ", err)
+			log.Println("handler/callback failed to parse form: ", err)
 			http.Error(w, "the request was bad", http.StatusBadRequest)
 			return
 		}
@@ -27,7 +27,7 @@ func Callback(authStore data.SessionStore, strat strategy.Strategy) http.Handler
 			if err == strategy.ErrUnauthorized {
 				http.Error(w, "the chosen provider says you are unauthorized", http.StatusUnauthorized)
 			} else {
-				log.Println("Callback: strat.Callback: ", err)
+				log.Println("handler/callback unknown error: ", err)
 				http.Error(w, "something went wrong with the chosen provider, maybe try again with a different choice?", http.StatusInternalServerError)
 			}
 			return
