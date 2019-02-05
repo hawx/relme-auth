@@ -53,7 +53,7 @@ func TestPGPAuthFlow(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer server.Close()
 
-	public, _ := os.Open("public.asc")
+	public, _ := os.Open("testdata/public.asc")
 	defer public.Close()
 
 	key := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +83,7 @@ func TestPGPAuthFlow(t *testing.T) {
 	// 2. Callback
 	profileURL, err := pgp.Callback(url.Values{
 		"state":  {state},
-		"signed": {sign(store.Challenge, "private.asc")},
+		"signed": {sign(store.Challenge, "testdata/private.asc")},
 	})
 	assert.Nil(err)
 	assert.Equal(expectedURL, profileURL)
@@ -100,7 +100,7 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer server.Close()
 
-	public, _ := os.Open("public.asc")
+	public, _ := os.Open("testdata/public.asc")
 	defer public.Close()
 
 	key := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +130,7 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 	// 2. Callback
 	profileURL, err := pgp.Callback(url.Values{
 		"state":  {state},
-		"signed": {sign("abcde", "other_private.asc")},
+		"signed": {sign("abcde", "testdata/other_private.asc")},
 	})
 	assert.Equal(ErrUnauthorized, err)
 	assert.Equal("", profileURL)
