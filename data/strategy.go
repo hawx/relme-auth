@@ -2,15 +2,25 @@ package data
 
 import (
 	"sync"
+	"time"
 )
 
 type StrategyStore struct {
+	expiry     int64
 	mu         sync.Mutex
-	inProgress map[string]string
+	inProgress map[string]*expiringItem
+}
+
+type expiringItem struct {
+	createdAt int64
+	value     string
 }
 
 func Strategy(name string) (*StrategyStore, error) {
-	return &StrategyStore{inProgress: map[string]string{}}, nil
+	return &StrategyStore{
+		inProgress: map[string]*expiringItem{},
+		expiry:     60,
+	}, nil
 }
 
 func (s *StrategyStore) Insert(link string) (state string, err error) {
@@ -19,16 +29,12 @@ func (s *StrategyStore) Insert(link string) (state string, err error) {
 		return
 	}
 
-	s.mu.Lock()
-	s.inProgress[state] = link
-	s.mu.Unlock()
-
-	return
+	return state, s.Set(state, link)
 }
 
 func (s *StrategyStore) Set(key, value string) error {
 	s.mu.Lock()
-	s.inProgress[key] = value
+	s.inProgress[key] = &expiringItem{createdAt: time.Now().Unix(), value: value}
 	s.mu.Unlock()
 
 	return nil
@@ -38,10 +44,16 @@ func (s *StrategyStore) Claim(state string) (link string, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	link, ok = s.inProgress[state]
-	if ok {
-		delete(s.inProgress, state)
+	item, ok := s.inProgress[state]
+	if !ok {
+		return "", false
 	}
 
-	return
+	delete(s.inProgress, state)
+
+	if time.Now().Unix()-item.createdAt > s.expiry {
+		return "", false
+	}
+
+	return item.value, true
 }
