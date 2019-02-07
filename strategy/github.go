@@ -7,17 +7,16 @@ import (
 	"net/url"
 
 	"golang.org/x/oauth2"
-	"hawx.me/code/relme-auth/data"
 )
 
 type authGitHub struct {
 	Conf   *oauth2.Config
-	Store  data.StrategyStore
+	Store  strategyStore
 	APIURI string
 }
 
 // GitHub provides a strategy for authenticating with https://github.com.
-func GitHub(store data.StrategyStore, id, secret string) Strategy {
+func GitHub(store strategyStore, id, secret string) Strategy {
 	conf := &oauth2.Config{
 		ClientID:     id,
 		ClientSecret: secret,

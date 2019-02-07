@@ -1,4 +1,4 @@
-package sqlite
+package data
 
 import (
 	"database/sql"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data"
 )
 
 func TestToken(t *testing.T) {
@@ -17,7 +16,7 @@ func TestToken(t *testing.T) {
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
-	err := db.CreateToken(data.Token{
+	err := db.CreateToken(Token{
 		Token:     "abcde",
 		Me:        "http://john.doe.example.com",
 		ClientID:  "http://client.example.com",

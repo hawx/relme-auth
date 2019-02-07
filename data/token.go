@@ -1,8 +1,16 @@
-package sqlite
+package data
 
-import "hawx.me/code/relme-auth/data"
+import "time"
 
-func (d *Database) CreateToken(token data.Token) error {
+type Token struct {
+	Token     string
+	Me        string
+	ClientID  string
+	Scope     string
+	CreatedAt time.Time
+}
+
+func (d *Database) CreateToken(token Token) error {
 	_, err := d.db.Exec(`INSERT INTO token(Token, Me, ClientID, Scope, CreatedAt) VALUES (?, ?, ?, ?, ?)`,
 		token.Token,
 		token.Me,
@@ -13,7 +21,7 @@ func (d *Database) CreateToken(token data.Token) error {
 	return err
 }
 
-func (d *Database) Token(t string) (token data.Token, err error) {
+func (d *Database) Token(t string) (token Token, err error) {
 	row := d.db.QueryRow(`SELECT Token, Me, ClientID, Scope, CreatedAt FROM token WHERE Token = ?`,
 		t)
 

@@ -1,8 +1,26 @@
-package sqlite
+package data
 
-import "hawx.me/code/relme-auth/data"
+import (
+	"time"
+)
 
-func (d *Database) CacheProfile(profile data.Profile) error {
+// Profile stores a user's authentication methods, so they don't have to be
+// queried again.
+type Profile struct {
+	Me        string
+	UpdatedAt time.Time
+
+	Methods []Method
+}
+
+// Method is a way a user can authenticate, it contains the name of a 3rd party
+// provider and the expected profile URL with that provider.
+type Method struct {
+	Provider string
+	Profile  string
+}
+
+func (d *Database) CacheProfile(profile Profile) error {
 	_, err := d.db.Exec(`INSERT OR REPLACE INTO profile(Me, CreatedAt) VALUES(?, ?)`,
 		profile.Me,
 		profile.UpdatedAt)
@@ -17,7 +35,7 @@ func (d *Database) CacheProfile(profile data.Profile) error {
 	return err
 }
 
-func (d *Database) Profile(me string) (data.Profile, error) {
+func (d *Database) Profile(me string) (Profile, error) {
 	rows, err := d.db.Query(`
     SELECT profile.Me, profile.CreatedAt, method.Provider, method.Profile
     FROM method
@@ -25,13 +43,13 @@ func (d *Database) Profile(me string) (data.Profile, error) {
     WHERE method.Me = ?
     ORDER BY method.Provider`, me)
 	if err != nil {
-		return data.Profile{}, err
+		return Profile{}, err
 	}
 	defer rows.Close()
 
-	var profile data.Profile
+	var profile Profile
 	for rows.Next() {
-		var method data.Method
+		var method Method
 		if err = rows.Scan(&profile.Me, &profile.UpdatedAt, &method.Provider, &method.Profile); err != nil {
 			return profile, err
 		}

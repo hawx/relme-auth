@@ -1,11 +1,10 @@
-package sqlite
+package data
 
 import (
 	"testing"
 	"time"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data"
 )
 
 func TestCode(t *testing.T) {
@@ -16,7 +15,7 @@ func TestCode(t *testing.T) {
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
-	err := db.CreateCode(data.Code{
+	err := db.CreateCode(Code{
 		Code:         "abcde",
 		ResponseType: "code",
 		Me:           "http://john.doe.example.com",

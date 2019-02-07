@@ -1,10 +1,24 @@
-package sqlite
+package data
 
 import (
-	"hawx.me/code/relme-auth/data"
+	"time"
 )
 
-func (d *Database) CreateSession(session data.Session) error {
+// Session contains all of the information needed to keep track of OAuth
+// requests/responses with a 3rd party.
+type Session struct {
+	ResponseType string
+	Me           string
+	Provider     string
+	ProfileURI   string
+	ClientID     string
+	RedirectURI  string
+	Scope        string
+	State        string
+	CreatedAt    time.Time
+}
+
+func (d *Database) CreateSession(session Session) error {
 	_, err := d.db.Exec(`
     INSERT OR REPLACE INTO session(ResponseType, Me, ClientID, RedirectURI, Scope, State, Provider, ProfileURI, CreatedAt)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -31,7 +45,7 @@ func (d *Database) SetProvider(me, provider, profileURI string) error {
 	return err
 }
 
-func (d *Database) Session(me string) (session data.Session, err error) {
+func (d *Database) Session(me string) (session Session, err error) {
 	row := d.db.QueryRow(`
     SELECT ResponseType, Me, ClientID, RedirectURI, Scope, State, Provider, ProfileURI, CreatedAt
     FROM session

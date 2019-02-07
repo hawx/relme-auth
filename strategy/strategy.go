@@ -11,6 +11,12 @@ var (
 	ErrUnauthorized = errors.New("you are not the user you told me you were")
 )
 
+type strategyStore interface {
+	Insert(string) (string, error)
+	Set(key, value string) error
+	Claim(string) (string, bool)
+}
+
 // Strategies is a list of Strategy.
 type Strategies []Strategy
 

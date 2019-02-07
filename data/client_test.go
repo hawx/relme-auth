@@ -1,11 +1,10 @@
-package sqlite
+package data
 
 import (
 	"testing"
 	"time"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data"
 )
 
 func TestClient(t *testing.T) {
@@ -15,7 +14,7 @@ func TestClient(t *testing.T) {
 	defer db.Close()
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err := db.CacheClient(data.Client{
+	err := db.CacheClient(Client{
 		ID:          "http://client.example.com",
 		RedirectURI: "http://client.example.com/callback",
 		Name:        "Example",

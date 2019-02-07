@@ -11,8 +11,6 @@ import (
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/config"
 	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/data/memory"
-	"hawx.me/code/relme-auth/data/sqlite"
 	"hawx.me/code/relme-auth/handler"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/route"
@@ -79,9 +77,7 @@ func main() {
 		return
 	}
 
-	strategyStore := memory.New()
-
-	database, err := sqlite.Open(*dbPath)
+	database, err := data.Open(*dbPath)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -107,27 +103,27 @@ func main() {
 		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy, codeGenerator))
 
 	} else {
-		pgpDatabase, _ := strategyStore.Strategy("pgp")
+		pgpDatabase, _ := data.Strategy("pgp")
 		pgpStrategy := strategy.PGP(pgpDatabase, *baseURL, "")
 		route.Handle("/oauth/callback/pgp", handler.Callback(database, pgpStrategy, codeGenerator))
 		strategies = append(strategies, pgpStrategy)
 
 		if conf.Flickr != nil {
-			flickrDatabase, _ := strategyStore.Strategy("flickr")
+			flickrDatabase, _ := data.Strategy("flickr")
 			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.ID, conf.Flickr.Secret)
 			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy, codeGenerator))
 			strategies = append(strategies, flickrStrategy)
 		}
 
 		if conf.GitHub != nil {
-			gitHubDatabase, _ := strategyStore.Strategy("github")
+			gitHubDatabase, _ := data.Strategy("github")
 			gitHubStrategy := strategy.GitHub(gitHubDatabase, conf.GitHub.ID, conf.GitHub.Secret)
 			route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy, codeGenerator))
 			strategies = append(strategies, gitHubStrategy)
 		}
 
 		if conf.Twitter != nil {
-			twitterDatabase, _ := strategyStore.Strategy("twitter")
+			twitterDatabase, _ := data.Strategy("twitter")
 			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.ID, conf.Twitter.Secret)
 			route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy, codeGenerator))
 			strategies = append(strategies, twitterStrategy)

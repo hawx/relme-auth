@@ -1,11 +1,10 @@
-package sqlite
+package data
 
 import (
 	"testing"
 	"time"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data"
 )
 
 func TestProfile(t *testing.T) {
@@ -15,10 +14,10 @@ func TestProfile(t *testing.T) {
 	defer db.Close()
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err := db.CacheProfile(data.Profile{
+	err := db.CacheProfile(Profile{
 		Me:        "http://john.doe.example.com",
 		UpdatedAt: now,
-		Methods: []data.Method{
+		Methods: []Method{
 			{Provider: "someone", Profile: "http://someone.example.com/john.doe"},
 			{Provider: "else", Profile: "http://else.example.com/john.doe"},
 		},

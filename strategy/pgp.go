@@ -14,11 +14,11 @@ import (
 type authPGP struct {
 	AuthURL  string
 	ClientID string
-	Store    data.StrategyStore
+	Store    strategyStore
 }
 
 // PGP provides a strategy for authenticating with a pgpkey.
-func PGP(store data.StrategyStore, baseURI, id string) Strategy {
+func PGP(store strategyStore, baseURI, id string) Strategy {
 	return &authPGP{
 		AuthURL:  baseURI + "/pgp/authorize",
 		ClientID: id,

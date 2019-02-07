@@ -7,18 +7,17 @@ import (
 	"net/url"
 
 	"github.com/garyburd/go-oauth/oauth"
-	"hawx.me/code/relme-auth/data"
 )
 
 type authTwitter struct {
 	Client      oauth.Client
 	CallbackURL string
-	Store       data.StrategyStore
+	Store       strategyStore
 	APIURI      string
 }
 
 // Twitter provides a strategy for authenticating with https://twitter.com.
-func Twitter(baseURL string, store data.StrategyStore, id, secret string) Strategy {
+func Twitter(baseURL string, store strategyStore, id, secret string) Strategy {
 	oauthClient := oauth.Client{
 		TemporaryCredentialRequestURI: "https://api.twitter.com/oauth/request_token",
 		ResourceOwnerAuthorizationURI: "https://api.twitter.com/oauth/authenticate",

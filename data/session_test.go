@@ -1,11 +1,10 @@
-package sqlite
+package data
 
 import (
 	"testing"
 	"time"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data"
 )
 
 func TestSession(t *testing.T) {
@@ -16,7 +15,7 @@ func TestSession(t *testing.T) {
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
-	err := db.CreateSession(data.Session{
+	err := db.CreateSession(Session{
 		ResponseType: "code",
 		Me:           "http://john.doe.example.com",
 		ClientID:     "http://client.example.com",
