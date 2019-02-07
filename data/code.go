@@ -17,21 +17,17 @@ func (c Code) Expired() bool {
 	return time.Now().Add(-60 * time.Second).After(c.CreatedAt)
 }
 
-func (d *Database) CreateCode(code Code) error {
-	_, err := d.db.Exec(`INSERT INTO code(Code, ResponseType, Me, ClientID, RedirectURI, Scope, CreatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		code.Code,
-		code.ResponseType,
-		code.Me,
-		code.ClientID,
-		code.RedirectURI,
-		code.Scope,
-		code.CreatedAt)
+func (d *Database) CreateCode(me, code string, createdAt time.Time) error {
+	_, err := d.db.Exec(`UPDATE session SET Code = ?, CreatedAt = ? WHERE Me = ?`,
+		code,
+		createdAt,
+		me)
 
 	return err
 }
 
 func (d *Database) Code(c string) (code Code, err error) {
-	row := d.db.QueryRow(`SELECT Code, ResponseType, Me, ClientID, RedirectURI, Scope, CreatedAt FROM code WHERE Code = ?`,
+	row := d.db.QueryRow(`SELECT Code, ResponseType, Me, ClientID, RedirectURI, Scope, CreatedAt FROM session WHERE Code = ?`,
 		c)
 
 	err = row.Scan(

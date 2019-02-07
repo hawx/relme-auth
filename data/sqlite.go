@@ -53,16 +53,7 @@ func (d *Database) migrate() error {
       RedirectURI  TEXT,
       Scope        TEXT,
       State        TEXT,
-      CreatedAt    DATETIME
-    );
-
-    CREATE TABLE IF NOT EXISTS code (
-      Code         TEXT PRIMARY KEY,
-      ResponseType TEXT,
-      Me           TEXT,
-      ClientID     TEXT,
-      RedirectURI  TEXT,
-      Scope        TEXT,
+      Code         TEXT,
       CreatedAt    DATETIME
     );
 

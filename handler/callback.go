@@ -12,7 +12,7 @@ import (
 
 type callbackStore interface {
 	Session(string) (data.Session, error)
-	CreateCode(data.Code) error
+	CreateCode(me, code string, createdAt time.Time) error
 }
 
 // Callback handles the return from the authentication provider by delegating to
@@ -45,19 +45,15 @@ func Callback(store callbackStore, strat strategy.Strategy, generator func() str
 			return
 		}
 
-		code := data.Code{
-			Code:         generator(),
-			ResponseType: session.ResponseType,
-			Me:           session.Me,
-			ClientID:     session.ClientID,
-			RedirectURI:  session.RedirectURI,
-			Scope:        session.Scope,
-			CreatedAt:    time.Now(),
+		code := generator()
+		if err := store.CreateCode(session.Me, code, time.Now()); err != nil {
+			log.Println("handler/callback could not create code:", err)
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
 		}
-		store.CreateCode(code)
 
 		query := url.Values{
-			"code":  {code.Code},
+			"code":  {code},
 			"state": {session.State},
 		}
 

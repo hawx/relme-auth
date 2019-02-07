@@ -15,14 +15,16 @@ func TestCode(t *testing.T) {
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
-	err := db.CreateCode(Code{
-		Code:         "abcde",
+	err := db.CreateSession(Session{
 		ResponseType: "code",
 		Me:           "http://john.doe.example.com",
 		ClientID:     "http://client.example.com",
 		RedirectURI:  "http://client.example.com/callback",
 		CreatedAt:    now,
 	})
+	assert.Nil(err)
+
+	err = db.CreateCode("http://john.doe.example.com", "abcde", now)
 	assert.Nil(err)
 
 	code, err := db.Code("abcde")

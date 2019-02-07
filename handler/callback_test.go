@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"hawx.me/code/assert"
 	"hawx.me/code/relme-auth/data"
@@ -26,9 +27,20 @@ func (s *fakeCallbackStore) Session(me string) (data.Session, error) {
 	return data.Session{}, errors.New("what")
 }
 
-func (s *fakeCallbackStore) CreateCode(code data.Code) error {
-	s.code = code
-	return nil
+func (s *fakeCallbackStore) CreateCode(me, code string, createdAt time.Time) error {
+	if me == s.session.Me {
+		s.code = data.Code{
+			Code:         code,
+			ResponseType: s.session.ResponseType,
+			Me:           s.session.Me,
+			ClientID:     s.session.ClientID,
+			RedirectURI:  s.session.RedirectURI,
+			Scope:        s.session.Scope,
+			CreatedAt:    createdAt,
+		}
+		return nil
+	}
+	return errors.New("who")
 }
 
 func TestCallback(t *testing.T) {
