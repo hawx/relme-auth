@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-const profileExpiry = 7 * 24 * time.Hour
+const profileExpiry = -7 * 24 * time.Hour
 
 // Profile stores a user's authentication methods, so they don't have to be
 // queried again.
