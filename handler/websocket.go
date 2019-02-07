@@ -171,7 +171,7 @@ func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profi
 }
 
 func (s *webSocketServer) readAllEvents(conn *conn, request profileRequest, profile *data.Profile) error {
-	meCh := microformats.Me(request.Me)
+	meCh := microformats.Me(request.Me, s.strategies)
 
 	for {
 		event, ok := <-meCh

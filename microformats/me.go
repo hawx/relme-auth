@@ -7,7 +7,12 @@ import (
 	"strings"
 
 	"golang.org/x/net/html"
+	"hawx.me/code/relme-auth/strategy"
 )
+
+type matching interface {
+	IsAllowed(link string) (found strategy.Strategy, ok bool)
+}
 
 // EventType defines what has occured.
 type EventType uint
@@ -35,7 +40,7 @@ type Event struct {
 
 // Me requests profile, then finds all links that can be used to authenticate
 // the user.
-func Me(profile string) <-chan Event {
+func Me(profile string, strategies matching) <-chan Event {
 	eventCh := make(chan Event)
 	client := relMe{Client: http.DefaultClient}
 
@@ -50,11 +55,16 @@ func Me(profile string) <-chan Event {
 		if pgpkey != "" {
 			eventCh <- Event{Type: PGP, Link: pgpkey}
 		}
+
+		var allowedLinks []string
 		for _, link := range profileLinks {
-			eventCh <- Event{Type: Found, Link: link}
+			if _, ok := strategies.IsAllowed(link); ok {
+				eventCh <- Event{Type: Found, Link: link}
+				allowedLinks = append(allowedLinks, link)
+			}
 		}
 
-		for _, link := range profileLinks {
+		for _, link := range allowedLinks {
 			ok, err := client.LinksTo(link, profile)
 
 			if err != nil {

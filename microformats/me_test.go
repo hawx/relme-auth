@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"hawx.me/code/assert"
+	"hawx.me/code/relme-auth/strategy"
 )
 
 var client = &relMe{Client: http.DefaultClient}
@@ -36,6 +37,17 @@ func getEvent(ch <-chan Event) (Event, bool, bool) {
 	case <-time.After(100 * time.Millisecond):
 		return Event{}, false, true
 	}
+}
+
+type matchingStrategy []string
+
+func (s matchingStrategy) IsAllowed(link string) (found strategy.Strategy, ok bool) {
+	for _, u := range s {
+		if link == u {
+			return nil, true
+		}
+	}
+	return nil, false
 }
 
 func TestMe(t *testing.T) {
@@ -71,7 +83,9 @@ func TestMe(t *testing.T) {
 	}))
 	defer meSite.Close()
 
-	eventsCh := Me(meSite.URL)
+	strategies := matchingStrategy([]string{otherSite.URL, missingSite.URL, someSite.URL, "http://localhost/link"})
+
+	eventsCh := Me(meSite.URL, strategies)
 
 	event, ok, timedOut := getEvent(eventsCh)
 	if assert.False(timedOut) {
@@ -111,13 +125,6 @@ func TestMe(t *testing.T) {
 	event, ok, timedOut = getEvent(eventsCh)
 	if assert.False(timedOut) {
 		assert.True(ok)
-		assert.Equal(Found, event.Type)
-		assert.Equal("http://localhost/unknown", event.Link)
-	}
-
-	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
 		assert.Equal(Verified, event.Type)
 		assert.Equal(someSite.URL, event.Link)
 	}
@@ -142,14 +149,6 @@ func TestMe(t *testing.T) {
 		assert.True(ok)
 		assert.Equal(Unverified, event.Type)
 		assert.Equal(missingSite.URL, event.Link)
-	}
-
-	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Error, event.Type)
-		assert.Equal("http://localhost/unknown", event.Link)
-		assert.NotNil(event.Err)
 	}
 
 	_, ok, timedOut = getEvent(eventsCh)
