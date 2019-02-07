@@ -94,7 +94,7 @@ func TestGitHubAuthFlow(t *testing.T) {
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?access_type=offline&client_id=%s&response_type=code&state=%s", server.URL, id, state)
 
 	// 1. Redirect
-	redirectURL, err := gitHub.Redirect(expectedURL)
+	redirectURL, err := gitHub.Redirect(expectedURL, "")
 	assert.Nil(t, err)
 	assert.Equal(t, expectedRedirectURL, redirectURL)
 
@@ -109,20 +109,20 @@ func TestGitHubAuthFlow(t *testing.T) {
 
 type oneStore struct {
 	State string
-	Link  string
+	Link  interface{}
 }
 
-func (s *oneStore) Insert(link string) (state string, err error) {
+func (s *oneStore) Insert(link interface{}) (state string, err error) {
 	s.Link = link
 
 	return s.State, nil
 }
 
-func (s *oneStore) Set(key, value string) error {
+func (s *oneStore) Set(key string, value interface{}) error {
 	return errors.New("not used")
 }
 
-func (s *oneStore) Claim(state string) (link string, ok bool) {
+func (s *oneStore) Claim(state string) (link interface{}, ok bool) {
 	if state != s.State {
 		return "", false
 	}

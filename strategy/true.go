@@ -21,7 +21,7 @@ func (authTrue) Match(me *url.URL) bool {
 	return true
 }
 
-func (t authTrue) Redirect(expectedURL string) (redirectURL string, err error) {
+func (t authTrue) Redirect(expectedURL, _ string) (redirectURL string, err error) {
 	redirectURL = t.baseURL + "/oauth/callback/true?" +
 		url.Values{"expected": {expectedURL}}.Encode()
 

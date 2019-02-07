@@ -12,9 +12,9 @@ var (
 )
 
 type strategyStore interface {
-	Insert(string) (string, error)
-	Set(key, value string) error
-	Claim(string) (string, bool)
+	Insert(interface{}) (string, error)
+	Set(key string, value interface{}) error
+	Claim(string) (interface{}, bool)
 }
 
 // Strategies is a list of Strategy.
@@ -31,7 +31,7 @@ type Strategy interface {
 	Match(me *url.URL) bool
 
 	// Redirect returns the URL to redirect the user to begin the authentication flow.
-	Redirect(expectedLink string) (redirectURL string, err error)
+	Redirect(me, profile string) (redirectURL string, err error)
 
 	// Callback handles the user's return from the 3rd party auth provider. It
 	// returns the profile URL for the authenticated user, hopefully matching the

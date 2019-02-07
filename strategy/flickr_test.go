@@ -123,7 +123,7 @@ func TestFlickrAuthFlow(t *testing.T) {
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s&perms=read", server.URL, tempToken)
 
 	// 1. Redirect
-	redirectURL, err := flickr.Redirect(expectedURL)
+	redirectURL, err := flickr.Redirect(expectedURL, "")
 	assert.Nil(t, err)
 	assert.Equal(t, expectedRedirectURL, redirectURL)
 

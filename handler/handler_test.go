@@ -23,7 +23,7 @@ func (s *fakeStrategy) Match(me *url.URL) bool {
 	return true
 }
 
-func (s *fakeStrategy) Redirect(expectedLink string) (redirectURL string, err error) {
+func (s *fakeStrategy) Redirect(expectedLink, _ string) (redirectURL string, err error) {
 	s.expectedLink = expectedLink
 	return "https://example.com/redirect", nil
 }
@@ -44,7 +44,7 @@ func (falseStrategy) Match(me *url.URL) bool {
 	return false
 }
 
-func (falseStrategy) Redirect(expectedLink string) (redirectURL string, err error) {
+func (falseStrategy) Redirect(expectedLink, _ string) (redirectURL string, err error) {
 	return "https://example.com/redirect", nil
 }
 
@@ -57,7 +57,7 @@ type unauthorizedStrategy struct{}
 
 func (unauthorizedStrategy) Name() string           { return "unauthorized" }
 func (unauthorizedStrategy) Match(me *url.URL) bool { return true }
-func (unauthorizedStrategy) Redirect(expectedLink string) (string, error) {
+func (unauthorizedStrategy) Redirect(expectedLink, _ string) (string, error) {
 	return "https://example.com/redirect", nil
 }
 func (unauthorizedStrategy) Callback(form url.Values) (string, error) {
@@ -69,7 +69,7 @@ type errorStrategy struct{}
 
 func (errorStrategy) Name() string           { return "error" }
 func (errorStrategy) Match(me *url.URL) bool { return true }
-func (errorStrategy) Redirect(expectedLink string) (string, error) {
+func (errorStrategy) Redirect(expectedLink, _ string) (string, error) {
 	return "https://example.com/redirect", nil
 }
 func (errorStrategy) Callback(form url.Values) (string, error) {

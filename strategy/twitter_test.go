@@ -116,7 +116,7 @@ func TestTwitterAuthFlow(t *testing.T) {
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s", server.URL, tempToken)
 
 	// 1. Redirect
-	redirectURL, err := twitter.Redirect(expectedURL)
+	redirectURL, err := twitter.Redirect(expectedURL, "")
 	assert.Nil(t, err)
 	assert.Equal(t, expectedRedirectURL, redirectURL)
 

@@ -6,12 +6,12 @@ import (
 
 type fakeStore struct {
 	mu         sync.Mutex
-	inProgress map[string]string
+	inProgress map[string]interface{}
 }
 
-func (s *fakeStore) Insert(link string) (state string, err error) {
+func (s *fakeStore) Insert(link interface{}) (state string, err error) {
 	if s.inProgress == nil {
-		s.inProgress = map[string]string{}
+		s.inProgress = map[string]interface{}{}
 	}
 
 	state, err = randomString(64)
@@ -26,9 +26,9 @@ func (s *fakeStore) Insert(link string) (state string, err error) {
 	return
 }
 
-func (s *fakeStore) Set(key, value string) error {
+func (s *fakeStore) Set(key string, value interface{}) error {
 	if s.inProgress == nil {
-		s.inProgress = map[string]string{}
+		s.inProgress = map[string]interface{}{}
 	}
 
 	s.mu.Lock()
@@ -38,7 +38,7 @@ func (s *fakeStore) Set(key, value string) error {
 	return nil
 }
 
-func (s *fakeStore) Claim(state string) (link string, ok bool) {
+func (s *fakeStore) Claim(state string) (link interface{}, ok bool) {
 	if s.inProgress == nil {
 		return "", false
 	}

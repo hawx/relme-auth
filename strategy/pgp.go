@@ -11,6 +11,12 @@ import (
 	"golang.org/x/crypto/openpgp/clearsign"
 )
 
+type pgpData struct {
+	expectedURL string
+	profileURI  string
+	challenge   string
+}
+
 type authPGP struct {
 	AuthURL    string
 	ClientID   string
@@ -36,16 +42,18 @@ func (authPGP) Match(me *url.URL) bool {
 	return me.String() == "pgp"
 }
 
-func (strategy *authPGP) Redirect(expectedLink string) (redirectURL string, err error) {
-	state, err := strategy.Store.Insert(expectedLink)
-	if err != nil {
-		return "", err
-	}
+func (strategy *authPGP) Redirect(me, profile string) (redirectURL string, err error) {
 	challenge, err := randomString(40)
 	if err != nil {
 		return "", err
 	}
-	if err := strategy.Store.Set(expectedLink, challenge); err != nil {
+
+	state, err := strategy.Store.Insert(pgpData{
+		expectedURL: me,
+		profileURI:  profile,
+		challenge:   challenge,
+	})
+	if err != nil {
 		return "", err
 	}
 
@@ -59,20 +67,17 @@ func (strategy *authPGP) Redirect(expectedLink string) (redirectURL string, err 
 }
 
 func (strategy *authPGP) Callback(form url.Values) (string, error) {
-	expectedURL, ok := strategy.Store.Claim(form.Get("state"))
+	data, ok := strategy.Store.Claim(form.Get("state"))
 	if !ok {
-		return "", errors.New("how did you get here?")
+		return "", errors.New("how did you get here? 1")
 	}
-	challenge, ok := strategy.Store.Claim(expectedURL)
-	if !ok {
-		return "", errors.New("how did you get here?")
-	}
+	fdata := data.(pgpData)
 
-	if err := verify(strategy.httpClient, expectedURL, form.Get("signed"), challenge); err != nil {
+	if err := verify(strategy.httpClient, fdata.profileURI, form.Get("signed"), fdata.challenge); err != nil {
 		return "", ErrUnauthorized
 	}
 
-	return expectedURL, nil
+	return fdata.expectedURL, nil
 }
 
 func verify(httpClient *http.Client, keyURL, signed, challenge string) error {

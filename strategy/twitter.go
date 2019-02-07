@@ -9,6 +9,11 @@ import (
 	"github.com/garyburd/go-oauth/oauth"
 )
 
+type twitterData struct {
+	expectedURL string
+	secret      string
+}
+
 type authTwitter struct {
 	Client      oauth.Client
 	CallbackURL string
@@ -46,17 +51,16 @@ func (authTwitter) Match(me *url.URL) bool {
 	return me.Hostname() == "twitter.com"
 }
 
-func (strategy *authTwitter) Redirect(expectedURL string) (redirectURL string, err error) {
+func (strategy *authTwitter) Redirect(expectedURL, _ string) (redirectURL string, err error) {
 	tempCred, err := strategy.Client.RequestTemporaryCredentials(strategy.httpClient, strategy.CallbackURL, nil)
 	if err != nil {
 		return "", err
 	}
 
-	// these are temporary hacks
-	if err := strategy.Store.Set(tempCred.Token, tempCred.Secret); err != nil {
-		return "", err
-	}
-	if err := strategy.Store.Set(tempCred.Secret, expectedURL); err != nil {
+	if err := strategy.Store.Set(tempCred.Token, twitterData{
+		expectedURL: expectedURL,
+		secret:      tempCred.Secret,
+	}); err != nil {
 		return "", err
 	}
 
@@ -65,14 +69,15 @@ func (strategy *authTwitter) Redirect(expectedURL string) (redirectURL string, e
 
 func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 	oauthToken := form.Get("oauth_token")
-	expectedSecret, ok := strategy.Store.Claim(oauthToken)
+	data, ok := strategy.Store.Claim(oauthToken)
 	if !ok {
 		return "", errors.New("unknown oauth_token")
 	}
+	fdata := data.(twitterData)
 
 	tempCred := &oauth.Credentials{
 		Token:  oauthToken,
-		Secret: expectedSecret,
+		Secret: fdata.secret,
 	}
 	tokenCred, _, err := strategy.Client.RequestToken(strategy.httpClient, tempCred, form.Get("oauth_verifier"))
 	if err != nil {
@@ -91,11 +96,6 @@ func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 		return "", err
 	}
 
-	expectedLink, ok := strategy.Store.Claim(expectedSecret)
-	if !ok {
-		return "", ErrUnauthorized
-	}
-
 	var profileURL string
 	for _, entity := range v.Entities.URL.URLs {
 		if entity.URL == v.URL {
@@ -103,11 +103,11 @@ func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 		}
 	}
 
-	if !urlsEqual(expectedLink, profileURL) {
+	if !urlsEqual(fdata.expectedURL, profileURL) {
 		return "", ErrUnauthorized
 	}
 
-	return expectedLink, nil
+	return fdata.expectedURL, nil
 }
 
 // Twitter will respond with something containing, which is stupid but whatever.

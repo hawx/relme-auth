@@ -9,6 +9,11 @@ import (
 	"github.com/garyburd/go-oauth/oauth"
 )
 
+type flickrData struct {
+	expectedURL string
+	secret      string
+}
+
 type authFlickr struct {
 	Client      oauth.Client
 	APIKey      string
@@ -48,17 +53,16 @@ func (authFlickr) Match(me *url.URL) bool {
 	return me.Hostname() == "www.flickr.com"
 }
 
-func (strategy *authFlickr) Redirect(expectedURL string) (redirectURL string, err error) {
+func (strategy *authFlickr) Redirect(expectedURL, _ string) (redirectURL string, err error) {
 	tempCred, err := strategy.Client.RequestTemporaryCredentials(strategy.httpClient, strategy.CallbackURL, nil)
 	if err != nil {
 		return "", err
 	}
 
-	// these are temporary hacks
-	if err := strategy.Store.Set(tempCred.Token, tempCred.Secret); err != nil {
-		return "", err
-	}
-	if err := strategy.Store.Set(tempCred.Secret, expectedURL); err != nil {
+	if err := strategy.Store.Set(tempCred.Token, flickrData{
+		expectedURL: expectedURL,
+		secret:      tempCred.Secret,
+	}); err != nil {
 		return "", err
 	}
 
@@ -67,14 +71,15 @@ func (strategy *authFlickr) Redirect(expectedURL string) (redirectURL string, er
 
 func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 	oauthToken := form.Get("oauth_token")
-	expectedSecret, ok := strategy.Store.Claim(oauthToken)
+	data, ok := strategy.Store.Claim(oauthToken)
 	if !ok {
 		return "", errors.New("unknown oauth_token")
 	}
+	fdata := data.(flickrData)
 
 	tempCred := &oauth.Credentials{
 		Token:  oauthToken,
-		Secret: expectedSecret,
+		Secret: fdata.secret,
 	}
 	tokenCred, vals, err := strategy.Client.RequestToken(strategy.httpClient, tempCred, form.Get("oauth_verifier"))
 	if err != nil {
@@ -101,12 +106,11 @@ func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 		return "", err
 	}
 
-	expectedLink, ok := strategy.Store.Claim(expectedSecret)
-	if !ok || !urlsEqual(expectedLink, v.Profile.Website) {
+	if !ok || !urlsEqual(fdata.expectedURL, v.Profile.Website) {
 		return "", ErrUnauthorized
 	}
 
-	return expectedLink, nil
+	return fdata.expectedURL, nil
 }
 
 type flickrResponse struct {

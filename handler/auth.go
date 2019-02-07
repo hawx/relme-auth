@@ -58,7 +58,7 @@ func Auth(store authStore, strategies strategy.Strategies, httpClient *http.Clie
 			return
 		}
 
-		redirectURL, err := chosenStrategy.Redirect(me)
+		redirectURL, err := chosenStrategy.Redirect(me, profile)
 		if err != nil {
 			http.Error(w, "Something went wrong with the redirect, sorry", http.StatusInternalServerError)
 			return

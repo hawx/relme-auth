@@ -52,14 +52,15 @@ func TestPGPAuthFlow(t *testing.T) {
 	defer public.Close()
 
 	key := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		io.Copy(w, public)
+		if r.URL.Path == "/key" {
+			io.Copy(w, public)
+		}
 	}))
 	defer key.Close()
 
 	state := "randomstatestring"
-	expectedURL := key.URL
 
-	store := &pgpStore{
+	store := &oneStore{
 		State: state,
 	}
 
@@ -71,19 +72,20 @@ func TestPGPAuthFlow(t *testing.T) {
 	}
 
 	// 1. Redirect
-	redirectURL, err := pgp.Redirect(expectedURL)
+	redirectURL, err := pgp.Redirect(key.URL, key.URL+"/key")
 	assert.Nil(err)
 
-	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?challenge=%s&client_id=%s&state=%s", server.URL, store.Challenge, id, state)
+	data := store.Link.(pgpData)
+	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?challenge=%s&client_id=%s&state=%s", server.URL, data.challenge, id, state)
 	assert.Equal(expectedRedirectURL, redirectURL)
 
 	// 2. Callback
 	profileURL, err := pgp.Callback(url.Values{
 		"state":  {state},
-		"signed": {sign(store.Challenge, "testdata/private.asc")},
+		"signed": {sign(data.challenge, "testdata/private.asc")},
 	})
 	assert.Nil(err)
-	assert.Equal(expectedURL, profileURL)
+	assert.Equal(key.URL, profileURL)
 }
 
 func TestPGPAuthFlowWithBadKey(t *testing.T) {
@@ -96,14 +98,15 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 	defer public.Close()
 
 	key := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		io.Copy(w, public)
+		if r.URL.Path == "/key" {
+			io.Copy(w, public)
+		}
 	}))
 	defer key.Close()
 
-	expectedURL := key.URL
 	state := "randomstatestring"
 
-	store := &pgpStore{
+	store := &oneStore{
 		State: state,
 	}
 
@@ -115,10 +118,11 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 	}
 
 	// 1. Redirect
-	redirectURL, err := pgp.Redirect(expectedURL)
+	redirectURL, err := pgp.Redirect(key.URL, key.URL+"/key")
 	assert.Nil(err)
 
-	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?challenge=%s&client_id=%s&state=%s", server.URL, store.Challenge, id, state)
+	data := store.Link.(pgpData)
+	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?challenge=%s&client_id=%s&state=%s", server.URL, data.challenge, id, state)
 	assert.Equal(expectedRedirectURL, redirectURL)
 
 	// 2. Callback
@@ -128,35 +132,6 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 	})
 	assert.Equal(ErrUnauthorized, err)
 	assert.Equal("", profileURL)
-}
-
-type pgpStore struct {
-	State     string
-	Challenge string
-	Link      string
-}
-
-func (s *pgpStore) Insert(link string) (state string, err error) {
-	s.Link = link
-
-	return s.State, nil
-}
-
-func (s *pgpStore) Set(key, value string) error {
-	s.Link = key
-	s.Challenge = value
-	return nil
-}
-
-func (s *pgpStore) Claim(state string) (link string, ok bool) {
-	if state == s.State {
-		return s.Link, true
-	}
-	if state == s.Link {
-		return s.Challenge, true
-	}
-
-	return "", false
 }
 
 func sign(challenge, key string) string {

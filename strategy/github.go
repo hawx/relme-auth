@@ -42,7 +42,7 @@ func (authGitHub) Match(me *url.URL) bool {
 	return me.Hostname() == "github.com"
 }
 
-func (strategy *authGitHub) Redirect(expectedLink string) (redirectURL string, err error) {
+func (strategy *authGitHub) Redirect(expectedLink, _ string) (redirectURL string, err error) {
 	state, err := strategy.Store.Insert(expectedLink)
 	if err != nil {
 		return "", err
@@ -52,10 +52,11 @@ func (strategy *authGitHub) Redirect(expectedLink string) (redirectURL string, e
 }
 
 func (strategy *authGitHub) Callback(form url.Values) (string, error) {
-	expectedURL, ok := strategy.Store.Claim(form.Get("state"))
+	data, ok := strategy.Store.Claim(form.Get("state"))
 	if !ok {
 		return "", errors.New("how did you get here?")
 	}
+	expectedURL := data.(string)
 
 	ctx := context.Background()
 
