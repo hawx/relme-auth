@@ -5,14 +5,11 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/strategy"
 )
-
-const profileExpiry = 7 * 24 * time.Hour
 
 type chooseStore interface {
 	CreateSession(data.Session) error

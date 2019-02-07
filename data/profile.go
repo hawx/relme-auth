@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+const profileExpiry = 7 * 24 * time.Hour
+
 // Profile stores a user's authentication methods, so they don't have to be
 // queried again.
 type Profile struct {
@@ -11,6 +13,10 @@ type Profile struct {
 	UpdatedAt time.Time
 
 	Methods []Method
+}
+
+func (p Profile) Expired() bool {
+	return time.Now().Add(profileExpiry).After(p.UpdatedAt)
 }
 
 // Method is a way a user can authenticate, it contains the name of a 3rd party

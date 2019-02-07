@@ -147,7 +147,7 @@ func (s *webSocketServer) canUseCache(request profileRequest) (profile data.Prof
 		return
 	}
 
-	return profile, profile.UpdatedAt.After(time.Now().Add(-profileExpiry))
+	return profile, profile.Expired()
 }
 
 func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profile data.Profile) {
