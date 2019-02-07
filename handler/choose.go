@@ -82,22 +82,13 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 		}
 
 		if err := templates.ExecuteTemplate(w, "choose.gotmpl", chooseCtx{
-			WebSocketURL: wsify(baseURL) + "/ws",
-			ClientID:     client.ID,
-			ClientName:   client.Name,
-			Me:           me,
+			ClientID:   client.ID,
+			ClientName: client.Name,
+			Me:         me,
 		}); err != nil {
 			log.Println("handler/choose failed to write template:", err)
 		}
 	})
-}
-
-func wsify(s string) string {
-	if strings.HasPrefix(s, "http://") {
-		return "ws://" + strings.TrimPrefix(s, "http://")
-	}
-
-	return "wss://" + strings.TrimPrefix(s, "https://")
 }
 
 func getClient(clientID, redirectURI string, store chooseStore) (client data.Client, err error) {
@@ -127,8 +118,7 @@ func getClient(clientID, redirectURI string, store chooseStore) (client data.Cli
 }
 
 type chooseCtx struct {
-	WebSocketURL string
-	ClientID     string
-	ClientName   string
-	Me           string
+	ClientID   string
+	ClientName string
+	Me         string
 }
