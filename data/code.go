@@ -2,6 +2,8 @@ package data
 
 import "time"
 
+const codeExpiry = -60 * time.Second
+
 type Code struct {
 	Code         string
 	ResponseType string
@@ -14,7 +16,7 @@ type Code struct {
 
 // Expired returns true if the Code was created over 60 seconds ago.
 func (c Code) Expired() bool {
-	return time.Now().Add(-60 * time.Second).After(c.CreatedAt)
+	return time.Now().Add(codeExpiry).After(c.CreatedAt)
 }
 
 func (d *Database) CreateCode(me, code string, createdAt time.Time) error {

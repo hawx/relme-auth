@@ -9,17 +9,14 @@ import (
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/microformats"
 	"hawx.me/code/relme-auth/strategy"
 )
 
 const profileExpiry = 7 * 24 * time.Hour
-const clientExpiry = 30 * 24 * time.Hour
 
 type chooseStore interface {
 	CreateSession(data.Session) error
-	CacheClient(data.Client) error
-	Client(string) (data.Client, error)
+	Client(clientID, redirectURI string) (data.Client, error)
 }
 
 // Choose finds, for the "me" parameter, all authentication providers that can be
@@ -76,7 +73,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			return
 		}
 
-		client, err := getClient(clientID, redirectURI, store)
+		client, err := store.Client(clientID, redirectURI)
 		if err != nil {
 			log.Println("handler/choose failed to get client:", err)
 		}
@@ -89,32 +86,6 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			log.Println("handler/choose failed to write template:", err)
 		}
 	})
-}
-
-func getClient(clientID, redirectURI string, store chooseStore) (client data.Client, err error) {
-	if foundClient, ferr := store.Client(clientID); ferr == nil {
-		if foundClient.RedirectURI == redirectURI && foundClient.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
-			return foundClient, ferr
-		}
-	}
-
-	client.ID = clientID
-	client.Name = clientID
-	client.UpdatedAt = time.Now().UTC()
-	client.RedirectURI = redirectURI
-
-	clientInfoResp, err := http.Get(clientID)
-	if err != nil {
-		return
-	}
-	defer clientInfoResp.Body.Close()
-
-	if clientName, _, okerr := microformats.HApp(clientInfoResp.Body); okerr == nil {
-		client.Name = clientName
-	}
-
-	err = store.CacheClient(client)
-	return
 }
 
 type chooseCtx struct {
