@@ -17,8 +17,12 @@ type A struct {
 	Href string
 }
 
-func testAPage(as ...A) string {
-	s := `<!doctype html><html><head></head><body>`
+func testAPage(as []A, links []A) string {
+	s := `<!doctype html><html><head>`
+	for _, a := range links {
+		s += `<link rel="` + a.Rel + `" href="` + a.Href + `" />`
+	}
+	s += `</head><body>`
 	for _, a := range as {
 		s += `<a rel="` + a.Rel + `" href="` + a.Href + `">ok</a>`
 	}
@@ -37,25 +41,33 @@ func getEvent(ch <-chan Event) (Event, bool, bool) {
 func TestMe(t *testing.T) {
 	assert := assert.New(t)
 
-	var meSite, otherSite, missingSite *httptest.Server
+	var meSite, someSite, otherSite, missingSite *httptest.Server
 
 	missingSite = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: "what"}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: "what"}}, []A{}))
 	}))
 	defer missingSite.Close()
 
+	someSite = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: meSite.URL}}, []A{}))
+	}))
+	defer someSite.Close()
+
 	otherSite = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: meSite.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: meSite.URL}}, []A{}))
 	}))
 	defer otherSite.Close()
 
 	meSite = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(
-			A{Rel: "me", Href: otherSite.URL},
-			A{Rel: "me", Href: missingSite.URL},
-			A{Rel: "me", Href: "http://localhost/unknown"},
-			A{Rel: "pgpkey", Href: "my-key"},
-		))
+		fmt.Fprint(w, testAPage([]A{
+			{Rel: "me", Href: otherSite.URL},
+			{Rel: "me", Href: missingSite.URL},
+			{Rel: "me", Href: "http://localhost/unknown"},
+			{Rel: "pgpkey", Href: "my-key"},
+		}, []A{
+			{Rel: "me", Href: someSite.URL},
+			{Rel: "me", Href: "http://localhost/link"},
+		}))
 	}))
 	defer meSite.Close()
 
@@ -66,6 +78,20 @@ func TestMe(t *testing.T) {
 		assert.True(ok)
 		assert.Equal(PGP, event.Type)
 		assert.Equal(meSite.URL+"/my-key", event.Link)
+	}
+
+	event, ok, timedOut = getEvent(eventsCh)
+	if assert.False(timedOut) {
+		assert.True(ok)
+		assert.Equal(Found, event.Type)
+		assert.Equal(someSite.URL, event.Link)
+	}
+
+	event, ok, timedOut = getEvent(eventsCh)
+	if assert.False(timedOut) {
+		assert.True(ok)
+		assert.Equal(Found, event.Type)
+		assert.Equal("http://localhost/link", event.Link)
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
@@ -87,6 +113,21 @@ func TestMe(t *testing.T) {
 		assert.True(ok)
 		assert.Equal(Found, event.Type)
 		assert.Equal("http://localhost/unknown", event.Link)
+	}
+
+	event, ok, timedOut = getEvent(eventsCh)
+	if assert.False(timedOut) {
+		assert.True(ok)
+		assert.Equal(Verified, event.Type)
+		assert.Equal(someSite.URL, event.Link)
+	}
+
+	event, ok, timedOut = getEvent(eventsCh)
+	if assert.False(timedOut) {
+		assert.True(ok)
+		assert.Equal(Error, event.Type)
+		assert.Equal("http://localhost/link", event.Link)
+		assert.NotNil(event.Err)
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
@@ -123,20 +164,20 @@ func TestFindAuth(t *testing.T) {
 	var me, good, bad *httptest.Server
 
 	good = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: me.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: me.URL}}, []A{}))
 	}))
 	defer good.Close()
 
 	bad = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: me.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: me.URL}}, []A{}))
 	}))
 	defer bad.Close()
 
 	me = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(
-			A{Rel: "me authn", Href: good.URL},
-			A{Rel: "me", Href: bad.URL},
-		))
+		fmt.Fprint(w, testAPage([]A{
+			{Rel: "me authn", Href: good.URL},
+			{Rel: "me", Href: bad.URL},
+		}, []A{}))
 	}))
 	defer me.Close()
 
@@ -155,14 +196,14 @@ func TestFindAuthWithPGPKey(t *testing.T) {
 	var me, good *httptest.Server
 
 	good = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: me.URL}))
+		fmt.Fprint(w, testAPage([]A{}, []A{{Rel: "me", Href: me.URL}}))
 	}))
 	defer good.Close()
 
 	me = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, testAPage(
-			A{Rel: "me", Href: good.URL},
-			A{Rel: "pgpkey", Href: "/key"},
+			[]A{{Rel: "me", Href: good.URL}},
+			[]A{{Rel: "pgpkey", Href: "/key"}},
 		))
 	}))
 	defer me.Close()
@@ -182,21 +223,21 @@ func TestFindAuthWithAuthnPGPKey(t *testing.T) {
 	var me, good, bad *httptest.Server
 
 	good = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: me.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: me.URL}}, []A{}))
 	}))
 	defer good.Close()
 
 	bad = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: me.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: me.URL}}, []A{}))
 	}))
 	defer bad.Close()
 
 	me = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(
-			A{Rel: "authn me", Href: good.URL},
-			A{Rel: "me", Href: bad.URL},
-			A{Rel: "authn pgpkey", Href: "http://example.com/key"},
-		))
+		fmt.Fprint(w, testAPage([]A{
+			{Rel: "authn me", Href: good.URL},
+			{Rel: "me", Href: bad.URL},
+			{Rel: "authn pgpkey", Href: "http://example.com/key"},
+		}, []A{}))
 	}))
 	defer me.Close()
 
@@ -215,21 +256,21 @@ func TestFindAuthWithNoneAuthnPGPKey(t *testing.T) {
 	var me, good, bad *httptest.Server
 
 	good = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: me.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: me.URL}}, []A{}))
 	}))
 	defer good.Close()
 
 	bad = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: me.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: me.URL}}, []A{}))
 	}))
 	defer bad.Close()
 
 	me = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(
-			A{Rel: "authn me", Href: good.URL},
-			A{Rel: "me", Href: bad.URL},
-			A{Rel: "pgpkey", Href: "http://example.com/key"},
-		))
+		fmt.Fprint(w, testAPage([]A{
+			{Rel: "authn me", Href: good.URL},
+			{Rel: "me", Href: bad.URL},
+			{Rel: "pgpkey", Href: "http://example.com/key"},
+		}, []A{}))
 	}))
 	defer me.Close()
 
@@ -248,15 +289,15 @@ func TestFindAuthWhenNoAuthnRels(t *testing.T) {
 	var me, good *httptest.Server
 
 	good = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: me.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: me.URL}}, []A{}))
 	}))
 	defer good.Close()
 
 	me = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(
-			A{Rel: "me", Href: good.URL},
-			A{Rel: "me", Href: "http://localhost/unknown"},
-		))
+		fmt.Fprint(w, testAPage([]A{
+			{Rel: "me", Href: good.URL},
+			{Rel: "me", Href: "http://localhost/unknown"},
+		}, []A{}))
 	}))
 	defer me.Close()
 
@@ -354,7 +395,7 @@ func TestLinksToWithRedirects(t *testing.T) {
 
 	// my homepage links to my twitter
 	homepage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: twitterURL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: twitterURL}}, []A{}))
 	}))
 	defer homepage.Close()
 
@@ -366,7 +407,7 @@ func TestLinksToWithRedirects(t *testing.T) {
 
 	// twitter has a link to tco
 	twitter := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: tco.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: tco.URL}}, []A{}))
 	}))
 	twitterURL = twitter.URL
 	defer twitter.Close()
@@ -399,7 +440,7 @@ func TestLinksToWithMoreRedirects(t *testing.T) {
 
 	// my homepage links to my twitter
 	homepage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: twitterURL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: twitterURL}}, []A{}))
 	}))
 	defer homepage.Close()
 
@@ -417,7 +458,7 @@ func TestLinksToWithMoreRedirects(t *testing.T) {
 
 	// twitter has a link to tco
 	twitter := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, testAPage(A{Rel: "me", Href: tco.URL}))
+		fmt.Fprint(w, testAPage([]A{{Rel: "me", Href: tco.URL}}, []A{}))
 	}))
 	twitterURL = twitter.URL
 	defer twitter.Close()

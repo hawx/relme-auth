@@ -269,7 +269,7 @@ func parseLinks(r io.Reader) (links []string, err error) {
 
 func findPGPKey(profile string, root *html.Node) (key string, wasAuthn bool) {
 	searchAll(root, func(node *html.Node) bool {
-		if node.Type == html.ElementNode && node.Data == "a" {
+		if node.Type == html.ElementNode && (node.Data == "a" || node.Data == "link") {
 			var hasKey, hasAuthn bool
 
 			rels := strings.Fields(getAttr(node, "rel"))
@@ -313,7 +313,7 @@ func findPGPKey(profile string, root *html.Node) (key string, wasAuthn bool) {
 }
 
 func isRelMe(node *html.Node) bool {
-	if node.Type == html.ElementNode && node.Data == "a" {
+	if node.Type == html.ElementNode && (node.Data == "a" || node.Data == "link") {
 		rels := strings.Fields(getAttr(node, "rel"))
 		for _, rel := range rels {
 			if rel == "me" {
@@ -328,7 +328,7 @@ func isRelMe(node *html.Node) bool {
 func isRelAuthn(node *html.Node) bool {
 	var me, authn bool
 
-	if node.Type == html.ElementNode && node.Data == "a" {
+	if node.Type == html.ElementNode && (node.Data == "a" || node.Data == "link") {
 		rels := strings.Fields(getAttr(node, "rel"))
 		for _, rel := range rels {
 			if rel == "me" {
