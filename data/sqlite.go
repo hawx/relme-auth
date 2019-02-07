@@ -2,22 +2,24 @@ package data
 
 import (
 	"database/sql"
+	"net/http"
 
 	// register sqlite3 for sql
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Database struct {
-	db *sql.DB
+	db         *sql.DB
+	httpClient *http.Client
 }
 
-func Open(path string) (*Database, error) {
+func Open(path string, httpClient *http.Client) (*Database, error) {
 	sqlite, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
 
-	db := &Database{db: sqlite}
+	db := &Database{db: sqlite, httpClient: httpClient}
 
 	return db, db.migrate()
 }

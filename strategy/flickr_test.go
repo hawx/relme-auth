@@ -18,7 +18,7 @@ const (
 )
 
 func TestFlickrMatch(t *testing.T) {
-	flickr := Flickr("", new(fakeStore), id, secret)
+	flickr := Flickr("", new(fakeStore), id, secret, http.DefaultClient)
 
 	testCases := []string{
 		"https://www.flickr.com/somebody",
@@ -36,7 +36,7 @@ func TestFlickrMatch(t *testing.T) {
 }
 
 func TestFlickrNotMatch(t *testing.T) {
-	flickr := Flickr("", new(fakeStore), id, secret)
+	flickr := Flickr("", new(fakeStore), id, secret, http.DefaultClient)
 
 	testCases := []string{
 		"https://www.flickrz.com/somebody",
@@ -117,6 +117,7 @@ func TestFlickrAuthFlow(t *testing.T) {
 		Store:       new(fakeStore),
 		APIKey:      id,
 		APIURI:      server.URL + "/services/rest",
+		httpClient:  http.DefaultClient,
 	}
 
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s&perms=read", server.URL, tempToken)

@@ -15,10 +15,11 @@ type authFlickr struct {
 	CallbackURL string
 	Store       strategyStore
 	APIURI      string
+	httpClient  *http.Client
 }
 
 // Flickr provides a strategy for authenticating with https://www.flickr.com.
-func Flickr(baseURL string, store strategyStore, id, secret string) Strategy {
+func Flickr(baseURL string, store strategyStore, id, secret string, httpClient *http.Client) Strategy {
 	oauthClient := oauth.Client{
 		TemporaryCredentialRequestURI: "https://www.flickr.com/services/oauth/request_token",
 		ResourceOwnerAuthorizationURI: "https://www.flickr.com/services/oauth/authorize",
@@ -35,6 +36,7 @@ func Flickr(baseURL string, store strategyStore, id, secret string) Strategy {
 		Store:       store,
 		APIKey:      id,
 		APIURI:      "https://api.flickr.com/services/rest",
+		httpClient:  httpClient,
 	}
 }
 
@@ -47,7 +49,7 @@ func (authFlickr) Match(me *url.URL) bool {
 }
 
 func (strategy *authFlickr) Redirect(expectedURL string) (redirectURL string, err error) {
-	tempCred, err := strategy.Client.RequestTemporaryCredentials(http.DefaultClient, strategy.CallbackURL, nil)
+	tempCred, err := strategy.Client.RequestTemporaryCredentials(strategy.httpClient, strategy.CallbackURL, nil)
 	if err != nil {
 		return "", err
 	}
@@ -74,14 +76,14 @@ func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 		Token:  oauthToken,
 		Secret: expectedSecret,
 	}
-	tokenCred, vals, err := strategy.Client.RequestToken(http.DefaultClient, tempCred, form.Get("oauth_verifier"))
+	tokenCred, vals, err := strategy.Client.RequestToken(strategy.httpClient, tempCred, form.Get("oauth_verifier"))
 	if err != nil {
 		return "", errors.New("error getting request token, " + err.Error())
 	}
 
 	nsid := vals.Get("user_nsid")
 
-	resp, err := strategy.Client.Get(http.DefaultClient, tokenCred, strategy.APIURI, url.Values{
+	resp, err := strategy.Client.Get(strategy.httpClient, tokenCred, strategy.APIURI, url.Values{
 		"nojsoncallback": {"1"},
 		"format":         {"json"},
 		"api_key":        {strategy.APIKey},

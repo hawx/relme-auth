@@ -1,6 +1,7 @@
 package data
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 func TestCode(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared")
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
 	defer db.Close()
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)

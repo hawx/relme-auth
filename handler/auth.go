@@ -22,7 +22,7 @@ type authStore interface {
 //   - provider: 3rd party authentication provider that was chosen
 //   - profile: URL expected to be matched by the provider
 //   - redirect_uri: final URI to redirect to when auth is finished
-func Auth(store authStore, strategies strategy.Strategies) http.Handler {
+func Auth(store authStore, strategies strategy.Strategies, httpClient *http.Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			me          = r.FormValue("me")
@@ -40,7 +40,7 @@ func Auth(store authStore, strategies strategy.Strategies) http.Handler {
 			return
 		}
 
-		if session.RedirectURI != redirectURI || !verifyRedirectURI(session.ClientID, session.RedirectURI) {
+		if session.RedirectURI != redirectURI || !verifyRedirectURI(httpClient, session.ClientID, session.RedirectURI) {
 			http.Error(w, "redirect_uri is untrustworthy", http.StatusBadRequest)
 			return
 		}
@@ -73,7 +73,7 @@ func Auth(store authStore, strategies strategy.Strategies) http.Handler {
 	})
 }
 
-func verifyRedirectURI(clientID, redirect string) bool {
+func verifyRedirectURI(httpClient *http.Client, clientID, redirect string) bool {
 	clientURI, err := url.Parse(clientID)
 	if err != nil {
 		return false
@@ -88,7 +88,7 @@ func verifyRedirectURI(clientID, redirect string) bool {
 		return true
 	}
 
-	clientResp, err := http.Get(clientID)
+	clientResp, err := httpClient.Get(clientID)
 	if err != nil {
 		return false
 	}

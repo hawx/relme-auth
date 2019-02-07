@@ -16,7 +16,7 @@ import (
 )
 
 func TestPGPMatch(t *testing.T) {
-	pgp := PGP(new(fakeStore), "", id)
+	pgp := PGP(new(fakeStore), "", id, http.DefaultClient)
 
 	parsed, err := url.Parse("pgp")
 	assert.Nil(t, err)
@@ -24,7 +24,7 @@ func TestPGPMatch(t *testing.T) {
 }
 
 func TestPGPNotMatch(t *testing.T) {
-	pgp := PGP(new(fakeStore), "", id)
+	pgp := PGP(new(fakeStore), "", id, http.DefaultClient)
 
 	testCases := []string{
 		"what",
@@ -64,9 +64,10 @@ func TestPGPAuthFlow(t *testing.T) {
 	}
 
 	pgp := &authPGP{
-		AuthURL:  server.URL + "/oauth/authorize",
-		ClientID: id,
-		Store:    store,
+		AuthURL:    server.URL + "/oauth/authorize",
+		ClientID:   id,
+		Store:      store,
+		httpClient: http.DefaultClient,
 	}
 
 	// 1. Redirect
@@ -107,9 +108,10 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 	}
 
 	pgp := &authPGP{
-		AuthURL:  server.URL + "/oauth/authorize",
-		ClientID: id,
-		Store:    store,
+		AuthURL:    server.URL + "/oauth/authorize",
+		ClientID:   id,
+		Store:      store,
+		httpClient: http.DefaultClient,
 	}
 
 	// 1. Redirect

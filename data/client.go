@@ -1,7 +1,6 @@
 package data
 
 import (
-	"net/http"
 	"time"
 
 	"hawx.me/code/relme-auth/microformats"
@@ -59,7 +58,7 @@ func (d *Database) queryClient(clientID, redirectURI string) (client Client, err
 	client.UpdatedAt = time.Now().UTC()
 	client.RedirectURI = redirectURI
 
-	clientInfoResp, err := http.Get(clientID)
+	clientInfoResp, err := d.httpClient.Get(clientID)
 	if err != nil {
 		return
 	}

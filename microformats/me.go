@@ -40,9 +40,8 @@ type Event struct {
 
 // Me requests profile, then finds all links that can be used to authenticate
 // the user.
-func Me(profile string, strategies matching) <-chan Event {
+func (client *RelMe) Me(profile string, strategies matching) <-chan Event {
 	eventCh := make(chan Event)
-	client := relMe{Client: http.DefaultClient}
 
 	go func() {
 		profileLinks, pgpkey, err := client.FindAuth(profile)
@@ -82,15 +81,16 @@ func Me(profile string, strategies matching) <-chan Event {
 	return eventCh
 }
 
-type relMe struct {
-	Client *http.Client
+type RelMe struct {
+	Client           *http.Client
+	NoRedirectClient *http.Client
 }
 
 // FindAuth takes a profile URL and returns a list of all hrefs in <a rel="me
 // authn"/> elements on the page that also link back to the profile, if none
 // exist it fallsback to using hrefs in <a rel="me"/> elements as FindVerified
 // does.
-func (me *relMe) FindAuth(profile string) (links []string, pgpkey string, err error) {
+func (me *RelMe) FindAuth(profile string) (links []string, pgpkey string, err error) {
 	req, err := http.NewRequest("GET", profile, nil)
 	if err != nil {
 		return
@@ -107,7 +107,7 @@ func (me *relMe) FindAuth(profile string) (links []string, pgpkey string, err er
 
 // Find takes a profile URL and returns a list of all hrefs in <a rel="me"/>
 // elements on the page.
-func (me *relMe) Find(profile string) (links []string, err error) {
+func (me *RelMe) Find(profile string) (links []string, err error) {
 	req, err := http.NewRequest("GET", profile, nil)
 	if err != nil {
 		return
@@ -124,13 +124,13 @@ func (me *relMe) Find(profile string) (links []string, err error) {
 
 // LinksTo takes a remote profile URL and checks whether any of the hrefs in <a
 // rel="me"/> elements match the test URL.
-func (me *relMe) LinksTo(remote, test string) (ok bool, err error) {
+func (me *RelMe) LinksTo(remote, test string) (ok bool, err error) {
 	testURL, err := url.Parse(test)
 	if err != nil {
 		return
 	}
 
-	testRedirects, err := follow(testURL)
+	testRedirects, err := me.follow(testURL)
 	if err != nil {
 		return
 	}
@@ -146,7 +146,7 @@ func (me *relMe) LinksTo(remote, test string) (ok bool, err error) {
 			continue
 		}
 
-		linkRedirects, err := follow(linkURL)
+		linkRedirects, err := me.follow(linkURL)
 		if err != nil {
 			continue
 		}
@@ -186,13 +186,7 @@ func compare(as, bs []string) bool {
 	return false
 }
 
-func follow(remote *url.URL) (redirects []string, err error) {
-	noRedirectClient := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
+func (me *RelMe) follow(remote *url.URL) (redirects []string, err error) {
 	previous := map[string]struct{}{}
 	current := remote
 
@@ -205,7 +199,7 @@ func follow(remote *url.URL) (redirects []string, err error) {
 		}
 		previous[current.String()] = struct{}{}
 
-		resp, err := noRedirectClient.Do(req)
+		resp, err := me.NoRedirectClient.Do(req)
 		if err != nil {
 			break
 		}

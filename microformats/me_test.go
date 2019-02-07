@@ -11,7 +11,14 @@ import (
 	"hawx.me/code/relme-auth/strategy"
 )
 
-var client = &relMe{Client: http.DefaultClient}
+var client = &RelMe{
+	Client: http.DefaultClient,
+	NoRedirectClient: &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	},
+}
 
 type A struct {
 	Rel  string
@@ -85,7 +92,7 @@ func TestMe(t *testing.T) {
 
 	strategies := matchingStrategy([]string{otherSite.URL, missingSite.URL, someSite.URL, "http://localhost/link"})
 
-	eventsCh := Me(meSite.URL, strategies)
+	eventsCh := client.Me(meSite.URL, strategies)
 
 	event, ok, timedOut := getEvent(eventsCh)
 	if assert.False(timedOut) {

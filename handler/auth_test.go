@@ -60,7 +60,7 @@ func TestAuth(t *testing.T) {
 	defer s.Close()
 	sURL = s.URL
 
-	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}))
+	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}, http.DefaultClient))
 	defer a.Close()
 
 	client := &http.Client{
@@ -112,7 +112,7 @@ func TestAuthWithEvilRedirect(t *testing.T) {
 	defer s.Close()
 	sURL = s.URL
 
-	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}))
+	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}, http.DefaultClient))
 	defer a.Close()
 
 	client := &http.Client{
@@ -167,7 +167,7 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInHeader(t *testing.T) {
 	defer s.Close()
 	sURL = s.URL
 
-	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}))
+	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}, http.DefaultClient))
 	defer a.Close()
 
 	client := &http.Client{
@@ -226,7 +226,7 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInLink(t *testing.T) {
 	defer s.Close()
 	sURL = s.URL
 
-	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}))
+	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}, http.DefaultClient))
 	defer a.Close()
 
 	client := &http.Client{
@@ -276,7 +276,7 @@ func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	defer s.Close()
 	sURL = s.URL
 
-	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}))
+	a := httptest.NewServer(Auth(authStore, strategy.Strategies{strat}, http.DefaultClient))
 	defer a.Close()
 
 	client := &http.Client{

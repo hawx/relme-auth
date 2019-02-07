@@ -22,11 +22,12 @@ type webSocketStore interface {
 
 // WebSocket returns a http.Handler that handles websocket connections. The
 // client can request a set of authentication methods for a user.
-func WebSocket(strategies strategy.Strategies, store webSocketStore) http.Handler {
+func WebSocket(strategies strategy.Strategies, store webSocketStore, relMe *microformats.RelMe) http.Handler {
 	return &webSocketServer{
 		strategies:  strategies,
 		store:       store,
 		connections: map[*conn]struct{}{},
+		relMe:       relMe,
 	}
 }
 
@@ -37,6 +38,7 @@ func (s *webSocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type webSocketServer struct {
 	strategies strategy.Strategies
 	store      webSocketStore
+	relMe      *microformats.RelMe
 
 	mu          sync.RWMutex
 	connections map[*conn]struct{}
@@ -176,7 +178,7 @@ func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profi
 }
 
 func (s *webSocketServer) readAllEvents(conn *conn, request profileRequest, profile *data.Profile) error {
-	meCh := microformats.Me(request.Me, s.strategies)
+	meCh := s.relMe.Me(request.Me, s.strategies)
 
 	for {
 		event, ok := <-meCh

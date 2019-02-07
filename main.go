@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
@@ -12,6 +14,7 @@ import (
 	"hawx.me/code/relme-auth/config"
 	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/handler"
+	"hawx.me/code/relme-auth/microformats"
 	"hawx.me/code/relme-auth/random"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/route"
@@ -78,7 +81,35 @@ func main() {
 		return
 	}
 
-	database, err := data.Open(*dbPath)
+	// use default values from DefaultTransport
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	httpClient := &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: tr,
+	}
+	noRedirectClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Timeout:   10 * time.Second,
+		Transport: tr,
+	}
+
+	codeGenerator := random.Generator(20)
+
+	database, err := data.Open(*dbPath, httpClient)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -91,8 +122,6 @@ func main() {
 		return
 	}
 
-	codeGenerator := random.Generator(20)
-
 	var strategies strategy.Strategies
 	if *useTrue {
 		trueStrategy := strategy.True(*baseURL)
@@ -102,13 +131,13 @@ func main() {
 
 	} else {
 		pgpDatabase, _ := data.Strategy("pgp")
-		pgpStrategy := strategy.PGP(pgpDatabase, *baseURL, "")
+		pgpStrategy := strategy.PGP(pgpDatabase, *baseURL, "", httpClient)
 		route.Handle("/oauth/callback/pgp", handler.Callback(database, pgpStrategy, codeGenerator))
 		strategies = append(strategies, pgpStrategy)
 
 		if conf.Flickr != nil {
 			flickrDatabase, _ := data.Strategy("flickr")
-			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.ID, conf.Flickr.Secret)
+			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.ID, conf.Flickr.Secret, httpClient)
 			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy, codeGenerator))
 			strategies = append(strategies, flickrStrategy)
 		}
@@ -122,7 +151,7 @@ func main() {
 
 		if conf.Twitter != nil {
 			twitterDatabase, _ := data.Strategy("twitter")
-			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.ID, conf.Twitter.Secret)
+			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.ID, conf.Twitter.Secret, httpClient)
 			route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy, codeGenerator))
 			strategies = append(strategies, twitterStrategy)
 		}
@@ -133,7 +162,7 @@ func main() {
 		"POST": handler.Verify(database),
 	})
 	route.Handle("/auth/start", mux.Method{
-		"GET": handler.Auth(database, strategies),
+		"GET": handler.Auth(database, strategies, httpClient),
 	})
 
 	route.Handle("/token", handler.Token(database, random.Generator(40)))
@@ -147,8 +176,17 @@ func main() {
 		route.Handle("/sign-out", handler.ExampleSignOut(*baseURL, exampleSessionStore))
 	}
 
-	route.Handle("/ws", handler.WebSocket(strategies, database))
+	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}
+
+	route.Handle("/ws", handler.WebSocket(strategies, database, relMe))
 	route.Handle("/public/*path", http.StripPrefix("/public", http.FileServer(http.Dir("web/static"))))
 
-	serve.Serve(*port, *socket, context.ClearHandler(route.Default))
+	srv := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      context.ClearHandler(route.Default),
+	}
+
+	serve.Server(*port, *socket, srv)
 }

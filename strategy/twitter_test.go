@@ -13,7 +13,7 @@ import (
 )
 
 func TestTwitterMatch(t *testing.T) {
-	twitter := Twitter("", new(fakeStore), id, secret)
+	twitter := Twitter("", new(fakeStore), id, secret, http.DefaultClient)
 
 	testCases := []string{
 		"https://twitter.com/somebody",
@@ -31,7 +31,7 @@ func TestTwitterMatch(t *testing.T) {
 }
 
 func TestTwitterNotMatch(t *testing.T) {
-	twitter := Twitter("", new(fakeStore), id, secret)
+	twitter := Twitter("", new(fakeStore), id, secret, http.DefaultClient)
 
 	testCases := []string{
 		"https://www.twitter.com/somebody",
@@ -110,6 +110,7 @@ func TestTwitterAuthFlow(t *testing.T) {
 		CallbackURL: "",
 		Store:       new(fakeStore),
 		APIURI:      server.URL + "/1.1",
+		httpClient:  http.DefaultClient,
 	}
 
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s", server.URL, tempToken)

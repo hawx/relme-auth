@@ -12,17 +12,19 @@ import (
 )
 
 type authPGP struct {
-	AuthURL  string
-	ClientID string
-	Store    strategyStore
+	AuthURL    string
+	ClientID   string
+	Store      strategyStore
+	httpClient *http.Client
 }
 
 // PGP provides a strategy for authenticating with a pgpkey.
-func PGP(store strategyStore, baseURI, id string) Strategy {
+func PGP(store strategyStore, baseURI, id string, httpClient *http.Client) Strategy {
 	return &authPGP{
-		AuthURL:  baseURI + "/pgp/authorize",
-		ClientID: id,
-		Store:    store,
+		AuthURL:    baseURI + "/pgp/authorize",
+		ClientID:   id,
+		Store:      store,
+		httpClient: httpClient,
 	}
 }
 
@@ -66,15 +68,15 @@ func (strategy *authPGP) Callback(form url.Values) (string, error) {
 		return "", errors.New("how did you get here?")
 	}
 
-	if err := verify(expectedURL, form.Get("signed"), challenge); err != nil {
+	if err := verify(strategy.httpClient, expectedURL, form.Get("signed"), challenge); err != nil {
 		return "", ErrUnauthorized
 	}
 
 	return expectedURL, nil
 }
 
-func verify(keyURL, signed, challenge string) error {
-	resp, err := http.Get(keyURL)
+func verify(httpClient *http.Client, keyURL, signed, challenge string) error {
+	resp, err := httpClient.Get(keyURL)
 	if err != nil {
 		return errors.New("could not get file: " + err.Error())
 	}
