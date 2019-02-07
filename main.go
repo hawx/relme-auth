@@ -11,8 +11,8 @@ import (
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/config"
 	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/data/boltdb"
 	"hawx.me/code/relme-auth/data/memory"
+	"hawx.me/code/relme-auth/data/sqlite"
 	"hawx.me/code/relme-auth/handler"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/route"
@@ -48,10 +48,8 @@ func printHelp() {
      authenticated!
 
  DATA
-   By default riviera runs with an in memory database.
-
-   --boltdb PATH
-      Use the boltdb file at the given path.
+   --db PATH
+      Use the sqlite database at the given path.
 
  SERVE
    --port PORT='8080'
@@ -67,7 +65,7 @@ func main() {
 		socket        = flag.String("socket", "", "Socket to run on")
 		baseURL       = flag.String("base-url", "http://localhost:8080", "Where this is running")
 		configPath    = flag.String("config", "./config.toml", "Path to config file")
-		boltdbPath    = flag.String("boltdb", "", "Path to database")
+		dbPath        = flag.String("db", "", "Path to database")
 		exampleSecret = flag.String("example-secret", "", "Session secret for example site")
 		useTrue       = flag.Bool("true", false, "Use the fake 'true' auth provider")
 		webPath       = flag.String("web-path", "web", "Path to web/ directory")
@@ -81,15 +79,12 @@ func main() {
 		return
 	}
 
-	var database data.Database
-	if *boltdbPath != "" {
-		database, err = boltdb.Open(*boltdbPath)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	} else {
-		database = memory.New()
+	strategyStore := memory.New()
+
+	database, err := sqlite.Open(*dbPath)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 	defer database.Close()
 
@@ -99,50 +94,58 @@ func main() {
 		return
 	}
 
+	codeGenerator := func() string {
+		s, _ := data.RandomString(20)
+		return s
+	}
+
 	var strategies strategy.Strategies
 	if *useTrue {
 		trueStrategy := strategy.True(*baseURL)
 		strategies = append(strategies, trueStrategy)
 
-		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy))
+		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy, codeGenerator))
 
 	} else {
-		pgpDatabase, _ := database.Strategy("pgp")
+		pgpDatabase, _ := strategyStore.Strategy("pgp")
 		pgpStrategy := strategy.PGP(pgpDatabase, *baseURL, "")
-		route.Handle("/oauth/callback/pgp", handler.Callback(database, pgpStrategy))
+		route.Handle("/oauth/callback/pgp", handler.Callback(database, pgpStrategy, codeGenerator))
 		strategies = append(strategies, pgpStrategy)
 
 		if conf.Flickr != nil {
-			flickrDatabase, _ := database.Strategy("flickr")
+			flickrDatabase, _ := strategyStore.Strategy("flickr")
 			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.ID, conf.Flickr.Secret)
-			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy))
+			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy, codeGenerator))
 			strategies = append(strategies, flickrStrategy)
 		}
 
 		if conf.GitHub != nil {
-			gitHubDatabase, _ := database.Strategy("github")
+			gitHubDatabase, _ := strategyStore.Strategy("github")
 			gitHubStrategy := strategy.GitHub(gitHubDatabase, conf.GitHub.ID, conf.GitHub.Secret)
-			route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy))
+			route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy, codeGenerator))
 			strategies = append(strategies, gitHubStrategy)
 		}
 
 		if conf.Twitter != nil {
-			twitterDatabase, _ := database.Strategy("twitter")
+			twitterDatabase, _ := strategyStore.Strategy("twitter")
 			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.ID, conf.Twitter.Secret)
-			route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy))
+			route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy, codeGenerator))
 			strategies = append(strategies, twitterStrategy)
 		}
 	}
 
 	route.Handle("/auth", mux.Method{
-		"GET":  handler.Choose(*baseURL, database, database, strategies, templates),
+		"GET":  handler.Choose(*baseURL, database, strategies, templates),
 		"POST": handler.Verify(database),
 	})
 	route.Handle("/auth/start", mux.Method{
 		"GET": handler.Auth(database, strategies),
 	})
 
-	route.Handle("/token", handler.Token(database))
+	route.Handle("/token", handler.Token(database, func() string {
+		s, _ := data.RandomString(40)
+		return s
+	}))
 	route.Handle("/pgp/authorize", handler.PGP(templates))
 
 	if *exampleSecret != "" {

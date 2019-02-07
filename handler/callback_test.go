@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,17 +11,36 @@ import (
 	"hawx.me/code/relme-auth/data"
 )
 
+func codeGenerator() string { return "my-code" }
+
+type fakeCallbackStore struct {
+	session data.Session
+	code    data.Code
+}
+
+func (s *fakeCallbackStore) Session(me string) (data.Session, error) {
+	if me == s.session.Me {
+		return s.session, nil
+	}
+
+	return data.Session{}, errors.New("what")
+}
+
+func (s *fakeCallbackStore) CreateCode(code data.Code) error {
+	s.code = code
+	return nil
+}
+
 func TestCallback(t *testing.T) {
-	store := &fakeSessionStore{
-		Session: data.Session{
+	store := &fakeCallbackStore{
+		session: data.Session{
 			Me:          "me",
-			Code:        "my-code",
 			State:       "my-state",
 			RedirectURI: "http://example.com/callback",
 		},
 	}
 
-	s := httptest.NewServer(Callback(store, &fakeStrategy{}))
+	s := httptest.NewServer(Callback(store, &fakeStrategy{}, codeGenerator))
 	defer s.Close()
 
 	client := &http.Client{
@@ -40,7 +60,7 @@ func TestCallback(t *testing.T) {
 }
 
 func TestCallbackWhenSessionDoesNotExist(t *testing.T) {
-	s := httptest.NewServer(Callback(&fakeSessionStore{}, &fakeStrategy{}))
+	s := httptest.NewServer(Callback(&fakeCallbackStore{}, &fakeStrategy{}, codeGenerator))
 	defer s.Close()
 
 	form := url.Values{
@@ -53,16 +73,15 @@ func TestCallbackWhenSessionDoesNotExist(t *testing.T) {
 }
 
 func TestCallbackWhenProviderSaysTheyAreUnauthorized(t *testing.T) {
-	store := &fakeSessionStore{
-		Session: data.Session{
+	store := &fakeCallbackStore{
+		session: data.Session{
 			Me:          "me",
-			Code:        "my-code",
 			State:       "my-state",
 			RedirectURI: "http://example.com/callback",
 		},
 	}
 
-	s := httptest.NewServer(Callback(store, &unauthorizedStrategy{}))
+	s := httptest.NewServer(Callback(store, &unauthorizedStrategy{}, codeGenerator))
 	defer s.Close()
 
 	form := url.Values{
@@ -75,16 +94,15 @@ func TestCallbackWhenProviderSaysTheyAreUnauthorized(t *testing.T) {
 }
 
 func TestCallbackWhenProviderErrors(t *testing.T) {
-	store := &fakeSessionStore{
-		Session: data.Session{
+	store := &fakeCallbackStore{
+		session: data.Session{
 			Me:          "me",
-			Code:        "my-code",
 			State:       "my-state",
 			RedirectURI: "http://example.com/callback",
 		},
 	}
 
-	s := httptest.NewServer(Callback(store, &errorStrategy{}))
+	s := httptest.NewServer(Callback(store, &errorStrategy{}, codeGenerator))
 	defer s.Close()
 
 	form := url.Values{

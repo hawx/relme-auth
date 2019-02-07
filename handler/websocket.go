@@ -15,18 +15,31 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+type webSocketStore interface {
+	Profile(string) (data.Profile, error)
+	CacheProfile(data.Profile) error
+}
+
 // WebSocket returns a http.Handler that handles websocket connections. The
 // client can request a set of authentication methods for a user.
-func WebSocket(strategies strategy.Strategies, database data.CacheStore) http.Handler {
+func WebSocket(strategies strategy.Strategies, store webSocketStore) http.Handler {
 	return &webSocketServer{
 		strategies:  strategies,
-		database:    database,
+		store:       store,
 		connections: map[*conn]struct{}{},
 	}
 }
 
 func (s *webSocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	websocket.Handler(s.serve).ServeHTTP(w, r)
+}
+
+type webSocketServer struct {
+	strategies strategy.Strategies
+	store      webSocketStore
+
+	mu          sync.RWMutex
+	connections map[*conn]struct{}
 }
 
 type conn struct {
@@ -50,14 +63,6 @@ func (c *conn) send(msg interface{}) {
 	if err := websocket.JSON.Send(c.ws, msg); err != nil {
 		log.Println("handler/websocket failed to send message:", err)
 	}
-}
-
-type webSocketServer struct {
-	strategies strategy.Strategies
-	database   data.CacheStore
-
-	mu          sync.RWMutex
-	connections map[*conn]struct{}
 }
 
 func (s *webSocketServer) addConnection(ws *websocket.Conn) *conn {
@@ -120,7 +125,7 @@ func (s *webSocketServer) serveConnection(conn *conn) error {
 		}
 		conn.send(eventResponse{Type: "done"})
 
-		if err := s.database.CacheProfile(profile); err != nil {
+		if err := s.store.CacheProfile(profile); err != nil {
 			log.Println("handler/websocket failed to cache profile:", err)
 		}
 	}
@@ -137,7 +142,7 @@ func (s *webSocketServer) canUseCache(request profileRequest) (profile data.Prof
 		return
 	}
 
-	profile, err := s.database.GetProfile(request.Me)
+	profile, err := s.store.Profile(request.Me)
 	if err != nil {
 		return
 	}

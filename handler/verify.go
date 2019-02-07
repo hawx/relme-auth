@@ -8,9 +8,13 @@ import (
 	"hawx.me/code/relme-auth/data"
 )
 
+type verifyStore interface {
+	Code(string) (data.Code, error)
+}
+
 // Verify allows clients to check who a particular "code" belongs to, or whether
 // it is invalid.
-func Verify(authStore data.SessionStore) http.Handler {
+func Verify(store verifyStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code := r.FormValue("code")
 
@@ -19,8 +23,8 @@ func Verify(authStore data.SessionStore) http.Handler {
 			return
 		}
 
-		session, ok := authStore.GetByCode(code)
-		if !ok || session.ResponseType != "id" {
+		session, err := store.Code(code)
+		if err != nil || session.ResponseType != "id" {
 			writeJSONError(w, "invalid_request", "The code provided was not valid", http.StatusBadRequest)
 			return
 		}

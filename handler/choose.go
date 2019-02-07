@@ -16,15 +16,21 @@ import (
 const profileExpiry = 7 * 24 * time.Hour
 const clientExpiry = 30 * 24 * time.Hour
 
+type chooseStore interface {
+	CreateSession(data.Session) error
+	CacheClient(data.Client) error
+	Client(string) (data.Client, error)
+}
+
 // Choose finds, for the "me" parameter, all authentication providers that can be
 // used for authentication.
-func Choose(baseURL string, authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies, templates *template.Template) http.Handler {
+func Choose(baseURL string, store chooseStore, strategies strategy.Strategies, templates *template.Template) http.Handler {
 	return mux.Method{
-		"GET": chooseProvider(baseURL, authStore, database, strategies, templates),
+		"GET": chooseProvider(baseURL, store, strategies, templates),
 	}
 }
 
-func chooseProvider(baseURL string, authStore data.SessionStore, database data.CacheStore, strategies strategy.Strategies, templates *template.Template) http.Handler {
+func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strategies, templates *template.Template) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			me           = r.FormValue("me")
@@ -41,7 +47,7 @@ func chooseProvider(baseURL string, authStore data.SessionStore, database data.C
 
 		switch responseType {
 		case "id":
-			authStore.Save(&data.Session{
+			store.CreateSession(data.Session{
 				Me:           me,
 				ClientID:     clientID,
 				RedirectURI:  redirectURI,
@@ -56,13 +62,13 @@ func chooseProvider(baseURL string, authStore data.SessionStore, database data.C
 				return
 			}
 
-			authStore.Save(&data.Session{
+			store.CreateSession(data.Session{
 				Me:           me,
 				ClientID:     clientID,
 				RedirectURI:  redirectURI,
 				State:        state,
 				ResponseType: responseType,
-				Scopes:       scopes,
+				Scope:        strings.Join(scopes, " "),
 			})
 
 		default:
@@ -70,7 +76,7 @@ func chooseProvider(baseURL string, authStore data.SessionStore, database data.C
 			return
 		}
 
-		client, err := getClient(clientID, redirectURI, database)
+		client, err := getClient(clientID, redirectURI, store)
 		if err != nil {
 			log.Println("handler/choose failed to get client:", err)
 		}
@@ -94,8 +100,8 @@ func wsify(s string) string {
 	return "wss://" + strings.TrimPrefix(s, "https://")
 }
 
-func getClient(clientID, redirectURI string, database data.CacheStore) (client data.Client, err error) {
-	if foundClient, ferr := database.GetClient(clientID); ferr == nil {
+func getClient(clientID, redirectURI string, store chooseStore) (client data.Client, err error) {
+	if foundClient, ferr := store.Client(clientID); ferr == nil {
 		if foundClient.RedirectURI == redirectURI && foundClient.UpdatedAt.After(time.Now().UTC().Add(-clientExpiry)) {
 			return foundClient, ferr
 		}
@@ -116,7 +122,7 @@ func getClient(clientID, redirectURI string, database data.CacheStore) (client d
 		client.Name = clientName
 	}
 
-	err = database.CacheClient(client)
+	err = store.CacheClient(client)
 	return
 }
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/url"
 
-	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/strategy"
 )
 
@@ -75,43 +74,4 @@ func (errorStrategy) Redirect(expectedLink string) (string, error) {
 }
 func (errorStrategy) Callback(form url.Values) (string, error) {
 	return "", errors.New("/shrug")
-}
-
-// fakeSessionStore can be used as data.SessionStore
-type fakeSessionStore struct {
-	Session data.Session
-}
-
-func (s *fakeSessionStore) Save(session *data.Session) {}
-
-func (s *fakeSessionStore) Update(session data.Session) {}
-
-func (s *fakeSessionStore) Get(me string) (data.Session, bool) {
-	if me == s.Session.Me {
-		return s.Session, true
-	}
-
-	return data.Session{}, false
-}
-
-func (s *fakeSessionStore) GetByCode(code string) (data.Session, bool) {
-	if code == s.Session.Code {
-		return s.Session, true
-	}
-
-	return data.Session{}, false
-}
-
-func (s *fakeSessionStore) GetByToken(token string) (data.Session, bool) {
-	if token == s.Session.Token {
-		return s.Session, true
-	}
-
-	return data.Session{}, false
-}
-
-func (s *fakeSessionStore) RevokeByToken(token string) {
-	if token == s.Session.Token {
-		s.Session = data.Session{}
-	}
 }

@@ -4,24 +4,32 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/data"
 )
 
-func Token(authStore data.SessionStore) http.Handler {
+type tokenStore interface {
+	Code(string) (data.Code, error)
+	Token(string) (data.Token, error)
+	CreateToken(data.Token) error
+	RevokeToken(string) error
+}
+
+func Token(store tokenStore, generator func() string) http.Handler {
 	return mux.Method{
-		"POST": tokenEndpoint(authStore),
-		"GET":  verifyTokenEndpoint(authStore),
+		"POST": tokenEndpoint(store, generator),
+		"GET":  verifyTokenEndpoint(store),
 	}
 }
 
-func tokenEndpoint(authStore data.SessionStore) http.HandlerFunc {
+func tokenEndpoint(store tokenStore, generator func() string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("action") == "revoke" {
 			token := r.FormValue("token")
 			if token != "" {
-				authStore.RevokeByToken(token)
+				store.RevokeToken(token)
 			}
 
 			return
@@ -40,40 +48,49 @@ func tokenEndpoint(authStore data.SessionStore) http.HandlerFunc {
 			return
 		}
 
-		session, ok := authStore.GetByCode(code)
-		if !ok || session.ResponseType != "code" {
+		theCode, err := store.Code(code)
+		if err != nil || theCode.ResponseType != "code" {
 			writeJSONError(w, "invalid_request", "The code provided was not valid", http.StatusBadRequest)
 			return
 		}
 
-		if session.Expired() {
+		if theCode.Expired() {
 			writeJSONError(w, "invalid_request", "The auth code has expired (valid for 60 seconds)", http.StatusBadRequest)
 			return
 		}
 
-		if session.ClientID != clientID {
+		if theCode.ClientID != clientID {
 			writeJSONError(w, "invalid_request", "The 'client_id' parameter did not match", http.StatusBadRequest)
 			return
 		}
-		if session.RedirectURI != redirectURI {
+		if theCode.RedirectURI != redirectURI {
 			writeJSONError(w, "invalid_request", "The 'redirect_uri' parameter did not match", http.StatusBadRequest)
 			return
 		}
-		if session.Me != me {
+		if theCode.Me != me {
 			writeJSONError(w, "invalid_request", "The 'me' parameter did not match", http.StatusBadRequest)
 			return
 		}
 
+		token := data.Token{
+			Token:     generator(),
+			Me:        theCode.Me,
+			ClientID:  theCode.ClientID,
+			Scope:     theCode.Scope,
+			CreatedAt: time.Now(),
+		}
+		store.CreateToken(token)
+
 		json.NewEncoder(w).Encode(tokenResponse{
-			AccessToken: session.Token,
+			AccessToken: token.Token,
 			TokenType:   "Bearer",
-			Scope:       strings.Join(session.Scopes, " "),
-			Me:          session.Me,
+			Scope:       token.Scope,
+			Me:          token.Me,
 		})
 	}
 }
 
-func verifyTokenEndpoint(authStore data.SessionStore) http.HandlerFunc {
+func verifyTokenEndpoint(store tokenStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authParts := strings.Fields(r.Header.Get("Authorization"))
 
@@ -82,16 +99,16 @@ func verifyTokenEndpoint(authStore data.SessionStore) http.HandlerFunc {
 			return
 		}
 
-		session, ok := authStore.GetByToken(authParts[1])
-		if !ok {
+		token, err := store.Token(authParts[1])
+		if err != nil {
 			http.Error(w, "", http.StatusUnauthorized)
 			return
 		}
 
 		json.NewEncoder(w).Encode(tokenVerificationResponse{
-			Me:       session.Me,
-			ClientID: session.ClientID,
-			Scope:    strings.Join(session.Scopes, " "),
+			Me:       token.Me,
+			ClientID: token.ClientID,
+			Scope:    token.Scope,
 		})
 	}
 }

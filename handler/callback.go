@@ -4,17 +4,23 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/strategy"
 )
+
+type callbackStore interface {
+	Session(string) (data.Session, error)
+	CreateCode(data.Code) error
+}
 
 // Callback handles the return from the authentication provider by delegating to
 // the relevant strategy. If authentication was successful, and for the correct
 // user, then it will redirect to the "redirect_uri" that the authentication
 // flow was originally started with. A "code" parameter is returned which can be
 // verified as belonging to the authenticated user for a short period of time.
-func Callback(authStore data.SessionStore, strat strategy.Strategy) http.Handler {
+func Callback(store callbackStore, strat strategy.Strategy, generator func() string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			log.Println("handler/callback failed to parse form: ", err)
@@ -33,14 +39,25 @@ func Callback(authStore data.SessionStore, strat strategy.Strategy) http.Handler
 			return
 		}
 
-		session, ok := authStore.Get(userProfileURL)
-		if !ok {
+		session, err := store.Session(userProfileURL)
+		if err != nil {
 			http.Error(w, "Who are you?", http.StatusInternalServerError)
 			return
 		}
 
+		code := data.Code{
+			Code:         generator(),
+			ResponseType: session.ResponseType,
+			Me:           session.Me,
+			ClientID:     session.ClientID,
+			RedirectURI:  session.RedirectURI,
+			Scope:        session.Scope,
+			CreatedAt:    time.Now(),
+		}
+		store.CreateCode(code)
+
 		query := url.Values{
-			"code":  {session.Code},
+			"code":  {code.Code},
 			"state": {session.State},
 		}
 

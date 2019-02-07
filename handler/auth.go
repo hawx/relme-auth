@@ -10,6 +10,11 @@ import (
 	"hawx.me/code/relme-auth/strategy"
 )
 
+type authStore interface {
+	Session(string) (data.Session, error)
+	SetProvider(me, provider, profileURI string) error
+}
+
 // Auth takes the chosen provider and initiates authentication by redirecting
 // the user to the 3rd party. It takes a number of parameters:
 //
@@ -17,7 +22,7 @@ import (
 //   - provider: 3rd party authentication provider that was chosen
 //   - profile: URL expected to be matched by the provider
 //   - redirect_uri: final URI to redirect to when auth is finished
-func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Handler {
+func Auth(store authStore, strategies strategy.Strategies) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			me          = r.FormValue("me")
@@ -29,8 +34,8 @@ func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Hand
 			ok             bool
 		)
 
-		session, ok := authStore.Get(me)
-		if !ok {
+		session, err := store.Session(me)
+		if err != nil {
 			http.Error(w, "you need to start at the start", http.StatusBadRequest)
 			return
 		}
@@ -62,7 +67,8 @@ func Auth(authStore data.SessionStore, strategies strategy.Strategies) http.Hand
 		session.Provider = provider
 		session.ProfileURI = profile
 
-		authStore.Update(session)
+		store.SetProvider(session.Me, provider, profile)
+
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,9 +10,23 @@ import (
 
 	"hawx.me/code/assert"
 	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/data/memory"
 	"hawx.me/code/relme-auth/strategy"
 )
+
+type fakeAuthStore struct {
+	session data.Session
+}
+
+func (s *fakeAuthStore) Session(me string) (data.Session, error) {
+	if me == s.session.Me {
+		return s.session, nil
+	}
+	return data.Session{}, errors.New("nope")
+}
+
+func (s *fakeAuthStore) SetProvider(me, provider, profileURI string) error {
+	return nil
+}
 
 func testPage(link string) string {
 	return `
@@ -30,8 +45,7 @@ func TestAuth(t *testing.T) {
 	var rURL, sURL string
 
 	assert := assert.New(t)
-	authStore := memory.New()
-
+	authStore := &fakeAuthStore{}
 	strat := &fakeStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -55,12 +69,12 @@ func TestAuth(t *testing.T) {
 		},
 	}
 
-	authStore.Save(&data.Session{
+	authStore.session = data.Session{
 		Me:          s.URL,
 		ClientID:    "https://example.com/",
 		RedirectURI: "https://example.com/redirect",
 		State:       "shared state",
-	})
+	}
 
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me":           {s.URL},
@@ -83,7 +97,7 @@ func TestAuthWithEvilRedirect(t *testing.T) {
 	var rURL, sURL string
 
 	assert := assert.New(t)
-	authStore := memory.New()
+	authStore := &fakeAuthStore{}
 	strat := &fakeStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -107,12 +121,12 @@ func TestAuthWithEvilRedirect(t *testing.T) {
 		},
 	}
 
-	authStore.Save(&data.Session{
+	authStore.session = data.Session{
 		Me:          s.URL,
 		ClientID:    "https://example.com/",
 		RedirectURI: "https://not.example.com/redirect",
 		State:       "shared state",
-	})
+	}
 
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me":           {s.URL},
@@ -133,7 +147,7 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInHeader(t *testing.T) {
 	var rURL, sURL string
 
 	assert := assert.New(t)
-	authStore := memory.New()
+	authStore := &fakeAuthStore{}
 	strat := &fakeStrategy{}
 
 	c := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -162,12 +176,12 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInHeader(t *testing.T) {
 		},
 	}
 
-	authStore.Save(&data.Session{
+	authStore.session = data.Session{
 		Me:          s.URL,
 		ClientID:    c.URL,
 		RedirectURI: "https://example.com/redirect",
 		State:       "shared state",
-	})
+	}
 
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me":           {s.URL},
@@ -188,7 +202,7 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInLink(t *testing.T) {
 	var rURL, sURL string
 
 	assert := assert.New(t)
-	authStore := memory.New()
+	authStore := &fakeAuthStore{}
 	strat := &fakeStrategy{}
 
 	c := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -221,12 +235,12 @@ func TestAuthWithEvilRedirectThatIsWhitelistedInLink(t *testing.T) {
 		},
 	}
 
-	authStore.Save(&data.Session{
+	authStore.session = data.Session{
 		Me:          s.URL,
 		ClientID:    c.URL,
 		RedirectURI: "https://example.com/redirect",
 		State:       "shared state",
-	})
+	}
 
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me":           {s.URL},
@@ -247,7 +261,7 @@ func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	var rURL, sURL string
 
 	assert := assert.New(t)
-	authStore := memory.New()
+	authStore := &fakeAuthStore{}
 	strat := &falseStrategy{}
 
 	r := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

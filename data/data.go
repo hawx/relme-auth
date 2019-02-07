@@ -11,19 +11,8 @@ import (
 // A Database is everything that should be implemented for subpackages. I know,
 // this isn't very Go...
 type Database interface {
-	SessionStore
 	Strategy(name string) (StrategyStore, error)
-	CacheStore
 	Close() error
-}
-
-// A CacheStore allows caching for user and client info speeding up the app when
-// requests are made for the same things.
-type CacheStore interface {
-	CacheProfile(Profile) error
-	CacheClient(Client) error
-	GetProfile(me string) (Profile, error)
-	GetClient(clientID string) (Client, error)
 }
 
 // Profile stores a user's authentication methods, so they don't have to be
@@ -47,20 +36,8 @@ type Method struct {
 type Client struct {
 	ID          string
 	RedirectURI string
+	Name        string
 	UpdatedAt   time.Time
-
-	Name string
-}
-
-// SessionStore is used by relme-auth to keep track of current user sessions
-// when initiating authentication or verifying a user's identity.
-type SessionStore interface {
-	Save(*Session)
-	Update(Session)
-	Get(string) (Session, bool)
-	GetByCode(string) (Session, bool)
-	GetByToken(string) (Session, bool)
-	RevokeByToken(string)
 }
 
 // StrategyStore is used by strategies to keep track of OAuthy type stuff
@@ -80,16 +57,9 @@ type Session struct {
 	ProfileURI   string
 	ClientID     string
 	RedirectURI  string
-	Scopes       []string
-	Code         string
-	Token        string
+	Scope        string
 	State        string
 	CreatedAt    time.Time
-}
-
-// Expired returns true if the Session was created over 60 seconds ago.
-func (s Session) Expired() bool {
-	return time.Now().Add(-60 * time.Second).After(s.CreatedAt)
 }
 
 const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
@@ -110,4 +80,27 @@ func randomBytes(length int) (b []byte, err error) {
 	b = make([]byte, length)
 	_, err = rand.Read(b)
 	return
+}
+
+type Token struct {
+	Token     string
+	Me        string
+	ClientID  string
+	Scope     string
+	CreatedAt time.Time
+}
+
+type Code struct {
+	Code         string
+	ResponseType string
+	Me           string
+	ClientID     string
+	RedirectURI  string
+	Scope        string
+	CreatedAt    time.Time
+}
+
+// Expired returns true if the Code was created over 60 seconds ago.
+func (c Code) Expired() bool {
+	return time.Now().Add(-60 * time.Second).After(c.CreatedAt)
 }

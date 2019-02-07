@@ -1,123 +1,18 @@
 package data_test
 
 import (
-	"io/ioutil"
-	"os"
 	"testing"
-	"time"
 
 	"hawx.me/code/assert"
 	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/data/boltdb"
 	"hawx.me/code/relme-auth/data/memory"
 )
 
-func TestCacheStore(t *testing.T) {
-	tmpfile, _ := ioutil.TempFile("", "boltdb")
-	defer os.Remove(tmpfile.Name())
-
-	db, _ := boltdb.Open(tmpfile.Name())
-
-	stores := map[string]data.CacheStore{
-		"memory": memory.New(),
-		"boltdb": db,
-	}
-
-	profile := data.Profile{Me: "me", UpdatedAt: time.Now().UTC()}
-	client := data.Client{ID: "client", UpdatedAt: time.Now().UTC()}
-
-	for name, store := range stores {
-		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			assert.Nil(store.CacheProfile(profile))
-
-			foundProfile, err := store.GetProfile(profile.Me)
-			assert.Nil(err)
-			assert.Equal(profile.Me, foundProfile.Me)
-			assert.Equal(profile.UpdatedAt, foundProfile.UpdatedAt)
-
-			assert.Nil(store.CacheClient(client))
-
-			foundClient, err := store.GetClient(client.ID)
-			assert.Nil(err)
-			assert.Equal(client.ID, foundClient.ID)
-			assert.Equal(client.UpdatedAt, foundClient.UpdatedAt)
-		})
-	}
-}
-
-func TestSessionStore(t *testing.T) {
-	tmpfile, _ := ioutil.TempFile("", "boltdb")
-	defer os.Remove(tmpfile.Name())
-
-	db, _ := boltdb.Open(tmpfile.Name())
-
-	stores := map[string]data.SessionStore{
-		"memory": memory.New(),
-		"boltdb": db,
-	}
-
-	for name, store := range stores {
-		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			originalSession := data.Session{
-				Me:          "me",
-				RedirectURI: "https://example.com/callback",
-			}
-			store.Save(&originalSession)
-
-			_, ok := store.Get("fake")
-			assert.False(ok)
-
-			gotSession, ok := store.Get("me")
-			assert.True(ok)
-			assert.Equal("https://example.com/callback", gotSession.RedirectURI)
-
-			gotSession.Provider = "service"
-			gotSession.Code = "1234"
-			gotSession.Token = "abc"
-			store.Update(gotSession)
-
-			gotAgainSession, ok := store.Get("me")
-			assert.True(ok)
-			assert.Equal("https://example.com/callback", gotAgainSession.RedirectURI)
-			assert.Equal("service", gotAgainSession.Provider)
-
-			_, ok = store.GetByCode("999")
-			assert.False(ok)
-
-			gotByCodeSession, ok := store.GetByCode("1234")
-			assert.True(ok)
-			assert.Equal("https://example.com/callback", gotByCodeSession.RedirectURI)
-			assert.Equal("service", gotByCodeSession.Provider)
-
-			gotByTokenSession, ok := store.GetByToken("abc")
-			assert.True(ok)
-			assert.Equal("https://example.com/callback", gotByTokenSession.RedirectURI)
-			assert.Equal("service", gotByTokenSession.Provider)
-
-			store.RevokeByToken("abc")
-
-			_, ok = store.GetByToken("abc")
-			assert.False(ok)
-		})
-	}
-}
-
 func TestStrategyStore(t *testing.T) {
-	tmpfile, _ := ioutil.TempFile("", "boltdb")
-	defer os.Remove(tmpfile.Name())
-
-	db, _ := boltdb.Open(tmpfile.Name())
-	dbS, _ := db.Strategy("cool")
-
 	memS, _ := memory.New().Strategy("cool")
 
 	stores := map[string]data.StrategyStore{
 		"memory": memS,
-		"boltdb": dbS,
 	}
 
 	for name, store := range stores {
