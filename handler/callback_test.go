@@ -12,7 +12,7 @@ import (
 	"hawx.me/code/relme-auth/data"
 )
 
-func codeGenerator() string { return "my-code" }
+func codeGenerator() (string, error) { return "my-code", nil }
 
 type fakeCallbackStore struct {
 	session data.Session

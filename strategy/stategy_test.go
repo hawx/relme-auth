@@ -2,8 +2,6 @@ package strategy
 
 import (
 	"sync"
-
-	"hawx.me/code/relme-auth/data"
 )
 
 type fakeStore struct {
@@ -16,7 +14,7 @@ func (s *fakeStore) Insert(link string) (state string, err error) {
 		s.inProgress = map[string]string{}
 	}
 
-	state, err = data.RandomString(64)
+	state, err = randomString(64)
 	if err != nil {
 		return
 	}

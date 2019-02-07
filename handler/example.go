@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"hawx.me/code/relme-auth/config"
-	"hawx.me/code/relme-auth/data"
+	"hawx.me/code/relme-auth/random"
 )
 
 // Example implements a basic site using the authentication flow provided by
@@ -29,7 +29,7 @@ func Example(baseURL string, conf config.Config, store sessions.Store, templates
 
 		var state string
 		if !ok {
-			state, _ = data.RandomString(64)
+			state, _ = random.String(64)
 			session.Values["state"] = state
 			if err := session.Save(r, w); err != nil {
 				log.Println("handler/example could not save session:", err)

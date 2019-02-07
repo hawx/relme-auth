@@ -2,13 +2,13 @@ package strategy
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 	"net/http"
 	"net/url"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/clearsign"
-	"hawx.me/code/relme-auth/data"
 )
 
 type authPGP struct {
@@ -39,7 +39,7 @@ func (strategy *authPGP) Redirect(expectedLink string) (redirectURL string, err 
 	if err != nil {
 		return "", err
 	}
-	challenge, err := data.RandomString(40)
+	challenge, err := randomString(40)
 	if err != nil {
 		return "", err
 	}
@@ -96,4 +96,24 @@ func verify(keyURL, signed, challenge string) error {
 
 	_, err = openpgp.CheckDetachedSignature(keyRing, bytes.NewBuffer(blk.Bytes), blk.ArmoredSignature.Body)
 	return err
+}
+
+const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
+
+// RandomString produces a random string of n characters.
+func randomString(n int) (string, error) {
+	bytes, err := randomBytes(n)
+	if err != nil {
+		return "", err
+	}
+	for i, b := range bytes {
+		bytes[i] = letters[b%byte(len(letters))]
+	}
+	return string(bytes), nil
+}
+
+func randomBytes(length int) (b []byte, err error) {
+	b = make([]byte, length)
+	_, err = rand.Read(b)
+	return
 }

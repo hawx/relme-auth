@@ -20,7 +20,7 @@ type callbackStore interface {
 // user, then it will redirect to the "redirect_uri" that the authentication
 // flow was originally started with. A "code" parameter is returned which can be
 // verified as belonging to the authenticated user for a short period of time.
-func Callback(store callbackStore, strat strategy.Strategy, generator func() string) http.Handler {
+func Callback(store callbackStore, strat strategy.Strategy, generator func() (string, error)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			log.Println("handler/callback failed to parse form: ", err)
@@ -45,8 +45,13 @@ func Callback(store callbackStore, strat strategy.Strategy, generator func() str
 			return
 		}
 
-		code := generator()
-		if err := store.CreateCode(session.Me, code, time.Now()); err != nil {
+		code, err := generator()
+		if err != nil {
+			log.Println("handler/callback could not generate code:", err)
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+		if err = store.CreateCode(session.Me, code, time.Now()); err != nil {
 			log.Println("handler/callback could not create code:", err)
 			http.Error(w, "something went wrong", http.StatusInternalServerError)
 			return

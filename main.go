@@ -12,6 +12,7 @@ import (
 	"hawx.me/code/relme-auth/config"
 	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/handler"
+	"hawx.me/code/relme-auth/random"
 	"hawx.me/code/relme-auth/strategy"
 	"hawx.me/code/route"
 	"hawx.me/code/serve"
@@ -90,10 +91,7 @@ func main() {
 		return
 	}
 
-	codeGenerator := func() string {
-		s, _ := data.RandomString(20)
-		return s
-	}
+	codeGenerator := random.Generator(20)
 
 	var strategies strategy.Strategies
 	if *useTrue {
@@ -138,10 +136,7 @@ func main() {
 		"GET": handler.Auth(database, strategies),
 	})
 
-	route.Handle("/token", handler.Token(database, func() string {
-		s, _ := data.RandomString(40)
-		return s
-	}))
+	route.Handle("/token", handler.Token(database, random.Generator(40)))
 	route.Handle("/pgp/authorize", handler.PGP(templates))
 
 	if *exampleSecret != "" {

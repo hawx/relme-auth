@@ -13,7 +13,7 @@ import (
 	"hawx.me/code/relme-auth/data"
 )
 
-func fakeGenerator() string { return "a token" }
+func fakeGenerator() (string, error) { return "a token", nil }
 
 type fakeTokenStore struct {
 	code  data.Code

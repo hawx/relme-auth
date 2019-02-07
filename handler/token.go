@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -17,14 +18,14 @@ type tokenStore interface {
 	RevokeToken(string) error
 }
 
-func Token(store tokenStore, generator func() string) http.Handler {
+func Token(store tokenStore, generator func() (string, error)) http.Handler {
 	return mux.Method{
 		"POST": tokenEndpoint(store, generator),
 		"GET":  verifyTokenEndpoint(store),
 	}
 }
 
-func tokenEndpoint(store tokenStore, generator func() string) http.HandlerFunc {
+func tokenEndpoint(store tokenStore, generator func() (string, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("action") == "revoke" {
 			token := r.FormValue("token")
@@ -72,8 +73,15 @@ func tokenEndpoint(store tokenStore, generator func() string) http.HandlerFunc {
 			return
 		}
 
+		tokenString, err := generator()
+		if err != nil {
+			log.Println("handler/token could not generate token:", err)
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+
 		token := data.Token{
-			Token:     generator(),
+			Token:     tokenString,
 			Me:        theCode.Me,
 			ClientID:  theCode.ClientID,
 			Scope:     theCode.Scope,

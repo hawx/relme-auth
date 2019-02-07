@@ -1,6 +1,8 @@
 package data
 
-import "time"
+import (
+	"time"
+)
 
 // Client stores an app's information, so it doesn't have to be queried again. If
 // redirectURI no longer matches then the data is invalidated.

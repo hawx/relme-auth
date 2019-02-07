@@ -3,6 +3,8 @@ package data
 import (
 	"sync"
 	"time"
+
+	"hawx.me/code/relme-auth/random"
 )
 
 type StrategyStore struct {
@@ -24,7 +26,7 @@ func Strategy(name string) (*StrategyStore, error) {
 }
 
 func (s *StrategyStore) Insert(link string) (state string, err error) {
-	state, err = RandomString(64)
+	state, err = random.String(64)
 	if err != nil {
 		return
 	}
