@@ -39,7 +39,19 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 		}
 
 		if me == "" || clientID == "" || redirectURI == "" || state == "" {
-			http.Error(w, "Missing parameter", http.StatusBadRequest)
+			http.Error(w, "missing parameter", http.StatusBadRequest)
+			return
+		}
+
+		me = data.ParseProfileURL(me)
+		if me == "" {
+			http.Error(w, "me is invalid", http.StatusBadRequest)
+			return
+		}
+
+		clientID = data.ParseClientID(clientID)
+		if clientID == "" {
+			http.Error(w, "client_id is invalid", http.StatusBadRequest)
 			return
 		}
 

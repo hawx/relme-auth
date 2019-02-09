@@ -45,8 +45,8 @@ func TestChoose(t *testing.T) {
 	defer s.Close()
 
 	form := url.Values{
-		"me":           {"http://me.example.com/"},
-		"client_id":    {"http://client.example.com/"},
+		"me":           {"http://mE.example.com"},
+		"client_id":    {"http://clIent.exAmple.com"},
 		"redirect_uri": {"http://client.example.com/callback"},
 		"state":        {"some-value"},
 	}
@@ -66,6 +66,60 @@ func TestChoose(t *testing.T) {
 	assert.Equal("http://client.example.com/", store.session.ClientID)
 	assert.Equal("http://client.example.com/callback", store.session.RedirectURI)
 	assert.Equal("some-value", store.session.State)
+}
+
+func TestChooseWithBadMe(t *testing.T) {
+	assert := assert.New(t)
+
+	store := &fakeChooseStore{
+		client: data.Client{
+			ID:          "http://client.example.com/",
+			RedirectURI: "http://client.example.com/callback",
+			Name:        "Client",
+		},
+	}
+	tmpl := &mockTemplate{}
+
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	defer s.Close()
+
+	form := url.Values{
+		"me":           {"http://127.0.0.1/"},
+		"client_id":    {"http://client.example.com/"},
+		"redirect_uri": {"http://client.example.com/callback"},
+		"state":        {"some-value"},
+	}
+
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+	assert.Nil(err)
+	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestChooseWithBadClientID(t *testing.T) {
+	assert := assert.New(t)
+
+	store := &fakeChooseStore{
+		client: data.Client{
+			ID:          "http://client.example.com/",
+			RedirectURI: "http://client.example.com/callback",
+			Name:        "Client",
+		},
+	}
+	tmpl := &mockTemplate{}
+
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	defer s.Close()
+
+	form := url.Values{
+		"me":           {"http://me.example.com"},
+		"client_id":    {"mailto:client.example.com/"},
+		"redirect_uri": {"http://client.example.com/callback"},
+		"state":        {"some-value"},
+	}
+
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+	assert.Nil(err)
+	assert.Equal(http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestChooseWithBadParams(t *testing.T) {
