@@ -10,8 +10,8 @@ import (
 )
 
 type flickrData struct {
-	expectedURL string
-	secret      string
+	me     string
+	secret string
 }
 
 type authFlickr struct {
@@ -49,19 +49,19 @@ func (authFlickr) Name() string {
 	return "flickr"
 }
 
-func (authFlickr) Match(me *url.URL) bool {
-	return me.Hostname() == "www.flickr.com"
+func (authFlickr) Match(profile *url.URL) bool {
+	return profile.Hostname() == "www.flickr.com"
 }
 
-func (strategy *authFlickr) Redirect(expectedURL, _ string) (redirectURL string, err error) {
+func (strategy *authFlickr) Redirect(me, profile string) (redirectURL string, err error) {
 	tempCred, err := strategy.Client.RequestTemporaryCredentials(strategy.httpClient, strategy.CallbackURL, nil)
 	if err != nil {
 		return "", err
 	}
 
 	if err := strategy.Store.Set(tempCred.Token, flickrData{
-		expectedURL: expectedURL,
-		secret:      tempCred.Secret,
+		me:     me,
+		secret: tempCred.Secret,
 	}); err != nil {
 		return "", err
 	}
@@ -106,11 +106,11 @@ func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 		return "", err
 	}
 
-	if !ok || !urlsEqual(fdata.expectedURL, v.Profile.Website) {
+	if !ok || !urlsEqual(fdata.me, v.Profile.Website) {
 		return "", ErrUnauthorized
 	}
 
-	return fdata.expectedURL, nil
+	return fdata.me, nil
 }
 
 type flickrResponse struct {

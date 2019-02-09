@@ -12,9 +12,9 @@ import (
 )
 
 type pgpData struct {
-	expectedURL string
-	profileURI  string
-	challenge   string
+	me        string
+	profile   string
+	challenge string
 }
 
 type authPGP struct {
@@ -38,8 +38,8 @@ func (authPGP) Name() string {
 	return "pgp"
 }
 
-func (authPGP) Match(me *url.URL) bool {
-	return me.String() == "pgp"
+func (authPGP) Match(profile *url.URL) bool {
+	return profile.String() == "pgp"
 }
 
 func (strategy *authPGP) Redirect(me, profile string) (redirectURL string, err error) {
@@ -49,9 +49,9 @@ func (strategy *authPGP) Redirect(me, profile string) (redirectURL string, err e
 	}
 
 	state, err := strategy.Store.Insert(pgpData{
-		expectedURL: me,
-		profileURI:  profile,
-		challenge:   challenge,
+		me:        me,
+		profile:   profile,
+		challenge: challenge,
 	})
 	if err != nil {
 		return "", err
@@ -73,11 +73,11 @@ func (strategy *authPGP) Callback(form url.Values) (string, error) {
 	}
 	fdata := data.(pgpData)
 
-	if err := verify(strategy.httpClient, fdata.profileURI, form.Get("signed"), fdata.challenge); err != nil {
+	if err := verify(strategy.httpClient, fdata.profile, form.Get("signed"), fdata.challenge); err != nil {
 		return "", ErrUnauthorized
 	}
 
-	return fdata.expectedURL, nil
+	return fdata.me, nil
 }
 
 func verify(httpClient *http.Client, keyURL, signed, challenge string) error {

@@ -17,13 +17,13 @@ func (authTrue) Name() string {
 	return "true"
 }
 
-func (authTrue) Match(me *url.URL) bool {
+func (authTrue) Match(profile *url.URL) bool {
 	return true
 }
 
-func (t authTrue) Redirect(expectedURL, _ string) (redirectURL string, err error) {
+func (t authTrue) Redirect(me, profile string) (redirectURL string, err error) {
 	redirectURL = t.baseURL + "/oauth/callback/true?" +
-		url.Values{"expected": {expectedURL}}.Encode()
+		url.Values{"expected": {me}}.Encode()
 
 	return redirectURL, nil
 }

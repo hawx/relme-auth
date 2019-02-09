@@ -26,9 +26,8 @@ type Strategy interface {
 	// be passed around as the "provider" parameter.
 	Name() string
 
-	// Match determines from the found rel="me" links whether this Strategy can be
-	// used.
-	Match(me *url.URL) bool
+	// Match determines from the found profile whether this Strategy can be used.
+	Match(profile *url.URL) bool
 
 	// Redirect returns the URL to redirect the user to begin the authentication flow.
 	Redirect(me, profile string) (redirectURL string, err error)

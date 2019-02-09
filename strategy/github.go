@@ -38,12 +38,12 @@ func (authGitHub) Name() string {
 	return "github"
 }
 
-func (authGitHub) Match(me *url.URL) bool {
-	return me.Hostname() == "github.com"
+func (authGitHub) Match(profile *url.URL) bool {
+	return profile.Hostname() == "github.com"
 }
 
-func (strategy *authGitHub) Redirect(expectedLink, _ string) (redirectURL string, err error) {
-	state, err := strategy.Store.Insert(expectedLink)
+func (strategy *authGitHub) Redirect(me, profile string) (redirectURL string, err error) {
+	state, err := strategy.Store.Insert(me)
 	if err != nil {
 		return "", err
 	}

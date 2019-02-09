@@ -10,8 +10,8 @@ import (
 )
 
 type twitterData struct {
-	expectedURL string
-	secret      string
+	me     string
+	secret string
 }
 
 type authTwitter struct {
@@ -47,19 +47,19 @@ func (authTwitter) Name() string {
 	return "twitter"
 }
 
-func (authTwitter) Match(me *url.URL) bool {
-	return me.Hostname() == "twitter.com"
+func (authTwitter) Match(profile *url.URL) bool {
+	return profile.Hostname() == "twitter.com"
 }
 
-func (strategy *authTwitter) Redirect(expectedURL, _ string) (redirectURL string, err error) {
+func (strategy *authTwitter) Redirect(me, profile string) (redirectURL string, err error) {
 	tempCred, err := strategy.Client.RequestTemporaryCredentials(strategy.httpClient, strategy.CallbackURL, nil)
 	if err != nil {
 		return "", err
 	}
 
 	if err := strategy.Store.Set(tempCred.Token, twitterData{
-		expectedURL: expectedURL,
-		secret:      tempCred.Secret,
+		me:     me,
+		secret: tempCred.Secret,
 	}); err != nil {
 		return "", err
 	}
@@ -103,11 +103,11 @@ func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 		}
 	}
 
-	if !urlsEqual(fdata.expectedURL, profileURL) {
+	if !urlsEqual(fdata.me, profileURL) {
 		return "", ErrUnauthorized
 	}
 
-	return fdata.expectedURL, nil
+	return fdata.me, nil
 }
 
 // Twitter will respond with something containing, which is stupid but whatever.
