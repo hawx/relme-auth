@@ -104,7 +104,7 @@ func TestFlickrAuthFlow(t *testing.T) {
 	defer server.Close()
 
 	flickr := &authFlickr{
-		Client: oauth.Client{
+		client: oauth.Client{
 			TemporaryCredentialRequestURI: server.URL + "/oauth/request_token",
 			ResourceOwnerAuthorizationURI: server.URL + "/oauth/authorize",
 			TokenRequestURI:               server.URL + "/oauth/access_token",
@@ -113,10 +113,10 @@ func TestFlickrAuthFlow(t *testing.T) {
 				Secret: secret,
 			},
 		},
-		CallbackURL: "",
-		Store:       new(fakeStore),
-		APIKey:      id,
-		APIURI:      server.URL + "/services/rest",
+		callbackURL: "",
+		store:       new(fakeStore),
+		apiKey:      id,
+		apiURI:      server.URL + "/services/rest",
 		httpClient:  http.DefaultClient,
 	}
 
@@ -134,4 +134,86 @@ func TestFlickrAuthFlow(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedURL, profileURL)
+}
+
+func TestFlickrAuthFlowWithBadUser(t *testing.T) {
+	const (
+		expectedURL = "http://whatever.example.com"
+		tempToken   = "temp-token"
+		tempSecret  = "temp-secret"
+		nsid        = "someflickrnsid"
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" && r.URL.Path == "/oauth/request_token" &&
+			r.PostFormValue("oauth_consumer_key") == id {
+
+			w.Write([]byte(url.Values{
+				"oauth_callback_confirmed": {"true"},
+				"oauth_token":              {tempToken},
+				"oauth_token_secret":       {tempSecret},
+			}.Encode()))
+		}
+
+		if r.Method == "POST" && r.URL.Path == "/oauth/access_token" &&
+			r.PostFormValue("oauth_token") == tempToken &&
+			r.PostFormValue("oauth_verifier") == tempSecret &&
+			r.PostFormValue("oauth_consumer_key") == id {
+
+			w.Write([]byte(url.Values{
+				"fullname":           {"Someone Someone"},
+				"oauth_token":        {tempToken},
+				"oauth_token_secret": {tempSecret},
+				"user_nsid":          {nsid},
+				"username":           {"someone"},
+			}.Encode()))
+		}
+
+		if r.Method == "GET" && r.URL.Path == "/services/rest" &&
+			r.FormValue("nojsoncallback") == "1" &&
+			r.FormValue("format") == "json" &&
+			r.FormValue("api_key") == id &&
+			r.FormValue("user_id") == nsid &&
+			r.FormValue("method") == "flickr.profile.getProfile" {
+
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"profile": map[string]string{
+					"website": "nope",
+				},
+			})
+		}
+	}))
+	defer server.Close()
+
+	flickr := &authFlickr{
+		client: oauth.Client{
+			TemporaryCredentialRequestURI: server.URL + "/oauth/request_token",
+			ResourceOwnerAuthorizationURI: server.URL + "/oauth/authorize",
+			TokenRequestURI:               server.URL + "/oauth/access_token",
+			Credentials: oauth.Credentials{
+				Token:  id,
+				Secret: secret,
+			},
+		},
+		callbackURL: "",
+		store:       new(fakeStore),
+		apiKey:      id,
+		apiURI:      server.URL + "/services/rest",
+		httpClient:  http.DefaultClient,
+	}
+
+	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s&perms=read", server.URL, tempToken)
+
+	// 1. Redirect
+	redirectURL, err := flickr.Redirect(expectedURL, "")
+	assert.Nil(t, err)
+	assert.Equal(t, expectedRedirectURL, redirectURL)
+
+	// 2. Callback
+	profileURL, err := flickr.Callback(url.Values{
+		"oauth_token":    {tempToken},
+		"oauth_verifier": {tempSecret},
+	})
+	assert.Equal(t, ErrUnauthorized, err)
+	assert.Equal(t, "", profileURL)
 }

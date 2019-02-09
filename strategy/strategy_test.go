@@ -1,6 +1,7 @@
 package strategy
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -52,4 +53,27 @@ func (s *fakeStore) Claim(state string) (link interface{}, ok bool) {
 	}
 
 	return
+}
+
+type oneStore struct {
+	State string
+	Link  interface{}
+}
+
+func (s *oneStore) Insert(link interface{}) (state string, err error) {
+	s.Link = link
+
+	return s.State, nil
+}
+
+func (s *oneStore) Set(key string, value interface{}) error {
+	return errors.New("not used")
+}
+
+func (s *oneStore) Claim(state string) (link interface{}, ok bool) {
+	if state != s.State {
+		return "", false
+	}
+
+	return s.Link, true
 }

@@ -98,7 +98,7 @@ func TestTwitterAuthFlow(t *testing.T) {
 	defer server.Close()
 
 	twitter := &authTwitter{
-		Client: oauth.Client{
+		client: oauth.Client{
 			TemporaryCredentialRequestURI: server.URL + "/oauth/request_token",
 			ResourceOwnerAuthorizationURI: server.URL + "/oauth/authorize",
 			TokenRequestURI:               server.URL + "/oauth/access_token",
@@ -107,9 +107,9 @@ func TestTwitterAuthFlow(t *testing.T) {
 				Secret: secret,
 			},
 		},
-		CallbackURL: "",
-		Store:       new(fakeStore),
-		APIURI:      server.URL + "/1.1",
+		callbackURL: "",
+		store:       new(fakeStore),
+		apiURI:      server.URL + "/1.1",
 		httpClient:  http.DefaultClient,
 	}
 
@@ -127,4 +127,84 @@ func TestTwitterAuthFlow(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedURL, profileURL)
+}
+
+func TestTwitterAuthFlowWithBadUser(t *testing.T) {
+	const (
+		expectedURL = "http://whatever.example.com"
+		shortURL    = "https://t.co/whatever"
+		tempToken   = "temp-token"
+		tempSecret  = "temp-secret"
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" && r.URL.Path == "/oauth/request_token" &&
+			r.PostFormValue("oauth_consumer_key") == id {
+
+			w.Write([]byte(url.Values{
+				"oauth_callback_confirmed": {"true"},
+				"oauth_token":              {tempToken},
+				"oauth_token_secret":       {tempSecret},
+			}.Encode()))
+		}
+
+		if r.Method == "POST" && r.URL.Path == "/oauth/access_token" &&
+			r.PostFormValue("oauth_token") == tempToken &&
+			r.PostFormValue("oauth_verifier") == tempSecret &&
+			r.PostFormValue("oauth_consumer_key") == id {
+
+			w.Write([]byte(url.Values{
+				"oauth_token":        {tempToken},
+				"oauth_token_secret": {tempSecret},
+			}.Encode()))
+		}
+
+		if r.Method == "GET" && r.URL.Path == "/1.1/account/verify_credentials.json" {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"url": "nope",
+				"entities": map[string]interface{}{
+					"url": map[string]interface{}{
+						"urls": []map[string]interface{}{
+							{
+								"url":          "nope",
+								"expanded_url": "nope",
+							},
+						},
+					},
+				},
+			})
+		}
+	}))
+	defer server.Close()
+
+	twitter := &authTwitter{
+		client: oauth.Client{
+			TemporaryCredentialRequestURI: server.URL + "/oauth/request_token",
+			ResourceOwnerAuthorizationURI: server.URL + "/oauth/authorize",
+			TokenRequestURI:               server.URL + "/oauth/access_token",
+			Credentials: oauth.Credentials{
+				Token:  id,
+				Secret: secret,
+			},
+		},
+		callbackURL: "",
+		store:       new(fakeStore),
+		apiURI:      server.URL + "/1.1",
+		httpClient:  http.DefaultClient,
+	}
+
+	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?oauth_token=%s", server.URL, tempToken)
+
+	// 1. Redirect
+	redirectURL, err := twitter.Redirect(expectedURL, "")
+	assert.Nil(t, err)
+	assert.Equal(t, expectedRedirectURL, redirectURL)
+
+	// 2. Callback
+	profileURL, err := twitter.Callback(url.Values{
+		"oauth_token":    {tempToken},
+		"oauth_verifier": {tempSecret},
+	})
+	assert.Equal(t, ErrUnauthorized, err)
+	assert.Equal(t, "", profileURL)
 }

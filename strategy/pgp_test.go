@@ -65,9 +65,9 @@ func TestPGPAuthFlow(t *testing.T) {
 	}
 
 	pgp := &authPGP{
-		AuthURL:    server.URL + "/oauth/authorize",
-		ClientID:   id,
-		Store:      store,
+		authURL:    server.URL + "/oauth/authorize",
+		clientID:   id,
+		store:      store,
 		httpClient: http.DefaultClient,
 	}
 
@@ -111,9 +111,9 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 	}
 
 	pgp := &authPGP{
-		AuthURL:    server.URL + "/oauth/authorize",
-		ClientID:   id,
-		Store:      store,
+		authURL:    server.URL + "/oauth/authorize",
+		clientID:   id,
+		store:      store,
 		httpClient: http.DefaultClient,
 	}
 

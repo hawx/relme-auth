@@ -15,10 +15,10 @@ type twitterData struct {
 }
 
 type authTwitter struct {
-	Client      oauth.Client
-	CallbackURL string
-	Store       strategyStore
-	APIURI      string
+	client      oauth.Client
+	callbackURL string
+	store       strategyStore
+	apiURI      string
 	httpClient  *http.Client
 }
 
@@ -35,10 +35,10 @@ func Twitter(baseURL string, store strategyStore, id, secret string, httpClient 
 	}
 
 	return &authTwitter{
-		Client:      oauthClient,
-		CallbackURL: baseURL + "/oauth/callback/twitter",
-		Store:       store,
-		APIURI:      "https://api.twitter.com/1.1",
+		client:      oauthClient,
+		callbackURL: baseURL + "/oauth/callback/twitter",
+		store:       store,
+		apiURI:      "https://api.twitter.com/1.1",
 		httpClient:  httpClient,
 	}
 }
@@ -52,24 +52,24 @@ func (authTwitter) Match(profile *url.URL) bool {
 }
 
 func (strategy *authTwitter) Redirect(me, profile string) (redirectURL string, err error) {
-	tempCred, err := strategy.Client.RequestTemporaryCredentials(strategy.httpClient, strategy.CallbackURL, nil)
+	tempCred, err := strategy.client.RequestTemporaryCredentials(strategy.httpClient, strategy.callbackURL, nil)
 	if err != nil {
 		return "", err
 	}
 
-	if err := strategy.Store.Set(tempCred.Token, twitterData{
+	if err := strategy.store.Set(tempCred.Token, twitterData{
 		me:     me,
 		secret: tempCred.Secret,
 	}); err != nil {
 		return "", err
 	}
 
-	return strategy.Client.AuthorizationURL(tempCred, nil), nil
+	return strategy.client.AuthorizationURL(tempCred, nil), nil
 }
 
 func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 	oauthToken := form.Get("oauth_token")
-	data, ok := strategy.Store.Claim(oauthToken)
+	data, ok := strategy.store.Claim(oauthToken)
 	if !ok {
 		return "", errors.New("unknown oauth_token")
 	}
@@ -79,12 +79,12 @@ func (strategy *authTwitter) Callback(form url.Values) (string, error) {
 		Token:  oauthToken,
 		Secret: fdata.secret,
 	}
-	tokenCred, _, err := strategy.Client.RequestToken(strategy.httpClient, tempCred, form.Get("oauth_verifier"))
+	tokenCred, _, err := strategy.client.RequestToken(strategy.httpClient, tempCred, form.Get("oauth_verifier"))
 	if err != nil {
 		return "", errors.New("error getting request token, " + err.Error())
 	}
 
-	resp, err := strategy.Client.Get(strategy.httpClient, tokenCred, strategy.APIURI+"/account/verify_credentials.json", nil)
+	resp, err := strategy.client.Get(strategy.httpClient, tokenCred, strategy.apiURI+"/account/verify_credentials.json", nil)
 	if err != nil {
 		return "", err
 	}

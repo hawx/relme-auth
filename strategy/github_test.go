@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -78,7 +77,7 @@ func TestGitHubAuthFlow(t *testing.T) {
 	defer server.Close()
 
 	gitHub := &authGitHub{
-		Conf: &oauth2.Config{
+		conf: &oauth2.Config{
 			ClientID:     id,
 			ClientSecret: secret,
 			Scopes:       []string{},
@@ -87,8 +86,8 @@ func TestGitHubAuthFlow(t *testing.T) {
 				TokenURL: server.URL + "/oauth/access_token",
 			},
 		},
-		Store:  &oneStore{State: state},
-		APIURI: server.URL,
+		store:  &oneStore{State: state},
+		apiURI: server.URL,
 	}
 
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?access_type=offline&client_id=%s&response_type=code&state=%s", server.URL, id, state)
@@ -107,25 +106,59 @@ func TestGitHubAuthFlow(t *testing.T) {
 	assert.Equal(t, expectedURL, profileURL)
 }
 
-type oneStore struct {
-	State string
-	Link  interface{}
-}
+func TestGitHubAuthFlowWithBadUser(t *testing.T) {
+	const (
+		expectedURL = "http://whatever.example.com"
+		state       = "randomstatestring"
+		code        = "somecode"
+		accessToken = "the-access-key"
+	)
 
-func (s *oneStore) Insert(link interface{}) (state string, err error) {
-	s.Link = link
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" && r.URL.Path == "/oauth/access_token" &&
+			r.PostFormValue("code") == code {
 
-	return s.State, nil
-}
+			w.Write([]byte(url.Values{
+				"access_token": {accessToken},
+			}.Encode()))
+		}
 
-func (s *oneStore) Set(key string, value interface{}) error {
-	return errors.New("not used")
-}
+		if r.Method == "GET" && r.URL.Path == "/user" &&
+			r.Header.Get("Authorization") == "Bearer "+accessToken {
 
-func (s *oneStore) Claim(state string) (link interface{}, ok bool) {
-	if state != s.State {
-		return "", false
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"blog": "nope",
+			})
+		}
+	}))
+	defer server.Close()
+
+	gitHub := &authGitHub{
+		conf: &oauth2.Config{
+			ClientID:     id,
+			ClientSecret: secret,
+			Scopes:       []string{},
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  server.URL + "/oauth/authorize",
+				TokenURL: server.URL + "/oauth/access_token",
+			},
+		},
+		store:  &oneStore{State: state},
+		apiURI: server.URL,
 	}
 
-	return s.Link, true
+	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?access_type=offline&client_id=%s&response_type=code&state=%s", server.URL, id, state)
+
+	// 1. Redirect
+	redirectURL, err := gitHub.Redirect(expectedURL, "")
+	assert.Nil(t, err)
+	assert.Equal(t, expectedRedirectURL, redirectURL)
+
+	// 2. Callback
+	profileURL, err := gitHub.Callback(url.Values{
+		"state": {state},
+		"code":  {code},
+	})
+	assert.Equal(t, ErrUnauthorized, err)
+	assert.Equal(t, "", profileURL)
 }

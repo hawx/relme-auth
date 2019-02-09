@@ -15,12 +15,12 @@ type flickrData struct {
 }
 
 type authFlickr struct {
-	Client      oauth.Client
-	APIKey      string
-	CallbackURL string
-	Store       strategyStore
-	APIURI      string
+	apiKey      string
+	apiURI      string
+	callbackURL string
+	client      oauth.Client
 	httpClient  *http.Client
+	store       strategyStore
 }
 
 // Flickr provides a strategy for authenticating with https://www.flickr.com.
@@ -36,12 +36,12 @@ func Flickr(baseURL string, store strategyStore, id, secret string, httpClient *
 	}
 
 	return &authFlickr{
-		Client:      oauthClient,
-		CallbackURL: baseURL + "/oauth/callback/flickr",
-		Store:       store,
-		APIKey:      id,
-		APIURI:      "https://api.flickr.com/services/rest",
+		apiKey:      id,
+		apiURI:      "https://api.flickr.com/services/rest",
+		callbackURL: baseURL + "/oauth/callback/flickr",
+		client:      oauthClient,
 		httpClient:  httpClient,
+		store:       store,
 	}
 }
 
@@ -54,24 +54,24 @@ func (authFlickr) Match(profile *url.URL) bool {
 }
 
 func (strategy *authFlickr) Redirect(me, profile string) (redirectURL string, err error) {
-	tempCred, err := strategy.Client.RequestTemporaryCredentials(strategy.httpClient, strategy.CallbackURL, nil)
+	tempCred, err := strategy.client.RequestTemporaryCredentials(strategy.httpClient, strategy.callbackURL, nil)
 	if err != nil {
 		return "", err
 	}
 
-	if err := strategy.Store.Set(tempCred.Token, flickrData{
+	if err := strategy.store.Set(tempCred.Token, flickrData{
 		me:     me,
 		secret: tempCred.Secret,
 	}); err != nil {
 		return "", err
 	}
 
-	return strategy.Client.AuthorizationURL(tempCred, url.Values{"perms": {"read"}}), nil
+	return strategy.client.AuthorizationURL(tempCred, url.Values{"perms": {"read"}}), nil
 }
 
 func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 	oauthToken := form.Get("oauth_token")
-	data, ok := strategy.Store.Claim(oauthToken)
+	data, ok := strategy.store.Claim(oauthToken)
 	if !ok {
 		return "", errors.New("unknown oauth_token")
 	}
@@ -81,17 +81,17 @@ func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 		Token:  oauthToken,
 		Secret: fdata.secret,
 	}
-	tokenCred, vals, err := strategy.Client.RequestToken(strategy.httpClient, tempCred, form.Get("oauth_verifier"))
+	tokenCred, vals, err := strategy.client.RequestToken(strategy.httpClient, tempCred, form.Get("oauth_verifier"))
 	if err != nil {
 		return "", errors.New("error getting request token, " + err.Error())
 	}
 
 	nsid := vals.Get("user_nsid")
 
-	resp, err := strategy.Client.Get(strategy.httpClient, tokenCred, strategy.APIURI, url.Values{
+	resp, err := strategy.client.Get(strategy.httpClient, tokenCred, strategy.apiURI, url.Values{
 		"nojsoncallback": {"1"},
 		"format":         {"json"},
-		"api_key":        {strategy.APIKey},
+		"api_key":        {strategy.apiKey},
 		"user_id":        {nsid},
 		"method":         {"flickr.profile.getProfile"},
 	})

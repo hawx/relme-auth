@@ -10,9 +10,9 @@ import (
 )
 
 type authGitHub struct {
-	Conf   *oauth2.Config
-	Store  strategyStore
-	APIURI string
+	conf   *oauth2.Config
+	store  strategyStore
+	apiURI string
 }
 
 // GitHub provides a strategy for authenticating with https://github.com.
@@ -28,9 +28,9 @@ func GitHub(store strategyStore, id, secret string) Strategy {
 	}
 
 	return &authGitHub{
-		Conf:   conf,
-		Store:  store,
-		APIURI: "https://api.github.com",
+		conf:   conf,
+		store:  store,
+		apiURI: "https://api.github.com",
 	}
 }
 
@@ -43,16 +43,16 @@ func (authGitHub) Match(profile *url.URL) bool {
 }
 
 func (strategy *authGitHub) Redirect(me, profile string) (redirectURL string, err error) {
-	state, err := strategy.Store.Insert(me)
+	state, err := strategy.store.Insert(me)
 	if err != nil {
 		return "", err
 	}
 
-	return strategy.Conf.AuthCodeURL(state, oauth2.AccessTypeOffline), nil
+	return strategy.conf.AuthCodeURL(state, oauth2.AccessTypeOffline), nil
 }
 
 func (strategy *authGitHub) Callback(form url.Values) (string, error) {
-	data, ok := strategy.Store.Claim(form.Get("state"))
+	data, ok := strategy.store.Claim(form.Get("state"))
 	if !ok {
 		return "", errors.New("how did you get here?")
 	}
@@ -60,13 +60,13 @@ func (strategy *authGitHub) Callback(form url.Values) (string, error) {
 
 	ctx := context.Background()
 
-	tok, err := strategy.Conf.Exchange(ctx, form.Get("code"))
+	tok, err := strategy.conf.Exchange(ctx, form.Get("code"))
 	if err != nil {
 		return "", err
 	}
 
-	client := strategy.Conf.Client(ctx, tok)
-	resp, err := client.Get(strategy.APIURI + "/user")
+	client := strategy.conf.Client(ctx, tok)
+	resp, err := client.Get(strategy.apiURI + "/user")
 	if err != nil {
 		return "", err
 	}
