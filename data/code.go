@@ -40,5 +40,10 @@ func (d *Database) Code(c string) (code Code, err error) {
 		&code.RedirectURI,
 		&code.Scope,
 		&code.CreatedAt)
+	if err != nil {
+		return
+	}
+
+	_, err = d.db.Exec(`DELETE FROM session WHERE Code = ?`, c)
 	return
 }
