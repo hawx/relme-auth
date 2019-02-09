@@ -38,6 +38,11 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			responseType = "id"
 		}
 
+		if me == "" || clientID == "" || redirectURI == "" || state == "" {
+			http.Error(w, "Missing parameter", http.StatusBadRequest)
+			return
+		}
+
 		switch responseType {
 		case "id":
 			store.CreateSession(data.Session{
@@ -65,7 +70,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			})
 
 		default:
-			http.Error(w, "Unknown response_type", http.StatusInternalServerError)
+			http.Error(w, "Unknown response_type", http.StatusBadRequest)
 			return
 		}
 
