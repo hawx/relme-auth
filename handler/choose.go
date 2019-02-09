@@ -56,6 +56,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			return
 		}
 
+		var scopes []string
 		switch responseType {
 		case "id":
 			store.CreateSession(data.Session{
@@ -68,7 +69,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			})
 
 		case "code":
-			scopes := strings.Fields(scope)
+			scopes = strings.Fields(scope)
 			if len(scopes) == 0 {
 				http.Error(w, "At least one scope must be provided", http.StatusBadRequest)
 				return
@@ -96,11 +97,14 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			return
 		}
 
-		if err := templates.ExecuteTemplate(w, "choose.gotmpl", chooseCtx{
+		tmplCtx := chooseCtx{
 			ClientID:   client.ID,
 			ClientName: client.Name,
 			Me:         me,
-		}); err != nil {
+			Scopes:     scopes,
+		}
+
+		if err := templates.ExecuteTemplate(w, "choose.gotmpl", tmplCtx); err != nil {
 			log.Println("handler/choose failed to write template:", err)
 		}
 	})
@@ -110,4 +114,5 @@ type chooseCtx struct {
 	ClientID   string
 	ClientName string
 	Me         string
+	Scopes     []string
 }

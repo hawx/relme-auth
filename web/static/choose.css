@@ -78,6 +78,18 @@ h2 {
     color: #666;
 }
 
+p {
+    margin: 1rem 0;
+}
+
+.scope {
+    margin-left: 1rem;
+}
+
+.scope + .scope {
+    margin-left: .5rem;
+}
+
 ul.methods {
     padding-left: 1rem;
 }

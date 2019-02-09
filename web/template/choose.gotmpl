@@ -12,6 +12,16 @@
       <header>
         <h1>Sign-in to {{ .ClientName }}</h1>
         <h2>{{ .ClientID }}</h2>
+
+        {{ if .Scopes }}
+        <p>The app is requesting the following scopes:</p>
+        {{ range .Scopes }}
+          <label class="scope">
+            <input type="checkbox" name="scope" value="{{ . }}" checked disabled />
+            {{ . }}
+          </label>
+        {{ end }}
+        {{ end }}
       </header>
 
       <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong></p>
