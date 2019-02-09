@@ -4,173 +4,7 @@
     <meta charset="utf-8" />
     <title>relme-auth</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      /* http://meyerweb.com/eric/tools/css/reset/
-         v2.0 | 20110126
-         License: none (public domain)
-       */
-
-      html, body, div, span, applet, object, iframe,
-      h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-      a, abbr, acronym, address, big, cite, code,
-      del, dfn, em, img, ins, kbd, q, s, samp,
-      small, strike, strong, sub, sup, tt, var,
-      b, u, i, center,
-      dl, dt, dd, ol, ul, li,
-      fieldset, form, label, legend,
-      table, caption, tbody, tfoot, thead, tr, th, td,
-      article, aside, canvas, details, embed,
-      figure, figcaption, footer, header, hgroup,
-      menu, nav, output, ruby, section, summary,
-      time, mark, audio, video {
-	      margin: 0;
-	      padding: 0;
-	      border: 0;
-	      font-size: 100%;
-	      font: inherit;
-	      vertical-align: baseline;
-      }
-      /* HTML5 display-role reset for older browsers */
-      article, aside, details, figcaption, figure,
-      footer, header, hgroup, menu, nav, section {
-	      display: block;
-      }
-      body {
-	      line-height: 1;
-      }
-      ol, ul {
-	      list-style: none;
-      }
-      blockquote, q {
-	      quotes: none;
-      }
-      blockquote:before, blockquote:after,
-      q:before, q:after {
-	      content: '';
-	      content: none;
-      }
-      table {
-	      border-collapse: collapse;
-	      border-spacing: 0;
-      }
-
-      /* start */
-
-      body {
-        font: 18px/1.3 sans-serif;
-      }
-
-      @media screen and (min-width: 100rem) {
-        @supports (display: grid) {
-          body {
-            display: grid;
-            grid-template-areas: "header header" "users developers" "footer footer";
-          }
-
-          #users .container {
-            margin-right: 0;
-          }
-          #developers .container {
-            margin-left: 0;
-          }
-        }
-      }
-
-      #users {
-        grid-area: users;
-      }
-      #developers {
-        grid-area: developers;
-      }
-      footer {
-        grid-area: footer;
-        font-size: .9rem;
-        text-align: center;
-        padding: 2rem 0 3rem;
-      }
-
-      header {
-        grid-area: header;
-        height: 70vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-        text-align: center;
-        background: rgb(240, 240, 240);
-        border-bottom: 1px solid rgb(210, 210, 210)
-      }
-
-      header h1 {
-        font-size: 2rem;
-        font-weight: bold;
-        font-family: monospace;
-      }
-
-      header h2 {
-        font-style: italic;
-        margin-bottom: 2rem;
-      }
-
-      header p {
-        margin: 1rem;
-      }
-
-      .field {
-        display: flex;
-      }
-
-      .field input {
-        margin-right: 5px;
-      }
-
-      @media screen and (max-width: 30rem) {
-        .field {
-          display: block;
-        }
-
-        .field input {
-          margin-bottom: .5rem;
-          margin-right: 0;
-        }
-      }
-
-      .container {
-        max-width: 40rem;
-        margin: 0 auto;
-        padding: 2rem;
-      }
-
-      section h1 {
-        font-size: 1.6rem;
-        margin: 1rem -1rem;
-      }
-      section h2 {
-        font-size: 1.2rem;
-        margin: 1rem -1rem;
-      }
-
-      pre {
-        padding: 1rem;
-        margin: 1rem 0;
-        background: rgb(240, 240, 240);
-        overflow-x: scroll;
-      }
-
-      code {
-        font: .9rem/1.3 monospace;
-      }
-      strong { font-weight: bold; }
-      dl {
-        margin-top: 1rem;
-      }
-      dd {
-        margin-bottom: 1rem;
-      }
-
-      p + p {
-        margin-top: 1rem;
-      }
-    </style>
+    <link rel="stylesheet" href="/public/welcome.css" />
   </head>
   <body>
     <header class="h-app">
@@ -204,61 +38,54 @@
         <p>You can log in to this site without creating a new account! Instead make sure one (or more) of
           the methods below is setup.</p>
 
-        <h2 id="pgp">PGP</h2>
-        <ol>
-          <li>To authenticate with your PGP key add a link to your public key on your homepage.
-            <pre><code>&lt;a rel="pgpkey" href="/key.asc"&gt;Key&lt;/a&gt;</code></pre>
-            Or if you don't want the link to be visible.
-            <pre><code>&lt;link rel="pgpkey" href="/key.asc" /&gt;</code></pre>
-          </li>
-          <li>
-            Sign the challenge when presented.
-            <pre><code>echo 'CHALLENGE' | gpg --clearsign --armor</code></pre>
-          </li>
-        </ol>
+        <h2>Providers</h2>
 
-        {{ if .HasFlickr }}<h2 id="flickr">Flickr</h2>
-        <ol>
-          <li>To authenticate with your Flickr account add a link to your profile on your homepage.
-            <pre><code>&lt;a rel="me" href="https://www.flickr.com/people/YOU"&gt;Flickr&lt;/a&gt;</code></pre>
-            Or if you don't want the link to be visible.
-            <pre><code>&lt;link rel="me" href="https://www.flickr.com/people/YOU" /&gt;</code></pre>
-          </li>
-          <li>Make sure your Flickr profile has a link back to your homepage.</li>
-        </ol>{{ end }}
+        <h3 id="pgp">PGP</h3>
+        <p>To authenticate with your PGP key add a link to your public key on your homepage.</p>
+        <pre><code>&lt;a rel="pgpkey" href="/key.asc"&gt;Key&lt;/a&gt;</code></pre>
+        <p>Or if you don't want the link to be visible.</p>
+        <pre><code>&lt;link rel="pgpkey" href="/key.asc" /&gt;</code></pre>
 
-        {{ if .HasGitHub }}<h2 id="github">GitHub</h2>
-        <ol>
-          <li>To authenticate with your GitHub account add a link to your profile on your homepage.
-            <pre><code>&lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;</code></pre>
-            Or if you don't want the link to be visible.
-            <pre><code>&lt;link rel="me" href="https://github.com/YOU" /&gt;</code></pre>
-          </li>
-          <li>Make sure your GitHub profile has a link back to your homepage.</li>
-        </ol>{{ end }}
+        {{ if .HasFlickr }}
+          <h3 id="flickr">Flickr</h3>
+          <p>To authenticate with your Flickr account add a link to your profile on your homepage.</p>
+          <pre><code>&lt;a rel="me" href="https://www.flickr.com/people/YOU"&gt;Flickr&lt;/a&gt;</code></pre>
+          <p>Or if you don't want the link to be visible.</p>
+          <pre><code>&lt;link rel="me" href="https://www.flickr.com/people/YOU" /&gt;</code></pre>
+          <p>Make sure your Flickr profile has a link back to your homepage.</p>
+        {{ end }}
 
-        {{ if .HasTwitter }}<h2 id="twitter">Twitter</h2>
-        <ol>
-          <li>To authenticate with your Twitter account add a link to your profile on your homepage.
-            <pre><code>&lt;a rel="me" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;</code></pre>
-            Or if you don't want the link to be visible.
-            <pre><code>&lt;link rel="me" href="https://twitter.com/YOU" /&gt;</code></pre>
-          </li>
-          <li>Make sure your Twitter profile has a link back to your homepage.</li>
-        </ol>{{ end }}
+        {{ if .HasGitHub }}
+          <h3 id="github">GitHub</h3>
+          <p>To authenticate with your GitHub account add a link to your profile on your homepage.</p>
+          <pre><code>&lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;</code></pre>
+          <p>Or if you don't want the link to be visible.</p>
+          <pre><code>&lt;link rel="me" href="https://github.com/YOU" /&gt;</code></pre>
+          <p>Make sure your GitHub profile has a link back to your homepage.</p>
+        {{ end }}
 
-        <div>
-          <h2>Choosing auth providers</h2>
+        {{ if .HasTwitter }}
+          <h3 id="twitter">Twitter</h3>
+          <p>To authenticate with your Twitter account add a link to your profile on your homepage.</p>
+          <pre><code>&lt;a rel="me" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;</code></pre>
+          <p>Or if you don't want the link to be visible.</p>
+          <pre><code>&lt;link rel="me" href="https://twitter.com/YOU" /&gt;</code></pre>
+          <p>Make sure your Twitter profile has a link back to your homepage.</p>
+        {{ end }}
 
-          <p>You may want to mark some links up with <code>rel="me"</code>, but
-            not want to consider them for authentication. You can choose which
-            will be considered by using <code>rel="authn me"</code> instead.</p>
+        <h2>Choosing auth providers</h2>
+        <p>You may want to mark some links up with <code>rel="me"</code>, but
+          not want to consider them for authentication. You can choose which
+          will be considered by adding <code>rel="authn"</code> too.</p>
+        <p>In the following example only Twitter and PGP would be shown as options.</p>
+        <pre><code>&lt;a rel="me authn" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;
+&lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;
+&lt;a rel="pgpkey authn" href="/public.asc"&gt;My PGP Key&lt;/a&gt;</code></pre>
 
-          <p>In the following example only Twitter would be shown as an option.</p>
-
-          <pre><code>&lt;a rel="me authn" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;
-&lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;</code></pre>
-        </div>
+        <h2>IndieAuth</h2>
+        <p>To use this service for <a href="https://indieweb.org/IndieAuth">IndieAuth</a>, add the following to your pages <code>&lt;head&gt;</code>:</p>
+        <pre><code>&lt;link rel="authorization_endpoint" href="{{ .ThisURI }}/auth"&gt;
+&lt;link rel="token_endpoint" href="{{ .ThisURI }}/token"&gt;</code></pre>
       </div>
     </section>
 
