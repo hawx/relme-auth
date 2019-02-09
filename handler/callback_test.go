@@ -49,6 +49,7 @@ func TestCallback(t *testing.T) {
 			Me:          "me",
 			State:       "my-state",
 			RedirectURI: "http://example.com/callback",
+			CreatedAt:   time.Now(),
 		},
 	}
 
@@ -82,6 +83,29 @@ func TestCallbackWhenSessionDoesNotExist(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+}
+
+func TestCallbackWhenSessionExpired(t *testing.T) {
+	store := &fakeCallbackStore{
+		session: data.Session{
+			Me:          "me",
+			State:       "my-state",
+			RedirectURI: "http://example.com/callback",
+			CreatedAt:   time.Now().Add(-10 * time.Minute),
+		},
+	}
+
+	s := httptest.NewServer(Callback(store, &fakeStrategy{}, codeGenerator))
+	defer s.Close()
+
+	form := url.Values{
+		"yes": {"ok"},
+	}
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, "", resp.Header.Get("Location"))
 }
 
 func TestCallbackWhenProviderSaysTheyAreUnauthorized(t *testing.T) {

@@ -39,6 +39,10 @@ func Auth(store authStore, strategies strategy.Strategies, httpClient *http.Clie
 			http.Error(w, "you need to start at the start", http.StatusBadRequest)
 			return
 		}
+		if session.Expired() {
+			http.Error(w, "auth session expired", http.StatusBadRequest)
+			return
+		}
 
 		if session.RedirectURI != redirectURI || !verifyRedirectURI(httpClient, session.ClientID, session.RedirectURI) {
 			http.Error(w, "redirect_uri is untrustworthy", http.StatusBadRequest)

@@ -44,6 +44,10 @@ func Callback(store callbackStore, strat strategy.Strategy, generator func() (st
 			http.Error(w, "Who are you?", http.StatusInternalServerError)
 			return
 		}
+		if session.Expired() {
+			http.Error(w, "Auth session expired", http.StatusInternalServerError)
+			return
+		}
 
 		code, err := generator()
 		if err != nil {
