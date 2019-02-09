@@ -179,7 +179,7 @@ func main() {
 	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}
 
 	route.Handle("/ws", handler.WebSocket(strategies, database, relMe))
-	route.Handle("/public/*path", http.StripPrefix("/public", http.FileServer(http.Dir("web/static"))))
+	route.Handle("/public/*path", http.StripPrefix("/public", http.FileServer(http.Dir(*webPath+"/static"))))
 
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,
