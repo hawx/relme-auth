@@ -68,6 +68,27 @@ func TestChoose(t *testing.T) {
 	assert.Equal("some-value", store.session.State)
 }
 
+func TestChooseWhenClientCannotBeRetrieved(t *testing.T) {
+	assert := assert.New(t)
+
+	store := &fakeChooseStore{}
+	tmpl := &mockTemplate{}
+
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	defer s.Close()
+
+	form := url.Values{
+		"me":           {"http://mE.example.com"},
+		"client_id":    {"http://clIent.exAmple.com"},
+		"redirect_uri": {"http://client.example.com/callback"},
+		"state":        {"some-value"},
+	}
+
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+	assert.Nil(err)
+	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+}
+
 func TestChooseWithBadMe(t *testing.T) {
 	assert := assert.New(t)
 

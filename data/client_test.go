@@ -59,3 +59,70 @@ func TestClient(t *testing.T) {
 	assert.WithinDuration(time.Now(), time.Now(), time.Second)
 	assert.Equal(3, callCount)
 }
+
+func TestClientWithMismatchedRedirectURI(t *testing.T) {
+	assert := assert.New(t)
+
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	defer db.Close()
+
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<div class="h-x-app">
+  <h1 class="p-name">My App</h1>
+</div>`))
+	}))
+	defer s.Close()
+
+	_, err := db.Client(s.URL, "http://example.com/callback")
+	assert.NotNil(err)
+}
+
+func TestClientWithWhitelistedMismatchedRedirectURI(t *testing.T) {
+	assert := assert.New(t)
+
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	defer db.Close()
+
+	callCount := 0
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		w.Write([]byte(`<link rel="redirect_uri" href="http://example.com/callback" />
+<div class="h-x-app">
+  <h1 class="p-name">My App</h1>
+</div>`))
+	}))
+	defer s.Close()
+
+	client, err := db.Client(s.URL, "http://example.com/callback")
+	assert.Nil(err)
+	assert.Equal(s.URL, client.ID)
+	assert.Equal("http://example.com/callback", client.RedirectURI)
+	assert.Equal("My App", client.Name)
+	assert.WithinDuration(time.Now(), time.Now(), time.Second)
+	assert.Equal(1, callCount)
+}
+
+func TestClientWithWhitelistedMismatchedRedirectURIInHeader(t *testing.T) {
+	assert := assert.New(t)
+
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	defer db.Close()
+
+	callCount := 0
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		w.Header().Set("Link", `<http://example.com/callback>; rel="redirect_uri"`)
+		w.Write([]byte(`<div class="h-x-app">
+  <h1 class="p-name">My App</h1>
+</div>`))
+	}))
+	defer s.Close()
+
+	client, err := db.Client(s.URL, "http://example.com/callback")
+	assert.Nil(err)
+	assert.Equal(s.URL, client.ID)
+	assert.Equal("http://example.com/callback", client.RedirectURI)
+	assert.Equal("My App", client.Name)
+	assert.WithinDuration(time.Now(), time.Now(), time.Second)
+	assert.Equal(1, callCount)
+}

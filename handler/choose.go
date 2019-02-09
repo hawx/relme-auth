@@ -89,6 +89,8 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 		client, err := store.Client(clientID, redirectURI)
 		if err != nil {
 			log.Println("handler/choose failed to get client:", err)
+			http.Error(w, "failed to retrieve client_id", http.StatusBadRequest)
+			return
 		}
 
 		if err := templates.ExecuteTemplate(w, "choose.gotmpl", chooseCtx{

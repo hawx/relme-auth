@@ -1,8 +1,12 @@
 package data
 
 import (
+	"errors"
+	"log"
+	"net/url"
 	"time"
 
+	"github.com/peterhellberg/link"
 	"hawx.me/code/relme-auth/microformats"
 )
 
@@ -53,6 +57,19 @@ func (d *Database) findClient(clientID, redirectURI string) (client Client, err 
 }
 
 func (d *Database) queryClient(clientID, redirectURI string) (client Client, err error) {
+	parsedClientID, err := url.Parse(clientID)
+	if err != nil {
+		return
+	}
+
+	parsedRedirectURI, err := url.Parse(redirectURI)
+	if err != nil {
+		return
+	}
+
+	redirectOK := parsedClientID.Scheme == parsedRedirectURI.Scheme && parsedClientID.Host == parsedRedirectURI.Host
+	log.Println(parsedClientID, parsedRedirectURI, redirectOK)
+
 	client.ID = clientID
 	client.Name = clientID
 	client.UpdatedAt = time.Now().UTC()
@@ -64,9 +81,68 @@ func (d *Database) queryClient(clientID, redirectURI string) (client Client, err
 	}
 	defer clientInfoResp.Body.Close()
 
-	if clientName, _, okerr := microformats.HApp(clientInfoResp.Body); okerr == nil {
-		client.Name = clientName
+	var whitelist []string
+	if whitelistedRedirect, ok := link.ParseResponse(clientInfoResp)["redirect_uri"]; ok {
+		whitelist = append(whitelist, whitelistedRedirect.URI)
+	}
+
+	if app, okerr := microformats.ParseApp(clientInfoResp.Body); okerr == nil {
+		client.Name = app.Name
+		whitelist = append(whitelist, app.RedirectURIs...)
+	}
+
+	for _, candidate := range whitelist {
+		if candidate == redirectURI {
+			redirectOK = true
+			break
+		}
+	}
+
+	if !redirectOK {
+		err = errors.New("bad redirect_uri")
 	}
 
 	return
+}
+
+func (d *Database) verifyRedirectURI(clientID, redirect string) bool {
+	clientURI, err := url.Parse(clientID)
+	if err != nil {
+		return false
+	}
+
+	redirectURI, err := url.Parse(redirect)
+	if err != nil {
+		return false
+	}
+
+	if clientURI.Scheme == redirectURI.Scheme && clientURI.Host == redirectURI.Host {
+		return true
+	}
+
+	clientResp, err := d.httpClient.Get(clientID)
+	if err != nil {
+		return false
+	}
+	defer clientResp.Body.Close()
+
+	if clientResp.StatusCode < 200 && clientResp.StatusCode >= 300 {
+		return false
+	}
+
+	var whitelist []string
+
+	if whitelistedRedirect, ok := link.ParseResponse(clientResp)["redirect_uri"]; ok {
+		whitelist = append(whitelist, whitelistedRedirect.URI)
+	}
+
+	whitelist = append(whitelist, microformats.RedirectURIs(clientResp.Body)...)
+
+	for _, candidate := range whitelist {
+		if candidate == redirect {
+			return true
+		}
+	}
+
+	return false
 }

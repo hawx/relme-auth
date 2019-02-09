@@ -2,11 +2,8 @@ package handler
 
 import (
 	"net/http"
-	"net/url"
 
-	"github.com/peterhellberg/link"
 	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/microformats"
 	"hawx.me/code/relme-auth/strategy"
 )
 
@@ -43,8 +40,7 @@ func Auth(store authStore, strategies strategy.Strategies, httpClient *http.Clie
 			http.Error(w, "auth session expired", http.StatusBadRequest)
 			return
 		}
-
-		if session.RedirectURI != redirectURI || !verifyRedirectURI(httpClient, session.ClientID, session.RedirectURI) {
+		if session.RedirectURI != redirectURI {
 			http.Error(w, "redirect_uri is untrustworthy", http.StatusBadRequest)
 			return
 		}
@@ -75,46 +71,4 @@ func Auth(store authStore, strategies strategy.Strategies, httpClient *http.Clie
 
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
-}
-
-func verifyRedirectURI(httpClient *http.Client, clientID, redirect string) bool {
-	clientURI, err := url.Parse(clientID)
-	if err != nil {
-		return false
-	}
-
-	redirectURI, err := url.Parse(redirect)
-	if err != nil {
-		return false
-	}
-
-	if clientURI.Scheme == redirectURI.Scheme && clientURI.Host == redirectURI.Host {
-		return true
-	}
-
-	clientResp, err := httpClient.Get(clientID)
-	if err != nil {
-		return false
-	}
-	defer clientResp.Body.Close()
-
-	if clientResp.StatusCode < 200 && clientResp.StatusCode >= 300 {
-		return false
-	}
-
-	var whitelist []string
-
-	if whitelistedRedirect, ok := link.ParseResponse(clientResp)["redirect_uri"]; ok {
-		whitelist = append(whitelist, whitelistedRedirect.URI)
-	}
-
-	whitelist = append(whitelist, microformats.RedirectURIs(clientResp.Body)...)
-
-	for _, candidate := range whitelist {
-		if candidate == redirect {
-			return true
-		}
-	}
-
-	return false
 }
