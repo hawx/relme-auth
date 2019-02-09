@@ -149,7 +149,7 @@ func (s *webSocketServer) canUseCache(request profileRequest) (profile data.Prof
 		return
 	}
 
-	return profile, !profile.Expired()
+	return profile, profile.Me != "" && !profile.Expired()
 }
 
 func (s *webSocketServer) getFromCache(conn *conn, request profileRequest, profile data.Profile) {

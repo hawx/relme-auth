@@ -1,8 +1,6 @@
 package data
 
-import (
-	"time"
-)
+import "time"
 
 const sessionExpiry = -5 * time.Minute
 

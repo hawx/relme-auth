@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/data"
@@ -63,6 +64,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 				RedirectURI:  redirectURI,
 				State:        state,
 				ResponseType: responseType,
+				CreatedAt:    time.Now().UTC(),
 			})
 
 		case "code":
@@ -79,6 +81,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 				State:        state,
 				ResponseType: responseType,
 				Scope:        strings.Join(scopes, " "),
+				CreatedAt:    time.Now().UTC(),
 			})
 
 		default:

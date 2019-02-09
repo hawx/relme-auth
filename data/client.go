@@ -2,7 +2,6 @@ package data
 
 import (
 	"errors"
-	"log"
 	"net/url"
 	"time"
 
@@ -68,7 +67,6 @@ func (d *Database) queryClient(clientID, redirectURI string) (client Client, err
 	}
 
 	redirectOK := parsedClientID.Scheme == parsedRedirectURI.Scheme && parsedClientID.Host == parsedRedirectURI.Host
-	log.Println(parsedClientID, parsedRedirectURI, redirectOK)
 
 	client.ID = clientID
 	client.Name = clientID
