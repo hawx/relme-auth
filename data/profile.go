@@ -16,7 +16,7 @@ type Profile struct {
 }
 
 func (p Profile) Expired() bool {
-	return time.Now().Add(profileExpiry).After(p.UpdatedAt)
+	return p.Me != "" && time.Now().Add(profileExpiry).After(p.UpdatedAt)
 }
 
 // Method is a way a user can authenticate, it contains the name of a 3rd party
@@ -27,18 +27,38 @@ type Method struct {
 }
 
 func (d *Database) CacheProfile(profile Profile) error {
-	_, err := d.db.Exec(`INSERT OR REPLACE INTO profile(Me, CreatedAt) VALUES(?, ?)`,
+	_, err := d.db.Exec(`
+    DELETE FROM method WHERE Me = ?;
+    DELETE FROM profile WHERE Me = ?;
+    INSERT INTO profile(Me, CreatedAt) VALUES(?, ?);
+  `,
+		profile.Me,
+		profile.Me,
 		profile.Me,
 		profile.UpdatedAt)
 
-	for _, method := range profile.Methods {
-		_, err = d.db.Exec(`INSERT OR REPLACE INTO method(Me, Provider, Profile) VALUES(?, ?, ?)`,
-			profile.Me,
-			method.Provider,
-			method.Profile)
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(`INSERT INTO method(Me, Provider, Profile) VALUES(?, ?, ?)`)
+	if err != nil {
+		return err
 	}
 
-	return err
+	for _, method := range profile.Methods {
+		_, err = stmt.Exec(profile.Me, method.Provider, method.Profile)
+	}
+
+	if err != nil {
+		terr := tx.Rollback()
+		if terr != nil {
+			return terr
+		}
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (d *Database) Profile(me string) (Profile, error) {

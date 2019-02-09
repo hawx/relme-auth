@@ -43,7 +43,7 @@ func TestStrategyExpiry(t *testing.T) {
 	state, err := store.Insert("http://example.com")
 	assert.Nil(err)
 
-	<-time.After(500 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	link, ok := store.Claim(state)
 	assert.True(ok)
 	assert.Equal("http://example.com", link)
@@ -51,9 +51,8 @@ func TestStrategyExpiry(t *testing.T) {
 	state, err = store.Insert("http://example.com")
 	assert.Nil(err)
 
-	<-time.After(2 * time.Second)
+	time.Sleep(2 * time.Second)
 	link, ok = store.Claim(state)
 	assert.False(ok)
 	assert.Equal("", link)
-
 }
