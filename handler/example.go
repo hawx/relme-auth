@@ -15,11 +15,7 @@ import (
 // this package.
 func Example(baseURL string, conf config.Config, store sessions.Store, templates tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := store.Get(r, "example-session")
-		if err != nil {
-			http.Error(w, "can't get cookies...", http.StatusInternalServerError)
-			return
-		}
+		session, _ := store.Get(r, "example-session")
 
 		var me string
 		meValue, ok := session.Values["me"]
@@ -54,11 +50,7 @@ func Example(baseURL string, conf config.Config, store sessions.Store, templates
 // verifies the code, then sets the value of "me" in a session cookie.
 func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := store.Get(r, "example-session")
-		if err != nil {
-			http.Error(w, "can't get cookies...", http.StatusInternalServerError)
-			return
-		}
+		session, _ := store.Get(r, "example-session")
 
 		code := r.FormValue("code")
 		state := r.FormValue("state")
@@ -98,11 +90,7 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 // ExampleSignOut removes the value of "me" from the session cookie.
 func ExampleSignOut(baseURL string, store sessions.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := store.Get(r, "example-session")
-		if err != nil {
-			http.Error(w, "can't get cookies...", http.StatusInternalServerError)
-			return
-		}
+		session, _ := store.Get(r, "example-session")
 
 		delete(session.Values, "me")
 		if err := session.Save(r, w); err != nil {
