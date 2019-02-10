@@ -171,9 +171,10 @@ func main() {
 	if *exampleSecret != "" {
 		exampleSessionStore := sessions.NewCookieStore([]byte(*exampleSecret))
 
-		route.Handle("/", handler.Example(*baseURL, conf, exampleSessionStore, templates))
+		route.Handle("/", handler.Example(*baseURL, conf, exampleSessionStore, database, templates))
 		route.Handle("/callback", handler.ExampleCallback(*baseURL, exampleSessionStore))
 		route.Handle("/sign-out", handler.ExampleSignOut(*baseURL, exampleSessionStore))
+		route.Handle("/revoke", handler.ExampleRevoke(*baseURL, exampleSessionStore, database))
 	}
 
 	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}

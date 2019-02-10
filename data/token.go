@@ -34,8 +34,41 @@ func (d *Database) Token(t string) (token Token, err error) {
 	return
 }
 
+func (d *Database) Tokens(me string) (tokens []Token, err error) {
+	rows, err := d.db.Query(`SELECT Token, Me, ClientID, Scope, CreatedAt FROM token WHERE Me = ?`,
+		me)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var token Token
+		if err = rows.Scan(
+			&token.Token,
+			&token.Me,
+			&token.ClientID,
+			&token.Scope,
+			&token.CreatedAt,
+		); err != nil {
+			return
+		}
+
+		tokens = append(tokens, token)
+	}
+
+	err = rows.Err()
+	return
+}
+
 func (d *Database) RevokeToken(token string) error {
 	_, err := d.db.Exec(`DELETE FROM token WHERE Token = ?`, token)
+
+	return err
+}
+
+func (d *Database) RevokeClient(me, clientID string) error {
+	_, err := d.db.Exec(`DELETE FROM token WHERE Me = ? AND ClientID = ?`, me, clientID)
 
 	return err
 }

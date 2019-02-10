@@ -8,28 +8,36 @@ import (
 
 	"github.com/gorilla/sessions"
 	"hawx.me/code/relme-auth/config"
+	"hawx.me/code/relme-auth/data"
 	"hawx.me/code/relme-auth/random"
 )
 
+type exampleStore interface {
+	Tokens(string) ([]data.Token, error)
+	RevokeClient(me, clientID string) error
+}
+
 // Example implements a basic site using the authentication flow provided by
 // this package.
-func Example(baseURL string, conf config.Config, store sessions.Store, templates tmpl) http.HandlerFunc {
+func Example(baseURL string, conf config.Config, store sessions.Store, tokenStore exampleStore, templates tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "example-session")
 
 		var me string
+		var tokens []data.Token
+
 		meValue, ok := session.Values["me"]
 		if ok {
 			me, ok = meValue.(string)
 		}
+		if ok {
+			tokens, _ = tokenStore.Tokens(me)
+		}
 
-		var state string
-		if !ok {
-			state, _ = random.String(64)
-			session.Values["state"] = state
-			if err := session.Save(r, w); err != nil {
-				log.Println("handler/example could not save session:", err)
-			}
+		state, _ := random.String(64)
+		session.Values["state"] = state
+		if err := session.Save(r, w); err != nil {
+			log.Println("handler/example could not save session:", err)
 		}
 
 		if err := templates.ExecuteTemplate(w, "welcome.gotmpl", welcomeCtx{
@@ -40,6 +48,7 @@ func Example(baseURL string, conf config.Config, store sessions.Store, templates
 			HasFlickr:  conf.Flickr != nil,
 			HasGitHub:  conf.GitHub != nil,
 			HasTwitter: conf.Twitter != nil,
+			Tokens:     tokens,
 		}); err != nil {
 			log.Println("handler/example failed to write template:", err)
 		}
@@ -101,6 +110,28 @@ func ExampleSignOut(baseURL string, store sessions.Store) http.HandlerFunc {
 	}
 }
 
+// ExampleRevoke removes the token for the client_id.
+func ExampleRevoke(baseURL string, store sessions.Store, tokenStore exampleStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		clientID := r.FormValue("client_id")
+
+		session, _ := store.Get(r, "example-session")
+
+		var me string
+		meValue, ok := session.Values["me"]
+		if ok {
+			me, ok = meValue.(string)
+		}
+		if ok {
+			if err := tokenStore.RevokeClient(me, clientID); err != nil {
+				log.Println("handler/example failed to revoke client:", err)
+			}
+		}
+
+		http.Redirect(w, r, baseURL, http.StatusFound)
+	}
+}
+
 type exampleResponse struct {
 	Me string `json:"me"`
 }
@@ -113,4 +144,5 @@ type welcomeCtx struct {
 	HasFlickr  bool
 	HasGitHub  bool
 	HasTwitter bool
+	Tokens     []data.Token
 }

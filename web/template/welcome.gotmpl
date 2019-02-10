@@ -14,9 +14,28 @@
 
         {{ if .LoggedIn }}
         <p>You are logged in as <strong>{{ .Me }}</strong>.</p>
+
         <form action="/sign-out" method="post">
           <button type="submit">Sign Out</button>
         </form>
+
+        <div class="apps">
+          <h3>Authorized Apps</h3>
+          <p>You have granted {{ len .Tokens }} application{{ if gt (len .Tokens) 1 }}s{{ end }} access.</p>
+
+          {{ range .Tokens }}
+            <div class="granted">
+              <span>
+                <a href="{{ .ClientID }}">{{ .ClientID }}</a>
+                on <time>{{ .CreatedAt.Format "2 Jan" }}</time>
+                with <code>{{ .Scope }}</code>
+              </span>
+              <form action="/revoke?client_id={{ .ClientID }}" method="post">
+                <button type="submit">Revoke</button>
+              </form>
+            </div>
+          {{ end }}
+        </div>
         {{ end }}{{ if not .LoggedIn }}<p>Try signing in to this site:</p>
 
         <form action="/auth" method="get">

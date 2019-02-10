@@ -104,6 +104,28 @@ header h2 {
     margin-bottom: 2rem;
 }
 
+header h3 {
+    font-weight: bold;
+}
+
+header .apps {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgb(210, 210, 210);
+    text-align: left;
+}
+
+header .granted {
+    margin: .5rem 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+header .apps form {
+    margin-left: 1rem;
+    display: inline;
+}
+
 .field {
     display: flex;
 }
