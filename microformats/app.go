@@ -3,9 +3,9 @@ package microformats
 import (
 	"errors"
 	"io"
-	"strings"
+	"net/url"
 
-	"golang.org/x/net/html"
+	"willnorris.com/go/microformats"
 )
 
 // ErrNoApp is used to signal when no app microformat exists.
@@ -17,104 +17,48 @@ type App struct {
 	RedirectURIs []string
 }
 
-func ParseApp(r io.Reader) (app App, err error) {
-	root, err := html.Parse(r)
-	if err != nil {
-		return
+func ParseApp(r io.Reader, baseURL *url.URL) (app App, err error) {
+	var appExists bool
+	data := microformats.Parse(r, baseURL)
+
+	app.RedirectURIs = data.Rels["redirect_uri"]
+
+	for _, item := range data.Items {
+		if hasEitherType(item.Type, "h-app", "h-x-app") {
+			appExists = true
+
+			if len(item.Properties["name"]) == 1 {
+				name, ok := item.Properties["name"][0].(string)
+				if ok {
+					app.Name = name
+				}
+			}
+
+			if len(item.Properties["url"]) == 1 {
+				url, ok := item.Properties["url"][0].(string)
+				if ok {
+					app.URL = url
+				}
+			}
+		}
 	}
 
-	hApp := searchAll(root, hasEitherClass("h-x-app", "h-app"))
-	if len(hApp) == 0 {
-		err = ErrNoApp
-		return
-	}
-
-	uURL := searchAll(hApp[0], hasClass("u-url"))
-	if len(uURL) != 0 {
-		app.URL = getAttr(uURL[0], "href")
-	}
-
-	pName := searchAll(hApp[0], hasClass("p-name"))
-	if len(pName) != 0 {
-		app.Name = textOf(pName[0])
-	} else if app.URL != "" {
+	if app.Name == "" {
 		app.Name = app.URL
 	}
 
-	redirectLinks := searchAll(root, func(node *html.Node) bool {
-		if node.Type == html.ElementNode && node.Data == "link" {
-			rels := strings.Fields(getAttr(node, "rel"))
-			for _, rel := range rels {
-				if rel == "redirect_uri" {
-					return true
-				}
-			}
-		}
-
-		return false
-	})
-
-	for _, node := range redirectLinks {
-		app.RedirectURIs = append(app.RedirectURIs, getAttr(node, "href"))
-	}
-
-	return
-}
-
-// HApp attempts to find the name and url provided by the h-app or h-x-app
-// microformat.
-func HApp(r io.Reader) (name string, url string, err error) {
-	root, err := html.Parse(r)
-	if err != nil {
-		return
-	}
-
-	hApp := searchAll(root, hasEitherClass("h-x-app", "h-app"))
-	if len(hApp) == 0 {
+	if !appExists {
 		err = ErrNoApp
-		return
-	}
-
-	uURL := searchAll(hApp[0], hasClass("u-url"))
-	if len(uURL) != 0 {
-		url = getAttr(uURL[0], "href")
-	}
-
-	pName := searchAll(hApp[0], hasClass("p-name"))
-	if len(pName) != 0 {
-		name = textOf(pName[0])
-	} else if url != "" {
-		name = url
 	}
 
 	return
 }
 
-// RedirectURIs finds whitelisted redirect_uris from the Reader.
-func RedirectURIs(r io.Reader) []string {
-	var whitelist []string
-
-	root, err := html.Parse(r)
-	if err != nil {
-		return whitelist
-	}
-
-	redirectLinks := searchAll(root, func(node *html.Node) bool {
-		if node.Type == html.ElementNode && node.Data == "link" {
-			rels := strings.Fields(getAttr(node, "rel"))
-			for _, rel := range rels {
-				if rel == "redirect_uri" {
-					return true
-				}
-			}
+func hasEitherType(list []string, a, b string) bool {
+	for _, item := range list {
+		if item == a || item == b {
+			return true
 		}
-
-		return false
-	})
-
-	for _, node := range redirectLinks {
-		whitelist = append(whitelist, getAttr(node, "href"))
 	}
-
-	return whitelist
+	return false
 }

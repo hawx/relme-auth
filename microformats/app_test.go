@@ -14,7 +14,7 @@ type testCase struct {
 	ExpectedURL  string
 }
 
-func TestHAppParseApp(t *testing.T) {
+func TestParseApp(t *testing.T) {
 	testCases := []testCase{
 		{
 			Name: "x",
@@ -50,11 +50,11 @@ func TestHAppParseApp(t *testing.T) {
 			ExpectedURL:  "http://host",
 		},
 		{
-			Name: "no name",
+			Name: "no explicit name",
 			HTML: `<div class="h-app">
   <a class="u-url" href="http://host">[here]</a>
 </div>`,
-			ExpectedName: "http://host",
+			ExpectedName: "[here]",
 			ExpectedURL:  "http://host",
 		},
 		{
@@ -71,17 +71,17 @@ func TestHAppParseApp(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			r := strings.NewReader(testCase.HTML)
 
-			name, url, err := HApp(r)
+			app, err := ParseApp(r, nil)
 			assert.Nil(t, err)
-			assert.Equal(t, testCase.ExpectedName, name)
-			assert.Equal(t, testCase.ExpectedURL, url)
+			assert.Equal(t, testCase.ExpectedName, app.Name)
+			assert.Equal(t, testCase.ExpectedURL, app.URL)
 		})
 	}
 }
 
-func TestHAppParseWhenNoApp(t *testing.T) {
+func TestParseAppWhenNone(t *testing.T) {
 	r := strings.NewReader("")
 
-	_, _, err := HApp(r)
+	_, err := ParseApp(r, nil)
 	assert.Equal(t, ErrNoApp, err)
 }

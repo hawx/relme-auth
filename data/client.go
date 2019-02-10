@@ -79,20 +79,23 @@ func (d *Database) queryClient(clientID, redirectURI string) (client Client, err
 	}
 	defer clientInfoResp.Body.Close()
 
-	var whitelist []string
-	if whitelistedRedirect, ok := link.ParseResponse(clientInfoResp)["redirect_uri"]; ok {
-		whitelist = append(whitelist, whitelistedRedirect.URI)
-	}
-
-	if app, okerr := microformats.ParseApp(clientInfoResp.Body); okerr == nil {
+	app, okerr := microformats.ParseApp(clientInfoResp.Body, parsedClientID)
+	if okerr == nil {
 		client.Name = app.Name
-		whitelist = append(whitelist, app.RedirectURIs...)
 	}
 
-	for _, candidate := range whitelist {
-		if candidate == redirectURI {
-			redirectOK = true
-			break
+	if !redirectOK {
+		whitelist := app.RedirectURIs
+
+		if whitelistedRedirect, ok := link.ParseResponse(clientInfoResp)["redirect_uri"]; ok {
+			whitelist = append(whitelist, whitelistedRedirect.URI)
+		}
+
+		for _, candidate := range whitelist {
+			if candidate == redirectURI {
+				redirectOK = true
+				break
+			}
 		}
 	}
 
@@ -101,46 +104,4 @@ func (d *Database) queryClient(clientID, redirectURI string) (client Client, err
 	}
 
 	return
-}
-
-func (d *Database) verifyRedirectURI(clientID, redirect string) bool {
-	clientURI, err := url.Parse(clientID)
-	if err != nil {
-		return false
-	}
-
-	redirectURI, err := url.Parse(redirect)
-	if err != nil {
-		return false
-	}
-
-	if clientURI.Scheme == redirectURI.Scheme && clientURI.Host == redirectURI.Host {
-		return true
-	}
-
-	clientResp, err := d.httpClient.Get(clientID)
-	if err != nil {
-		return false
-	}
-	defer clientResp.Body.Close()
-
-	if clientResp.StatusCode < 200 && clientResp.StatusCode >= 300 {
-		return false
-	}
-
-	var whitelist []string
-
-	if whitelistedRedirect, ok := link.ParseResponse(clientResp)["redirect_uri"]; ok {
-		whitelist = append(whitelist, whitelistedRedirect.URI)
-	}
-
-	whitelist = append(whitelist, microformats.RedirectURIs(clientResp.Body)...)
-
-	for _, candidate := range whitelist {
-		if candidate == redirect {
-			return true
-		}
-	}
-
-	return false
 }

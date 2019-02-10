@@ -44,3 +44,5 @@ hawx.me/code/route v1.0.0 h1:oSH04y0xTXUY5dflvRyUYl+yqs5J/lDvbOwMJc80sYY=
 hawx.me/code/route v1.0.0/go.mod h1:SKWPgx9IKsK2Yy66xj1bSRBOTMwR6kFQcLMjgajaeAc=
 hawx.me/code/serve v0.0.0-20190207181551-eb94630184cf h1:8rHeLEfK+pyTPkL/kH5THN2HgtfbuMeHnnneMFijo3Y=
 hawx.me/code/serve v0.0.0-20190207181551-eb94630184cf/go.mod h1:3Nhu3uATqipwDDYpeaS/SEIBvC2vbO0hdqYmHffpwRU=
+willnorris.com/go/microformats v1.0.0 h1:II6uDIJBPp6RpJQqRWm+6IN9lI00mN/jQAC5OHuF4HA=
+willnorris.com/go/microformats v1.0.0/go.mod h1:AXRtimOA0J5fDmM2sxlka4G6PNLWC4bCNJcZjLvFdDw=

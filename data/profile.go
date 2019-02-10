@@ -16,7 +16,7 @@ type Profile struct {
 }
 
 func (p Profile) Expired() bool {
-	return p.Me != "" && time.Now().Add(profileExpiry).After(p.UpdatedAt)
+	return time.Now().Add(profileExpiry).After(p.UpdatedAt)
 }
 
 // Method is a way a user can authenticate, it contains the name of a 3rd party

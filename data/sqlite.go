@@ -36,7 +36,7 @@ func (d *Database) migrate() error {
       Provider TEXT,
       Profile  TEXT,
       PRIMARY KEY (Me, Provider),
-      FOREIGN KEY(Me) REFERENCES profile(Me)
+      FOREIGN KEY (Me) REFERENCES profile(Me)
     );
 
     CREATE TABLE IF NOT EXISTS client (
