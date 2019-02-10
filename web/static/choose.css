@@ -57,9 +57,10 @@ body {
     flex-direction: column;
 }
 
-.container {
+body > .container {
     max-width: 35rem;
     margin: 0 auto 4rem;
+    padding: 0 1rem;
 }
 
 header {
