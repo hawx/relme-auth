@@ -1,49 +1,48 @@
 # relme-auth
 
-An (in-progress) implementation of <http://microformats.org/wiki/RelMeAuth>.
+An implementation of <http://microformats.org/wiki/RelMeAuth>.
 
 
 ## What?
 
 Sign-in to websites using your own domain.
 
-1. Own a domain, for example `https://john.example.com`.
+For example, say you own `https://john.example.com`. First you would need to set
+this domain on your Flickr/GitHub/Twitter profile(s). Then add a `<a rel="me"
+href="...">` link to those profiles from `https://john.example.com`.
 
-2. Set this domain for your profiles on Flickr/GitHub/Twitter.
-
-3. Add `<a rel="me" href="...">` tags pointing to your profile pages from
-   `https://john.example.com`.
-
-4. Go to _relme-auth_, enter `https://john.example.com` and hit sign-in. You
-   will be redirected to sign-in with one of the 3rd parties your site points
-   to.
+Now you can go to _relme-auth_, enter `https://john.example.com` and hit
+sign-in. You can then select which provider you want to authenticate with.
 
 
-## Trying it out
+## Running the code
 
-This project will currently only work locally on `localhost:8080` (this is good
-because I wouldn't want anyone using this on the internet yet). But assuming you
-want to try it out locally,
+This should be pretty standard for a Go project. It requires modules to pin
+specific versions of packages.
 
-1. `$ go get hawx.me/code/relme-auth`
+```
+$ go get hawx.me/code/relme-auth
+```
 
-2. Go to each of Flickr, GitHub and Twitter and setup a new app. Take the
-   id/apiKey and secret given and put in a `config.toml` file like so,
+Go to each of Flickr, GitHub and Twitter and setup a new app. Take the id/apiKey
+and secret given and put in a `config.toml` file like so,
 
-   ```
-   [flickr]
-   id = "..."
-   secret = "..."
+```toml
+[flickr]
+id = "..."
+secret = "..."
 
-   [github]
-   id = "..."
-   secret = "..."
+[github]
+id = "..."
+secret = "..."
 
-   [twitter]
-   id = "..."
-   secret = "..."
-   ```
+[twitter]
+id = "..."
+secret = "..."
+```
 
-3. Go to `http://localhost:8080` and try signing-in with your domain. If
-   everything works you will get your domain printed to the screen (obviously
-   this will eventually become something more useful).
+Then run the app and go to `http://localhost:8080`.
+
+```
+$ relme-auth --example-secret something
+```
