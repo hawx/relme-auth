@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -74,12 +75,18 @@ func (d *Database) Profile(me string) (Profile, error) {
 	defer rows.Close()
 
 	var profile Profile
+	var ok bool
 	for rows.Next() {
+		ok = true
 		var method Method
 		if err = rows.Scan(&profile.Me, &profile.UpdatedAt, &method.Provider, &method.Profile); err != nil {
 			return profile, err
 		}
 		profile.Methods = append(profile.Methods, method)
+	}
+
+	if !ok {
+		return Profile{}, sql.ErrNoRows
 	}
 
 	return profile, rows.Err()

@@ -15,6 +15,7 @@ import (
 type exampleStore interface {
 	Tokens(string) ([]data.Token, error)
 	RevokeClient(me, clientID string) error
+	Forget(string) error
 }
 
 // Example implements a basic site using the authentication flow provided by
@@ -69,10 +70,18 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 			return
 		}
 
+		redirectURL := baseURL + "/callback"
+		finalURL := baseURL
+
+		if r.FormValue("r") == "privacy" {
+			redirectURL += "?r=privacy"
+			finalURL = baseURL + "/privacy"
+		}
+
 		resp, err := http.PostForm(baseURL+"/auth", url.Values{
 			"code":         {code},
 			"client_id":    {baseURL + "/"},
-			"redirect_uri": {baseURL + "/callback"},
+			"redirect_uri": {redirectURL},
 		})
 		if err != nil || resp.StatusCode != 200 {
 			http.Error(w, "could not authenticate", http.StatusInternalServerError)
@@ -92,7 +101,7 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 			log.Println("handler/example could not save session:", err)
 		}
 
-		http.Redirect(w, r, baseURL, http.StatusFound)
+		http.Redirect(w, r, finalURL, http.StatusFound)
 	}
 }
 
@@ -132,6 +141,59 @@ func ExampleRevoke(baseURL string, store sessions.Store, tokenStore exampleStore
 	}
 }
 
+func ExamplePrivacy(baseURL string, store sessions.Store, templates tmpl) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "example-session")
+
+		var me string
+		meValue, ok := session.Values["me"]
+		if ok {
+			me, ok = meValue.(string)
+		}
+
+		state, _ := random.String(64)
+		session.Values["state"] = state
+		if err := session.Save(r, w); err != nil {
+			log.Println("handler/example could not save session:", err)
+		}
+
+		if err := templates.ExecuteTemplate(w, "privacy.gotmpl", privacyCtx{
+			ThisURI:  baseURL,
+			Me:       me,
+			LoggedIn: ok,
+			State:    state,
+		}); err != nil {
+			log.Println("handler/example failed to write template:", err)
+		}
+	}
+}
+
+func ExampleForget(baseURL string, store sessions.Store, tokenStore exampleStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "example-session")
+
+		var me string
+		meValue, ok := session.Values["me"]
+		if ok {
+			me, ok = meValue.(string)
+		}
+		if ok {
+			if err := tokenStore.Forget(me); err != nil {
+				log.Println("handler/example failed to forget:", err)
+				http.Error(w, "failed to forget", http.StatusInternalServerError)
+				return
+			}
+
+			delete(session.Values, "me")
+			if err := session.Save(r, w); err != nil {
+				log.Println("handler/example could not save session:", err)
+			}
+		}
+
+		http.Redirect(w, r, baseURL, http.StatusFound)
+	}
+}
+
 type exampleResponse struct {
 	Me string `json:"me"`
 }
@@ -145,4 +207,11 @@ type welcomeCtx struct {
 	HasGitHub  bool
 	HasTwitter bool
 	Tokens     []data.Token
+}
+
+type privacyCtx struct {
+	ThisURI  string
+	State    string
+	Me       string
+	LoggedIn bool
 }

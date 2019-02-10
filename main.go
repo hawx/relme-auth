@@ -175,6 +175,8 @@ func main() {
 		route.Handle("/callback", handler.ExampleCallback(*baseURL, exampleSessionStore))
 		route.Handle("/sign-out", handler.ExampleSignOut(*baseURL, exampleSessionStore))
 		route.Handle("/revoke", handler.ExampleRevoke(*baseURL, exampleSessionStore, database))
+		route.Handle("/privacy", handler.ExamplePrivacy(*baseURL, exampleSessionStore, templates))
+		route.Handle("/forget", handler.ExampleForget(*baseURL, exampleSessionStore, database))
 	}
 
 	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}

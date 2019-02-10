@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>relme-auth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/public/welcome.css" />
+  </head>
+  <body>
+    <section>
+      <div class="container">
+        <h1>Privacy</h1>
+
+        <h2>Data stored</h2>
+
+        <p>The following data is stored when using this website:</p>
+        <ul>
+          <li>the profile URL ("me") entered</li>
+          <li>the URL, name and redirect URL for the application being granted
+          access</li>
+          <li>the name of any authentication providers found and verified from
+          "me" (twitter, github, etc.)</li>
+          <li>the associated profile URL for those providers, or the URL to a
+          PGP key</li>
+          <li>the date of authentication</li>
+        </ul>
+
+        <p>Access tokens for GitHub, Twitter, etc. are never stored.</p>
+
+        <h2>Forget</h2>
+        {{ if .LoggedIn }}
+          <p>Click the button below to delete all information associated with <strong>{{ .Me }}</strong>.</p>
+
+          <form action="/forget" method="post">
+            <button type="submit">Forget</button>
+          </form>
+        {{ end }}
+
+        {{ if not .LoggedIn }}
+          <p>To remove data associated with your use of this website, first sign-in:</p>
+
+          <form action="/auth" method="get">
+            <div class="field">
+              <input type="url" name="me" placeholder="https://example.com" />
+              <button type="submit">Sign In</button>
+            </div>
+            <input type="hidden" name="client_id" value="{{ .ThisURI }}/" />
+            <input type="hidden" name="redirect_uri" value="{{ .ThisURI }}/callback?r=privacy" />
+            <input type="hidden" name="state" value="{{ .State }}" />
+          </form>
+        {{ end }}
+      </div>
+    </section>
+
+    {{ template "footer.gotmpl" . }}
+  </body>
+</html>

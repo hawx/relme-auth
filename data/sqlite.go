@@ -71,6 +71,18 @@ func (d *Database) migrate() error {
 	return err
 }
 
+func (d *Database) Forget(me string) error {
+	_, err := d.db.Exec(`
+    DELETE FROM profile WHERE Me = ?;
+    DELETE FROM method WHERE Me = ?;
+    DELETE FROM session WHERE Me = ?;
+    DELETE FROM token WHERE Me = ?;
+  `,
+		me, me, me, me)
+
+	return err
+}
+
 func (d *Database) Close() error {
 	return d.db.Close()
 }

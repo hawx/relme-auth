@@ -61,11 +61,18 @@ func Callback(store callbackStore, strat strategy.Strategy, generator func() (st
 			return
 		}
 
-		query := url.Values{
-			"code":  {code},
-			"state": {session.State},
+		redirectURI, err := url.Parse(session.RedirectURI)
+		if err != nil {
+			log.Println("handler/callback could not parse redirect_uri:", err)
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
 		}
 
-		http.Redirect(w, r, session.RedirectURI+"?"+query.Encode(), http.StatusFound)
+		query := redirectURI.Query()
+		query.Set("code", code)
+		query.Set("state", session.State)
+		redirectURI.RawQuery = query.Encode()
+
+		http.Redirect(w, r, redirectURI.String(), http.StatusFound)
 	})
 }
