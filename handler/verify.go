@@ -17,6 +17,7 @@ type verifyStore interface {
 func Verify(store verifyStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code := r.FormValue("code")
+		w.Header().Set("Content-Type", "application/json")
 
 		if code == "" {
 			writeJSONError(w, "invalid_request", "Missing 'code' parameter", http.StatusBadRequest)
@@ -34,7 +35,7 @@ func Verify(store verifyStore) http.Handler {
 			return
 		}
 
-		if session.ClientID != r.FormValue("client_id") {
+		if session.ClientID != data.ParseClientID(r.FormValue("client_id")) {
 			writeJSONError(w, "invalid_request", "The 'client_id' parameter did not match", http.StatusBadRequest)
 			return
 		}
