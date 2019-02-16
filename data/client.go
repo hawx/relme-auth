@@ -68,6 +68,15 @@ func (d *Database) queryClient(clientID, redirectURI string) (client Client, err
 
 	redirectOK := parsedClientID.Scheme == parsedRedirectURI.Scheme && parsedClientID.Host == parsedRedirectURI.Host
 
+	if redirectOK && parsedClientID.Hostname() == "localhost" {
+		return Client{
+			ID:          clientID,
+			RedirectURI: redirectURI,
+			Name:        "Local App",
+			UpdatedAt:   time.Now().UTC(),
+		}, nil
+	}
+
 	client.ID = clientID
 	client.Name = clientID
 	client.UpdatedAt = time.Now().UTC()

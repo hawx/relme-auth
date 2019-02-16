@@ -60,6 +60,20 @@ func TestClient(t *testing.T) {
 	assert.Equal(3, callCount)
 }
 
+func TestClientWhenLocalhost(t *testing.T) {
+	assert := assert.New(t)
+
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	defer db.Close()
+
+	client, err := db.Client("http://localhost:8080/", "http://localhost:8080/callback")
+	assert.Nil(err)
+	assert.Equal("http://localhost:8080/", client.ID)
+	assert.Equal("http://localhost:8080/callback", client.RedirectURI)
+	assert.Equal("Local App", client.Name)
+	assert.WithinDuration(time.Now(), time.Now(), time.Second)
+}
+
 func TestClientWithMismatchedRedirectURI(t *testing.T) {
 	assert := assert.New(t)
 
