@@ -17,7 +17,7 @@
       <textarea name="challenge" readonly>{{ .Challenge }}</textarea>
 
       <p>For example</p>
-      <pre><code>echo '{{ .Challenge }}' | gpg --clearsign --armor</code></pre>
+      <pre><code>echo '{{ .Challenge }}' | gpg --clearsign</code></pre>
 
       <form action="/oauth/callback/pgp" method="post">
         <label for="signed">Signed challenge</label>
