@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"html/template"
@@ -31,6 +32,7 @@ func printHelp() {
    * GitHub
    * Flickr
    * Twitter
+   * PGP
 
  CONFIGURATION
    --config PATH='./config.toml'
@@ -40,9 +42,9 @@ func printHelp() {
    --base-url URL='http://localhost:8080'
      Where this app is going to be accessible from.
 
-   --example-secret SECRET
-     This sets the secret used for sessions made by the example
-     site. If left unset then no example site will be served.
+   --cookie-secret SECRET
+     A base64 encoded string to use for authenticating sessions.
+     It is recommended to use 32 or 64 bytes for this value.
 
    --true
      Use the fake 'true' authentication provider. This should
@@ -54,6 +56,8 @@ func printHelp() {
       Use the sqlite database at the given path.
 
  SERVE
+   Will use a systemd.socket if configured to do so.
+
    --port PORT='8080'
       Serve on given port.
 
@@ -63,14 +67,14 @@ func printHelp() {
 
 func main() {
 	var (
-		port          = flag.String("port", "8080", "Port to run on")
-		socket        = flag.String("socket", "", "Socket to run on")
-		baseURL       = flag.String("base-url", "http://localhost:8080", "Where this is running")
-		configPath    = flag.String("config", "./config.toml", "Path to config file")
-		dbPath        = flag.String("db", "", "Path to database")
-		exampleSecret = flag.String("example-secret", "", "Session secret for example site")
-		useTrue       = flag.Bool("true", false, "Use the fake 'true' auth provider")
-		webPath       = flag.String("web-path", "web", "Path to web/ directory")
+		port         = flag.String("port", "8080", "Port to run on")
+		socket       = flag.String("socket", "", "Socket to run on")
+		baseURL      = flag.String("base-url", "http://localhost:8080", "Where this is running")
+		configPath   = flag.String("config", "./config.toml", "Path to config file")
+		dbPath       = flag.String("db", "", "Path to database")
+		cookieSecret = flag.String("cookie-secret", "", "Secret to authenticate sessions with")
+		useTrue      = flag.Bool("true", false, "Use the fake 'true' auth provider")
+		webPath      = flag.String("web-path", "web", "Path to web/ directory")
 	)
 	flag.Usage = func() { printHelp() }
 	flag.Parse()
@@ -108,11 +112,17 @@ func main() {
 	}
 
 	codeGenerator := random.Generator(20)
-	cookies := sessions.NewCookieStore([]byte(*exampleSecret))
+
+	secret, err := base64.StdEncoding.DecodeString(*cookieSecret)
+	if err != nil || len(secret) == 0 {
+		fmt.Println("could not base64 decode cookie-secret:", err)
+		return
+	}
+	cookies := sessions.NewCookieStore(secret)
 
 	database, err := data.Open(*dbPath, httpClient, cookies)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("could not open database:", err)
 		return
 	}
 	defer database.Close()
@@ -171,16 +181,12 @@ func main() {
 	route.Handle("/token", handler.Token(database, random.Generator(40)))
 	route.Handle("/pgp/authorize", handler.PGP(templates))
 
-	if *exampleSecret != "" {
-		exampleSessionStore := sessions.NewCookieStore([]byte(*exampleSecret))
-
-		route.Handle("/", handler.Example(*baseURL, conf, exampleSessionStore, database, templates))
-		route.Handle("/callback", handler.ExampleCallback(*baseURL, exampleSessionStore))
-		route.Handle("/sign-out", handler.ExampleSignOut(*baseURL, exampleSessionStore))
-		route.Handle("/revoke", handler.ExampleRevoke(*baseURL, exampleSessionStore, database))
-		route.Handle("/privacy", handler.ExamplePrivacy(*baseURL, exampleSessionStore, templates))
-		route.Handle("/forget", handler.ExampleForget(*baseURL, exampleSessionStore, database))
-	}
+	route.Handle("/", handler.Example(*baseURL, conf, cookies, database, templates))
+	route.Handle("/callback", handler.ExampleCallback(*baseURL, cookies))
+	route.Handle("/sign-out", handler.ExampleSignOut(*baseURL, cookies))
+	route.Handle("/revoke", handler.ExampleRevoke(*baseURL, cookies, database))
+	route.Handle("/privacy", handler.ExamplePrivacy(*baseURL, cookies, templates))
+	route.Handle("/forget", handler.ExampleForget(*baseURL, cookies, database))
 
 	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}
 
