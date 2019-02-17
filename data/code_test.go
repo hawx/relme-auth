@@ -12,7 +12,7 @@ import (
 func TestCode(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	now := time.Now()
@@ -43,7 +43,7 @@ func TestCode(t *testing.T) {
 func TestCodeWithExpiry(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	now := time.Now().Add(codeExpiry)
@@ -74,7 +74,7 @@ func TestCodeWithExpiry(t *testing.T) {
 func TestCodeReadTwice(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	now := time.Now()

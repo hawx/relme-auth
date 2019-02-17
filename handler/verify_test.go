@@ -29,7 +29,7 @@ func TestVerify(t *testing.T) {
 	assert := assert.New(t)
 
 	code := data.Code{
-		ClientID:     "http://client.example.com",
+		ClientID:     "http://client.example.com/",
 		RedirectURI:  "http://done.example.com",
 		Me:           "it is me",
 		CreatedAt:    time.Now(),

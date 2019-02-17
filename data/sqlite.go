@@ -4,22 +4,28 @@ import (
 	"database/sql"
 	"net/http"
 
-	// register sqlite3 for sql
+	"github.com/gorilla/sessions"
+	// register sqlite3 for database/sql
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Database struct {
 	db         *sql.DB
 	httpClient *http.Client
+	cookies    sessions.Store
 }
 
-func Open(path string, httpClient *http.Client) (*Database, error) {
+func Open(path string, httpClient *http.Client, cookies sessions.Store) (*Database, error) {
 	sqlite, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
 
-	db := &Database{db: sqlite, httpClient: httpClient}
+	db := &Database{
+		db:         sqlite,
+		httpClient: httpClient,
+		cookies:    cookies,
+	}
 
 	return db, db.migrate()
 }
@@ -66,6 +72,12 @@ func (d *Database) migrate() error {
       Scope     TEXT,
       CreatedAt DATETIME
     );
+
+    CREATE TABLE IF NOT EXISTS login (
+      ID        TEXT,
+      Me        TEXT PRIMARY KEY,
+      CreatedAt DATETIME
+    );
 `)
 
 	return err
@@ -77,8 +89,9 @@ func (d *Database) Forget(me string) error {
     DELETE FROM method WHERE Me = ?;
     DELETE FROM session WHERE Me = ?;
     DELETE FROM token WHERE Me = ?;
+    DELETE FROM login WHERE Me = ?;
   `,
-		me, me, me, me)
+		me, me, me, me, me)
 
 	return err
 }

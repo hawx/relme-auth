@@ -38,7 +38,7 @@ func Flickr(baseURL string, store strategyStore, id, secret string, httpClient *
 	return &authFlickr{
 		apiKey:      id,
 		apiURI:      "https://api.flickr.com/services/rest",
-		callbackURL: baseURL + "/oauth/callback/flickr",
+		callbackURL: baseURL + "/callback/flickr",
 		client:      oauthClient,
 		httpClient:  httpClient,
 		store:       store,

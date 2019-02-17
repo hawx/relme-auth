@@ -25,20 +25,35 @@
         {{ end }}
       </header>
 
-      <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong></p>
+      {{ if .Skip }}
+        <p>Continue signing-in with your previous session</p>
 
-      <ul class="methods"></ul>
-      <div class="loader"></div>
+        <ul class="methods">
+          <li>
+            <a class="btn" href="/callback/continue">
+              <strong>sign-in</strong> as {{ .Me }}
+            </a>
+          </li>
+        </ul>
+      {{ end }}
+      {{ if not .Skip }}
+        <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong></p>
 
-      <p class="info loading">
-        Results cached <span class="cachedAt"></span>. <a id="refresh">Refresh</a>.
-      </p>
+        <ul class="methods"></ul>
+        <div class="loader"></div>
+
+        <p class="info loading">
+          Results cached <span class="cachedAt"></span>. <a id="refresh">Refresh</a>.
+        </p>
+      {{ end }}
 
       {{ template "footer.gotmpl" . }}
     </div>
 
     <div class="fill"></div>
 
-    <script src="/public/choose.js"></script>
+    {{ if not .Skip }}
+      <script src="/public/choose.js"></script>
+    {{ end }}
   </body>
 </html>

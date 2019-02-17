@@ -22,7 +22,7 @@ func (authTrue) Match(profile *url.URL) bool {
 }
 
 func (t authTrue) Redirect(me, profile string) (redirectURL string, err error) {
-	redirectURL = t.baseURL + "/oauth/callback/true?" +
+	redirectURL = t.baseURL + "/callback/true?" +
 		url.Values{"expected": {me}}.Encode()
 
 	return redirectURL, nil

@@ -12,6 +12,7 @@ import (
 )
 
 type chooseStore interface {
+	Login(*http.Request) (string, error)
 	CreateSession(data.Session) error
 	Client(clientID, redirectURI string) (data.Client, error)
 }
@@ -104,6 +105,10 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			Scopes:     scopes,
 		}
 
+		if loggedInMe, err := store.Login(r); err == nil && loggedInMe == me {
+			tmplCtx.Skip = true
+		}
+
 		if err := templates.ExecuteTemplate(w, "choose.gotmpl", tmplCtx); err != nil {
 			log.Println("handler/choose failed to write template:", err)
 		}
@@ -115,4 +120,5 @@ type chooseCtx struct {
 	ClientName string
 	Me         string
 	Scopes     []string
+	Skip       bool
 }

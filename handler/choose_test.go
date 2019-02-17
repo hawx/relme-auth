@@ -15,6 +15,14 @@ import (
 type fakeChooseStore struct {
 	session data.Session
 	client  data.Client
+	login   string
+}
+
+func (s *fakeChooseStore) Login(r *http.Request) (string, error) {
+	if s.login != "" {
+		return s.login, nil
+	}
+	return "", errors.New("nope")
 }
 
 func (s *fakeChooseStore) CreateSession(session data.Session) error {
@@ -60,6 +68,48 @@ func TestChoose(t *testing.T) {
 	assert.Equal("http://client.example.com/", data.ClientID)
 	assert.Equal("Client", data.ClientName)
 	assert.Equal("http://me.example.com/", data.Me)
+	assert.False(data.Skip)
+
+	assert.Equal("id", store.session.ResponseType)
+	assert.Equal("http://me.example.com/", store.session.Me)
+	assert.Equal("http://client.example.com/", store.session.ClientID)
+	assert.Equal("http://client.example.com/callback", store.session.RedirectURI)
+	assert.Equal("some-value", store.session.State)
+}
+
+func TestChooseWithRecentLogin(t *testing.T) {
+	assert := assert.New(t)
+
+	store := &fakeChooseStore{
+		client: data.Client{
+			ID:          "http://client.example.com/",
+			RedirectURI: "http://client.example.com/callback",
+			Name:        "Client",
+		},
+		login: "http://me.example.com/",
+	}
+	tmpl := &mockTemplate{}
+
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	defer s.Close()
+
+	form := url.Values{
+		"me":           {"http://mE.example.com"},
+		"client_id":    {"http://clIent.exAmple.com"},
+		"redirect_uri": {"http://client.example.com/callback"},
+		"state":        {"some-value"},
+	}
+
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+	assert.Nil(err)
+	assert.Equal(http.StatusOK, resp.StatusCode)
+
+	data := tmpl.Data.(chooseCtx)
+	assert.Equal("choose.gotmpl", tmpl.Tmpl)
+	assert.Equal("http://client.example.com/", data.ClientID)
+	assert.Equal("Client", data.ClientName)
+	assert.Equal("http://me.example.com/", data.Me)
+	assert.True(data.Skip)
 
 	assert.Equal("id", store.session.ResponseType)
 	assert.Equal("http://me.example.com/", store.session.Me)
@@ -228,6 +278,7 @@ func TestChooseForCode(t *testing.T) {
 	assert.Equal("http://client.example.com/", data.ClientID)
 	assert.Equal("Client", data.ClientName)
 	assert.Equal("http://me.example.com/", data.Me)
+	assert.False(data.Skip)
 
 	assert.Equal("code", store.session.ResponseType)
 	assert.Equal("http://me.example.com/", store.session.Me)

@@ -19,6 +19,10 @@ type fakeCallbackStore struct {
 	code    data.Code
 }
 
+func (s *fakeCallbackStore) SaveLogin(w http.ResponseWriter, r *http.Request, me string) error {
+	return nil
+}
+
 func (s *fakeCallbackStore) Session(me string) (data.Session, error) {
 	if me == s.session.Me {
 		return s.session, nil

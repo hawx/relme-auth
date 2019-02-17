@@ -108,8 +108,9 @@ func main() {
 	}
 
 	codeGenerator := random.Generator(20)
+	cookies := sessions.NewCookieStore([]byte(*exampleSecret))
 
-	database, err := data.Open(*dbPath, httpClient)
+	database, err := data.Open(*dbPath, httpClient, cookies)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -122,37 +123,39 @@ func main() {
 		return
 	}
 
+	route.Handle("/callback/continue", handler.Continue(database, codeGenerator))
+
 	var strategies strategy.Strategies
 	if *useTrue {
 		trueStrategy := strategy.True(*baseURL)
 		strategies = append(strategies, trueStrategy)
 
-		route.Handle("/oauth/callback/true", handler.Callback(database, trueStrategy, codeGenerator))
+		route.Handle("/callback/true", handler.Callback(database, trueStrategy, codeGenerator))
 
 	} else {
 		pgpDatabase, _ := data.Strategy("pgp")
 		pgpStrategy := strategy.PGP(pgpDatabase, *baseURL, "", httpClient)
-		route.Handle("/oauth/callback/pgp", handler.Callback(database, pgpStrategy, codeGenerator))
+		route.Handle("/callback/pgp", handler.Callback(database, pgpStrategy, codeGenerator))
 		strategies = append(strategies, pgpStrategy)
 
 		if conf.Flickr != nil {
 			flickrDatabase, _ := data.Strategy("flickr")
 			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.ID, conf.Flickr.Secret, httpClient)
-			route.Handle("/oauth/callback/flickr", handler.Callback(database, flickrStrategy, codeGenerator))
+			route.Handle("/callback/flickr", handler.Callback(database, flickrStrategy, codeGenerator))
 			strategies = append(strategies, flickrStrategy)
 		}
 
 		if conf.GitHub != nil {
 			gitHubDatabase, _ := data.Strategy("github")
 			gitHubStrategy := strategy.GitHub(gitHubDatabase, conf.GitHub.ID, conf.GitHub.Secret)
-			route.Handle("/oauth/callback/github", handler.Callback(database, gitHubStrategy, codeGenerator))
+			route.Handle("/callback/github", handler.Callback(database, gitHubStrategy, codeGenerator))
 			strategies = append(strategies, gitHubStrategy)
 		}
 
 		if conf.Twitter != nil {
 			twitterDatabase, _ := data.Strategy("twitter")
 			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.ID, conf.Twitter.Secret, httpClient)
-			route.Handle("/oauth/callback/twitter", handler.Callback(database, twitterStrategy, codeGenerator))
+			route.Handle("/callback/twitter", handler.Callback(database, twitterStrategy, codeGenerator))
 			strategies = append(strategies, twitterStrategy)
 		}
 	}

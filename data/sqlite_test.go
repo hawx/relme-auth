@@ -6,13 +6,27 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/sessions"
+
 	"hawx.me/code/assert"
 )
+
+type fakeCookieStore struct{}
+
+func (f *fakeCookieStore) Get(r *http.Request, name string) (*sessions.Session, error) {
+	return nil, nil
+}
+func (f *fakeCookieStore) New(r *http.Request, name string) (*sessions.Session, error) {
+	return nil, nil
+}
+func (f *fakeCookieStore) Save(r *http.Request, w http.ResponseWriter, s *sessions.Session) error {
+	return nil
+}
 
 func TestForget(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)

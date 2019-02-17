@@ -12,7 +12,7 @@ import (
 func TestClient(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	callCount := 0
@@ -63,7 +63,7 @@ func TestClient(t *testing.T) {
 func TestClientWhenLocalhost(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	client, err := db.Client("http://localhost:8080/", "http://localhost:8080/callback")
@@ -77,7 +77,7 @@ func TestClientWhenLocalhost(t *testing.T) {
 func TestClientWithMismatchedRedirectURI(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +94,7 @@ func TestClientWithMismatchedRedirectURI(t *testing.T) {
 func TestClientWithWhitelistedMismatchedRedirectURI(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	callCount := 0
@@ -119,7 +119,7 @@ func TestClientWithWhitelistedMismatchedRedirectURI(t *testing.T) {
 func TestClientWithWhitelistedMismatchedRedirectURIInHeader(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
 	defer db.Close()
 
 	callCount := 0

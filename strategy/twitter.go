@@ -36,7 +36,7 @@ func Twitter(baseURL string, store strategyStore, id, secret string, httpClient 
 
 	return &authTwitter{
 		client:      oauthClient,
-		callbackURL: baseURL + "/oauth/callback/twitter",
+		callbackURL: baseURL + "/callback/twitter",
 		store:       store,
 		apiURI:      "https://api.twitter.com/1.1",
 		httpClient:  httpClient,

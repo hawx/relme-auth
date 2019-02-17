@@ -11,6 +11,7 @@ import (
 )
 
 type callbackStore interface {
+	SaveLogin(http.ResponseWriter, *http.Request, string) error
 	Session(string) (data.Session, error)
 	CreateCode(me, code string, createdAt time.Time) error
 }
@@ -72,6 +73,8 @@ func Callback(store callbackStore, strat strategy.Strategy, generator func() (st
 		query.Set("code", code)
 		query.Set("state", session.State)
 		redirectURI.RawQuery = query.Encode()
+
+		store.SaveLogin(w, r, session.Me)
 
 		http.Redirect(w, r, redirectURI.String(), http.StatusFound)
 	})
