@@ -110,6 +110,8 @@ func (s *webSocketServer) serveConnection(conn *conn) error {
 			return err
 		}
 
+		msg.Me = data.ParseProfileURL(msg.Me)
+
 		if profile, ok := s.canUseCache(msg); ok {
 			s.getFromCache(conn, msg, profile)
 			continue
