@@ -87,8 +87,13 @@ func tokenEndpoint(store tokenStore, generator func() (string, error)) http.Hand
 			Scope:     theCode.Scope,
 			CreatedAt: time.Now(),
 		}
-		store.CreateToken(token)
+		if err := store.CreateToken(token); err != nil {
+			log.Println("handler/token could not persist token:", err)
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
 
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(tokenResponse{
 			AccessToken: token.Token,
 			TokenType:   "Bearer",
@@ -113,6 +118,7 @@ func verifyTokenEndpoint(store tokenStore) http.HandlerFunc {
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(tokenVerificationResponse{
 			Me:       token.Me,
 			ClientID: token.ClientID,

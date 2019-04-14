@@ -69,6 +69,7 @@ func TestToken(t *testing.T) {
 	})
 	assert.Nil(err)
 	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert.Equal("application/json", resp.Header.Get("Content-Type"))
 
 	var v struct {
 		AccessToken string `json:"access_token"`
@@ -220,6 +221,7 @@ func TestVerifyToken(t *testing.T) {
 	resp, err := http.DefaultClient.Do(req)
 	assert.Nil(err)
 	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert.Equal("application/json", resp.Header.Get("Content-Type"))
 
 	var v struct {
 		Me       string `json:"me"`
