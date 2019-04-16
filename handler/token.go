@@ -60,7 +60,7 @@ func tokenEndpoint(store tokenStore, generator func() (string, error)) http.Hand
 			return
 		}
 
-		if theCode.ClientID != clientID {
+		if theCode.ClientID != data.ParseClientID(clientID) {
 			writeJSONError(w, "invalid_request", "The 'client_id' parameter did not match", http.StatusBadRequest)
 			return
 		}
