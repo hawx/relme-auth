@@ -44,5 +44,5 @@ secret = "..."
 Then run the app and go to `http://localhost:8080`.
 
 ```
-$ relme-auth --example-secret something
+$ relme-auth --cookie-secret something
 ```

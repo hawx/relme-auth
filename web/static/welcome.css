@@ -47,83 +47,93 @@ table {
 	  border-spacing: 0;
 }
 
+button, input, select, textarea {
+  font-family : inherit;
+  font-size   : 100%;
+}
+
 /* start */
 
+.no-padding {
+    padding: 0;
+}
+
 body {
-    font: 18px/1.3 sans-serif;
+    font: 18px/1.3 BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
 
-@media screen and (min-width: 100rem) {
-    @supports (display: grid) {
-        body {
-            display: grid;
-            grid-template-areas: "header header" "users developers" "footer footer";
-        }
-
-        #users .container {
-            margin-right: 0;
-        }
-        #developers .container {
-            margin-left: 0;
-        }
-    }
-}
-
-#users {
-    grid-area: users;
-}
-#developers {
-    grid-area: developers;
-}
 footer {
-    grid-area: footer;
     font-size: .9rem;
     text-align: center;
     padding: 2rem 0 3rem;
 }
 
 header {
-    grid-area: header;
-    height: 70vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    text-align: center;
     background: rgb(240, 240, 240);
-    border-bottom: 1px solid rgb(210, 210, 210)
+    border-bottom: 1px solid rgb(210, 210, 210);
 }
 
 header h1 {
+    font-weight: bold;
+    font-family: monospace;
+}
+
+header .me {
+    margin-right: 1rem;
+}
+
+header form {
+    display: inline-block;
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+}
+
+table {
+    width: 100%;
+}
+
+table thead {
+    border-bottom: 1px solid rgb(210, 210, 210);
+}
+
+table th {
+    font-weight: bold;
+    text-align: left;
+    padding: .5rem;
+}
+
+table td {
+    padding: .5rem;
+}
+
+.hero .container {
+    min-height: 70vh;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+}
+
+.hero h1 {
     font-size: 2rem;
     font-weight: bold;
     font-family: monospace;
 }
 
-header h2 {
+.hero h2 {
     font-style: italic;
     margin-bottom: 2rem;
 }
 
-header h3 {
+.hero h3 {
     font-weight: bold;
 }
 
-header .apps {
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid rgb(210, 210, 210);
-    text-align: left;
-}
-
-header .granted {
-    margin: .5rem 0;
+.hero form {
     display: flex;
-    justify-content: space-between;
-}
-
-header .apps form {
-    margin-left: 1rem;
-    display: inline;
+    justify-content: center;
 }
 
 .field {
@@ -132,6 +142,9 @@ header .apps form {
 
 .field input {
     margin-right: 5px;
+}
+
+button {
 }
 
 @media screen and (max-width: 30rem) {
@@ -146,7 +159,7 @@ header .apps form {
 }
 
 .container {
-    max-width: 40rem;
+    max-width: 50rem;
     margin: 0 auto;
     padding: 2rem;
 }
@@ -188,4 +201,55 @@ p {
 
 ul {
     list-style: disc;
+}
+
+
+/* form elements */
+
+button, input[type=url] {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    align-items: center;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    box-shadow: none;
+    font-size: 1rem;
+    height: 1.8rem;
+    line-height: 1;
+    padding: .1rem .5rem;
+    background: white;
+    border: 1px solid rgb(210, 210, 210);
+    color: black;
+}
+
+input[type=url] {
+    box-shadow: inset 0 .075rem .15rem rgba(0, 0, 0, .1);
+}
+
+button {
+    cursor: pointer;
+}
+
+input[type=url]:hover, button:hover {
+    border-color: rgb(150, 150, 150);
+}
+
+input[type=url]:focus, button:focus {
+    border-color: rgb(0, 102, 204);
+}
+
+button:focus:not(:active) {
+    box-shadow: 0 0 0 .125em rgba(0, 102, 204, .2);
+}
+
+input[type=url]:focus:not(:active) {
+    box-shadow: inset 0 .075rem .15rem rgba(0, 0, 0, .1), 0 0 0 .125em rgba(0, 102, 204, .2);
+}
+
+button:active {
+    border-color:black;
+}
+
+input[type=url] + button {
+    height: auto;
 }

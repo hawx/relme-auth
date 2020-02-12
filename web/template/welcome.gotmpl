@@ -7,166 +7,192 @@
     <link rel="stylesheet" href="/public/welcome.css" />
   </head>
   <body>
-    <header class="h-app">
-      <div class="container">
-        <h1 class="p-name">relme-auth</h1>
-        <h2>Sign in with your domain</h2>
+    {{ if .LoggedIn }}
+      <header class="h-app">
+        <div class="container">
+          <h1 class="p-name">relme-auth</h1>
 
-        {{ if .LoggedIn }}
-        <p>You are logged in as <strong>{{ .Me }}</strong>.</p>
-
-        <form action="/sign-out" method="post">
-          <button type="submit">Sign Out</button>
-        </form>
-
-        <div class="apps">
-          <h3>Authorized Apps</h3>
-          <p>You have granted {{ len .Tokens }} application{{ if gt (len .Tokens) 1 }}s{{ end }} access.</p>
-
-          {{ range .Tokens }}
-            <div class="granted">
-              <span>
-                <a href="{{ .ClientID }}">{{ .ClientID }}</a>
-                on <time>{{ .CreatedAt.Format "2 Jan" }}</time>
-                with <code>{{ .Scope }}</code>
-              </span>
-              <form action="/revoke?client_id={{ .ClientID }}" method="post">
-                <button type="submit">Revoke</button>
-              </form>
-            </div>
-          {{ end }}
-        </div>
-        {{ end }}{{ if not .LoggedIn }}<p>Try signing in to this site:</p>
-
-        <form action="/auth" method="get">
-          <div class="field">
-            <input type="url" name="me" placeholder="https://example.com" />
-            <button type="submit">Sign In</button>
+          <div>
+            <span class="me"><a href="{{ .Me }}">{{ .Me }}</a></span>
+            <form action="/sign-out" method="post">
+              <button type="submit">Sign Out</button>
+            </form>
           </div>
-          <input type="hidden" name="client_id" value="{{ .ThisURI }}/" />
-          <input type="hidden" name="redirect_uri" value="{{ .ThisURI }}/callback" />
-          <input type="hidden" name="state" value="{{ .State }}" />
-        </form>{{ end }}
-      </div>
-    </header>
+        </div>
+      </header>
 
-    <section id="users">
-      <div class="container">
-        <h1>For users</h1>
+      <section class="container apps">
+        <h2>Authorized Apps</h2>
+        <p>You have granted {{ len .Tokens }} client{{ if not (eq (len .Tokens) 1) }}s{{ end }} access.</p>
 
-        <p>You can log in to this site without creating a new account! Instead make sure one (or more) of the methods below is setup.</p>
-
-        <h2>Providers</h2>
-
-        <h3 id="pgp">PGP</h3>
-        <p>To authenticate with your PGP key add a link to your public key on your homepage.</p>
-        <pre><code>&lt;a rel="pgpkey" href="/key.asc"&gt;Key&lt;/a&gt;</code></pre>
-        <p>Or if you don't want the link to be visible.</p>
-        <pre><code>&lt;link rel="pgpkey" href="/key.asc" /&gt;</code></pre>
-
-        {{ if .HasFlickr }}
+        {{ if gt (len .Tokens) 0 }}
+          <table>
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Authorized</th>
+                <th>Scope</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {{ range .Tokens }}
+                <tr>
+                  <td><a href="{{ .ClientID }}">{{ .ClientID }}</a></td>
+                  <td><time datetime="{{ .CreatedAt.Format "2006-01-02T15:04:05Z07:00" }}">{{ .CreatedAt.Format "2 Jan 2006" }}</time></td>
+                  <td>{{ .Scope }}</td>
+                  <td class="no-padding"><form action="/revoke?client_id={{ .ClientID }}" method="post">
+                    <button type="submit">Revoke</button>
+                  </form></td>
+                </tr>
+              {{ end }}
+            </tbody>
+          </table>
+        {{ end }}
+      </section>
+    {{ else }}
+      <header class="h-app hero">
+        <div class="container">
+          <h1 class="p-name">relme-auth</h1>
+          <h2>Sign in with your domain</h2>
+          <p>Try signing in to this site:</p>
+          
+          <form action="/auth" method="get">
+            <div class="field">
+              <input type="url" name="me" placeholder="https://example.com" />
+              <button type="submit">Sign In</button>
+            </div>
+            <input type="hidden" name="client_id" value="{{ .ThisURI }}/" />
+            <input type="hidden" name="redirect_uri" value="{{ .ThisURI }}/callback" />
+            <input type="hidden" name="state" value="{{ .State }}" />
+          </form>
+        </div>
+      </header>
+    
+      <section id="users">
+        <div class="container">
+          <h1>For users</h1>
+      
+          <p>You can log in to this site without creating a new account! Instead make sure one (or more) of the methods below
+            is setup.</p>
+      
+          <h2>Providers</h2>
+      
+          <h3 id="pgp">PGP</h3>
+          <p>To authenticate with your PGP key add a link to your public key on your homepage.</p>
+          <pre><code>&lt;a rel="pgpkey" href="/key.asc"&gt;Key&lt;/a&gt;</code></pre>
+          <p>Or if you don't want the link to be visible.</p>
+          <pre><code>&lt;link rel="pgpkey" href="/key.asc" /&gt;</code></pre>
+      
+          {{ if .HasFlickr }}
           <h3 id="flickr">Flickr</h3>
           <p>To authenticate with your Flickr account add a link to your profile on your homepage.</p>
           <pre><code>&lt;a rel="me" href="https://www.flickr.com/people/YOU"&gt;Flickr&lt;/a&gt;</code></pre>
           <p>Or if you don't want the link to be visible.</p>
           <pre><code>&lt;link rel="me" href="https://www.flickr.com/people/YOU" /&gt;</code></pre>
           <p>Make sure your Flickr profile has a link back to your homepage.</p>
-        {{ end }}
-
-        {{ if .HasGitHub }}
+          {{ end }}
+      
+          {{ if .HasGitHub }}
           <h3 id="github">GitHub</h3>
           <p>To authenticate with your GitHub account add a link to your profile on your homepage.</p>
           <pre><code>&lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;</code></pre>
           <p>Or if you don't want the link to be visible.</p>
           <pre><code>&lt;link rel="me" href="https://github.com/YOU" /&gt;</code></pre>
           <p>Make sure your GitHub profile has a link back to your homepage.</p>
-        {{ end }}
-
-        {{ if .HasTwitter }}
+          {{ end }}
+      
+          {{ if .HasTwitter }}
           <h3 id="twitter">Twitter</h3>
           <p>To authenticate with your Twitter account add a link to your profile on your homepage.</p>
           <pre><code>&lt;a rel="me" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;</code></pre>
           <p>Or if you don't want the link to be visible.</p>
           <pre><code>&lt;link rel="me" href="https://twitter.com/YOU" /&gt;</code></pre>
           <p>Make sure your Twitter profile has a link back to your homepage.</p>
-        {{ end }}
-
-        <h2>Choosing auth providers</h2>
-        <p>You may want to mark some links up with <code>rel="me"</code>, but
-          not want to consider them for authentication. You can choose which
-          will be considered by adding <code>rel="authn"</code> too.</p>
-        <p>In the following example only Twitter and PGP would be shown as options.</p>
-        <pre><code>&lt;a rel="me authn" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;
+          {{ end }}
+      
+          <h2>Choosing auth providers</h2>
+          <p>You may want to mark some links up with <code>rel="me"</code>, but
+            not want to consider them for authentication. You can choose which
+            will be considered by adding <code>rel="authn"</code> too.</p>
+          <p>In the following example only Twitter and PGP would be shown as options.</p>
+          <pre><code>&lt;a rel="me authn" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;
 &lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;
 &lt;a rel="pgpkey authn" href="/public.asc"&gt;My PGP Key&lt;/a&gt;</code></pre>
-
-        <h2>IndieAuth</h2>
-        <p>To use this service for <a href="https://indieweb.org/IndieAuth">IndieAuth</a>, add the following to your pages <code>&lt;head&gt;</code>:</p>
-        <pre><code>&lt;link rel="authorization_endpoint" href="{{ .ThisURI }}/auth"&gt;
+      
+          <h2>IndieAuth</h2>
+          <p>To use this service for <a href="https://indieweb.org/IndieAuth">IndieAuth</a>, add the following to your pages
+            <code>&lt;head&gt;</code>:</p>
+          <pre><code>&lt;link rel="authorization_endpoint" href="{{ .ThisURI }}/auth"&gt;
 &lt;link rel="token_endpoint" href="{{ .ThisURI }}/token"&gt;</code></pre>
-
-        <h2>More information</h2>
-        <p>To find out more information on RelMeAuth, or other implementations, read <a href="https://indieweb.org/RelMeAuth">its IndieWeb wiki entry.</a>.</p>
-      </div>
-    </section>
-
-    <section id="developers">
-      <div class="container">
-        <h1>For developers</h1>
-
-        <p>It is possible to use this site to provide login for your users.</p>
-
-        <h2>Redirect a user to relme-auth</h2>
-        <p>The first step is to send a user to relme-auth so they can choose how
-          to authenticate. This is a simple redirect to <code>{{ .ThisURI }}/auth</code> with
-          a few query parameters:</p>
-        <dl>
-          <dt><code>me=</code></dt>
-          <dd>The web address of the user who is logging in.</dd>
-          <dt><code>client_id=</code></dt>
-          <dd>The URL to the site they are logging in to. This <em>should</em> be marked up with <a href="https://www.w3.org/TR/indieauth/#application-information"><code>h-app</code></a> to provide a name to
-            display. You are also able to whitelist a <a href="https://www.w3.org/TR/indieauth/#redirect-url"><code>redirect_uri</code></a> if it is not hosted at the same domain.</dd>
-          <dt><code>redirect_uri=</code></dt>
-          <dd>Where to send the user after they have authenticated.</dd>
-          <dt><code>state=</code></dt>
-          <dd>A random string that will be passed back after authentication to prevent CSRF attacks.</dd>
-        </dl>
-
-        <h2>The user is redirected back to the URI specified</h2>
-        <p>Once authentication is complete the user is sent back to your site with a couple of query parameters:</p>
-        <dl>
-          <dt><code>state=</code></dt>
-          <dd>The random string you originally sent, check this matches before continuing.</dd>
-          <dt><code>code=</code></dt>
-          <dd>A string you will need to verify to complete authentication.</dd>
-        </dl>
-
-        <h2>Verify the code</h2>
-        <p>Make a <code>POST</code> request to <code>{{ .ThisURI }}/auth</code> to verify the
-          code you recieved. In return you will get the web address for the
-          authenticated user.</p>
-
-        <pre><code>POST {{ .ThisURI }}/auth HTTP/1.1
+      
+          <h2>More information</h2>
+          <p>To find out more information on RelMeAuth, or other implementations, read <a
+              href="https://indieweb.org/RelMeAuth">its IndieWeb wiki entry</a>.</p>
+        </div>
+      </section>
+    
+      <section id="developers">
+        <div class="container">
+          <h1>For developers</h1>
+      
+          <p>It is possible to use this site to provide login for your users.</p>
+      
+          <h2>Redirect a user to relme-auth</h2>
+          <p>The first step is to send a user to relme-auth so they can choose how
+            to authenticate. This is a simple redirect to <code>{{ .ThisURI }}/auth</code> with
+            a few query parameters:</p>
+          <dl>
+            <dt><code>me=</code></dt>
+            <dd>The web address of the user who is logging in.</dd>
+            <dt><code>client_id=</code></dt>
+            <dd>The URL to the site they are logging in to. This <em>should</em> be marked up with <a
+                href="https://www.w3.org/TR/indieauth/#application-information"><code>h-app</code></a> to provide a name to
+              display. You are also able to whitelist a <a
+                href="https://www.w3.org/TR/indieauth/#redirect-url"><code>redirect_uri</code></a> if it is not hosted at the
+              same domain.</dd>
+            <dt><code>redirect_uri=</code></dt>
+            <dd>Where to send the user after they have authenticated.</dd>
+            <dt><code>state=</code></dt>
+            <dd>A random string that will be passed back after authentication to prevent CSRF attacks.</dd>
+          </dl>
+      
+          <h2>The user is redirected back to the URI specified</h2>
+          <p>Once authentication is complete the user is sent back to your site with a couple of query parameters:</p>
+          <dl>
+            <dt><code>state=</code></dt>
+            <dd>The random string you originally sent, check this matches before continuing.</dd>
+            <dt><code>code=</code></dt>
+            <dd>A string you will need to verify to complete authentication.</dd>
+          </dl>
+      
+          <h2>Verify the code</h2>
+          <p>Make a <code>POST</code> request to <code>{{ .ThisURI }}/auth</code> to verify the
+            code you recieved. In return you will get the web address for the
+            authenticated user.</p>
+      
+          <pre><code>POST {{ .ThisURI }}/auth HTTP/1.1
 Content-Type: application/x-www-form-urlencoded;charset=UTF-8
 Accept: application/json
 
 code=kgnn18riem3pssk74&
 redirect_uri=https://example.com/callback&
 client_id=https://example.com/</code></pre>
-
-        <p>Will, if correct, receive a JSON response with a value <code>"me"</code>.</p>
-
-        <pre><code>HTTP/1.1 200 OK
+      
+          <p>Will, if correct, receive a JSON response with a value <code>"me"</code>.</p>
+      
+          <pre><code>HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
   "me": "https://john.doe/"
 }</code></pre>
-
-        <p>Store the web address in a secure session and log the user in. You are done.</p>
-      </div>
-    </section>
-
+      
+          <p>Store the web address in a secure session and log the user in. You are done.</p>
+        </div>
+      </section>
+    {{ end }}
+    
     {{ template "footer.gotmpl" . }}
   </body>
 </html>

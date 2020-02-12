@@ -17,3 +17,5 @@ require (
 	hawx.me/code/serve v0.0.0-20190207181551-eb94630184cf
 	willnorris.com/go/microformats v1.0.0
 )
+
+go 1.13
