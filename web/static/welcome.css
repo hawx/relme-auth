@@ -144,9 +144,6 @@ table td {
     margin-right: 5px;
 }
 
-button {
-}
-
 @media screen and (max-width: 30rem) {
     .field {
         display: block;
@@ -214,6 +211,7 @@ button, input[type=url] {
     border-radius: 4px;
     box-shadow: none;
     font-size: 1rem;
+    font-weight: normal;
     height: 1.8rem;
     line-height: 1;
     padding: .1rem .5rem;
