@@ -33,6 +33,7 @@ func TestVerify(t *testing.T) {
 		RedirectURI:  "http://done.example.com",
 		Me:           "it is me",
 		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(time.Minute),
 		Code:         "1234",
 		ResponseType: "id",
 	}
@@ -60,6 +61,7 @@ func TestVerifyWithExpiredSession(t *testing.T) {
 		RedirectURI:  "http://done.example.com",
 		Me:           "it is me",
 		CreatedAt:    time.Now().Add(-60 * time.Second),
+		ExpiresAt:    time.Now().Add(-time.Second),
 		Code:         "1234",
 		ResponseType: "id",
 	}
@@ -87,6 +89,7 @@ func TestVerifyWithBadForm(t *testing.T) {
 		RedirectURI:  "http://done.example.com",
 		Me:           "it is me",
 		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(time.Minute),
 		Code:         "1234",
 		ResponseType: "id",
 	}
@@ -126,6 +129,7 @@ func TestVerifyWithCodeSession(t *testing.T) {
 		RedirectURI:  "http://done.example.com",
 		Me:           "it is me",
 		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(time.Minute),
 		Code:         "1234",
 		ResponseType: "code",
 	}

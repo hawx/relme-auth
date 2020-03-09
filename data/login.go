@@ -10,16 +10,15 @@ import (
 
 var ErrNoLogin = errors.New("no login exists")
 
-const loginExpiry = -8 * time.Hour
-
 type Login struct {
 	ID        string
 	Me        string
 	CreatedAt time.Time
+	expiresAt time.Time
 }
 
 func (l Login) Expired() bool {
-	return time.Now().Add(loginExpiry).After(l.CreatedAt)
+	return time.Now().After(l.expiresAt)
 }
 
 // Login returns a user's profile URL (i.e. 'me' value), if they have recently
@@ -40,7 +39,12 @@ func (d *Database) Login(r *http.Request) (string, error) {
 	var login Login
 
 	row := d.db.QueryRow(`SELECT ID, Me, CreatedAt FROM login WHERE ID = ?`, loginID)
-	if err := row.Scan(&login.ID, &login.Me, &login.CreatedAt); err != nil || login.Expired() {
+	if err := row.Scan(&login.ID, &login.Me, &login.CreatedAt); err != nil {
+		return "", ErrNoLogin
+	}
+	login.expiresAt = login.CreatedAt.Add(d.expiry.Login)
+
+	if login.Expired() {
 		return "", ErrNoLogin
 	}
 

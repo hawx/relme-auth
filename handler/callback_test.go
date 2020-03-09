@@ -41,6 +41,7 @@ func (s *fakeCallbackStore) CreateCode(me, code string, createdAt time.Time) err
 			RedirectURI:  s.session.RedirectURI,
 			Scope:        s.session.Scope,
 			CreatedAt:    createdAt,
+			ExpiresAt:    createdAt.Add(time.Minute),
 		}
 		return nil
 	}
@@ -54,6 +55,7 @@ func TestCallback(t *testing.T) {
 			State:       "my-state",
 			RedirectURI: "http://example.com/callback",
 			CreatedAt:   time.Now(),
+			ExpiresAt:   time.Now().Add(5 * time.Minute),
 		},
 	}
 
@@ -96,6 +98,7 @@ func TestCallbackWhenSessionExpired(t *testing.T) {
 			State:       "my-state",
 			RedirectURI: "http://example.com/callback",
 			CreatedAt:   time.Now().Add(-10 * time.Minute),
+			ExpiresAt:   time.Now().Add(-10 * time.Minute),
 		},
 	}
 

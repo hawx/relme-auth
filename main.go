@@ -120,7 +120,13 @@ func main() {
 	}
 	cookies := sessions.NewCookieStore(secret)
 
-	database, err := data.Open(*dbPath, httpClient, cookies)
+	database, err := data.Open(*dbPath, httpClient, cookies, data.Expiry{
+		Session: 5 * time.Minute,
+		Code:    60 * time.Second,
+		Client:  24 * time.Hour,
+		Profile: 7 * 24 * time.Hour,
+		Login:   8 * time.Hour,
+	})
 	if err != nil {
 		fmt.Println("could not open database:", err)
 		return

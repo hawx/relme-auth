@@ -26,7 +26,7 @@ func (f *fakeCookieStore) Save(r *http.Request, w http.ResponseWriter, s *sessio
 func TestForget(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
 	defer db.Close()
 
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)

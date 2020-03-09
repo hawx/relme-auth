@@ -9,8 +9,6 @@ import (
 	"hawx.me/code/relme-auth/microformats"
 )
 
-const clientExpiry = -24 * time.Hour
-
 // Client stores an app's information, so it doesn't have to be queried again. If
 // redirectURI no longer matches then the data is invalidated.
 type Client struct {
@@ -18,10 +16,11 @@ type Client struct {
 	RedirectURI string
 	Name        string
 	UpdatedAt   time.Time
+	expiresAt   time.Time
 }
 
 func (c Client) Expired() bool {
-	return time.Now().Add(clientExpiry).After(c.UpdatedAt)
+	return time.Now().After(c.expiresAt)
 }
 
 func (d *Database) Client(clientID, redirectURI string) (Client, error) {
@@ -52,6 +51,8 @@ func (d *Database) findClient(clientID, redirectURI string) (client Client, err 
 		redirectURI)
 
 	err = row.Scan(&client.ID, &client.RedirectURI, &client.Name, &client.UpdatedAt)
+	client.expiresAt = client.UpdatedAt.Add(d.expiry.Client)
+
 	return
 }
 
@@ -69,11 +70,14 @@ func (d *Database) queryClient(clientID, redirectURI string) (client Client, err
 	redirectOK := parsedClientID.Scheme == parsedRedirectURI.Scheme && parsedClientID.Host == parsedRedirectURI.Host
 
 	if redirectOK && parsedClientID.Hostname() == "localhost" {
+		now := time.Now().UTC()
+
 		return Client{
 			ID:          clientID,
 			RedirectURI: redirectURI,
 			Name:        "Local App",
-			UpdatedAt:   time.Now().UTC(),
+			UpdatedAt:   now,
+			expiresAt:   now.Add(d.expiry.Client),
 		}, nil
 	}
 

@@ -12,7 +12,7 @@ import (
 func TestCode(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Code: time.Hour})
 	defer db.Close()
 
 	now := time.Now()
@@ -43,10 +43,10 @@ func TestCode(t *testing.T) {
 func TestCodeWithExpiry(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Code: time.Hour})
 	defer db.Close()
 
-	now := time.Now().Add(codeExpiry)
+	now := time.Now().Add(-time.Hour)
 
 	err := db.CreateSession(Session{
 		ResponseType: "code",
@@ -74,7 +74,7 @@ func TestCodeWithExpiry(t *testing.T) {
 func TestCodeReadTwice(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
 	defer db.Close()
 
 	now := time.Now()

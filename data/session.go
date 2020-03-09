@@ -2,8 +2,6 @@ package data
 
 import "time"
 
-const sessionExpiry = -5 * time.Minute
-
 // Session contains all of the information needed to keep track of OAuth
 // requests/responses with a 3rd party.
 type Session struct {
@@ -16,10 +14,11 @@ type Session struct {
 	Scope        string
 	State        string
 	CreatedAt    time.Time
+	ExpiresAt    time.Time
 }
 
 func (s Session) Expired() bool {
-	return time.Now().Add(sessionExpiry).After(s.CreatedAt)
+	return time.Now().After(s.ExpiresAt)
 }
 
 func (d *Database) CreateSession(session Session) error {
@@ -66,5 +65,7 @@ func (d *Database) Session(me string) (session Session, err error) {
 		&session.Provider,
 		&session.ProfileURI,
 		&session.CreatedAt)
+	session.ExpiresAt = session.CreatedAt.Add(d.expiry.Session)
+
 	return
 }

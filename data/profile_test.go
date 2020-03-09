@@ -11,7 +11,7 @@ import (
 func TestProfile(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Profile: time.Hour})
 	defer db.Close()
 
 	now := time.Now()
@@ -70,10 +70,10 @@ func TestProfile(t *testing.T) {
 func TestProfileWhenExpired(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Profile: time.Hour})
 	defer db.Close()
 
-	now := time.Now().Add(profileExpiry)
+	now := time.Now().Add(-time.Hour)
 	err := db.CacheProfile(Profile{
 		Me:        "http://john.doe.example.com",
 		UpdatedAt: now,

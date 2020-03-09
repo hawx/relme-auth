@@ -5,19 +5,18 @@ import (
 	"time"
 )
 
-const profileExpiry = -7 * 24 * time.Hour
-
 // Profile stores a user's authentication methods, so they don't have to be
 // queried again.
 type Profile struct {
 	Me        string
 	UpdatedAt time.Time
+	expiresAt time.Time
 
 	Methods []Method
 }
 
 func (p Profile) Expired() bool {
-	return time.Now().Add(profileExpiry).After(p.UpdatedAt)
+	return time.Now().After(p.expiresAt)
 }
 
 // Method is a way a user can authenticate, it contains the name of a 3rd party
@@ -76,14 +75,20 @@ func (d *Database) Profile(me string) (Profile, error) {
 
 	var profile Profile
 	var ok bool
+	var updatedAt time.Time
 	for rows.Next() {
 		ok = true
 		var method Method
 		if err = rows.Scan(&profile.Me, &profile.UpdatedAt, &method.Provider, &method.Profile); err != nil {
 			return profile, err
 		}
+		if profile.UpdatedAt.After(updatedAt) {
+			updatedAt = profile.UpdatedAt
+		}
 		profile.Methods = append(profile.Methods, method)
 	}
+
+	profile.expiresAt = profile.UpdatedAt.Add(d.expiry.Profile)
 
 	if !ok {
 		return Profile{}, sql.ErrNoRows

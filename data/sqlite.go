@@ -3,19 +3,48 @@ package data
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/sessions"
 	// register sqlite3 for database/sql
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Expiry struct {
+	// Session specifies how long a session should be valid for. This is the time
+	// from the start of authentication (being served the "choose" page), and
+	// hitting the callback from an auth provider.
+	Session time.Duration
+
+	// Code specifies how long a code should be valid for. This is the time
+	// between hitting the callback from an auth provider, and the client
+	// verifying the code.
+	Code time.Duration
+
+	// Client specifies how long to store information about a client. It has no
+	// influence on the authentication session, but outdated information may be
+	// misleading.
+	Client time.Duration
+
+	// Profile specifies how long to store the authentication methods for a
+	// user. This data can be manually refreshed on the "choose" page.
+	Profile time.Duration
+
+	// Login specifies how long to consider the user logged in to relme-auth. If a
+	// un-expired login is found a user will be presented with the option to
+	// "continue" on the "choose" page, bypassing the need to reauthenticate with
+	// a downstream provider.
+	Login time.Duration
+}
+
 type Database struct {
 	db         *sql.DB
 	httpClient *http.Client
 	cookies    sessions.Store
+	expiry     Expiry
 }
 
-func Open(path string, httpClient *http.Client, cookies sessions.Store) (*Database, error) {
+func Open(path string, httpClient *http.Client, cookies sessions.Store, expiry Expiry) (*Database, error) {
 	sqlite, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
@@ -25,6 +54,7 @@ func Open(path string, httpClient *http.Client, cookies sessions.Store) (*Databa
 		db:         sqlite,
 		httpClient: httpClient,
 		cookies:    cookies,
+		expiry:     expiry,
 	}
 
 	return db, db.migrate()

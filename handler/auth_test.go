@@ -76,6 +76,7 @@ func TestAuth(t *testing.T) {
 		RedirectURI: "https://example.com/redirect",
 		State:       "shared state",
 		CreatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(time.Hour),
 	}
 
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
@@ -129,6 +130,7 @@ func TestAuthWhenSessionExpired(t *testing.T) {
 		RedirectURI: "https://example.com/redirect",
 		State:       "shared state",
 		CreatedAt:   time.Now().Add(-10 * time.Minute),
+		ExpiresAt:   time.Now().Add(-10 * time.Minute),
 	}
 
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{

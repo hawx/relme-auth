@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gorilla/sessions"
 
@@ -15,7 +16,7 @@ func TestLogin(t *testing.T) {
 
 	cookies := sessions.NewCookieStore([]byte("hey"))
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, cookies)
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, cookies, Expiry{Login: time.Hour})
 	defer db.Close()
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
