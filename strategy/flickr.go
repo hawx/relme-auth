@@ -2,7 +2,7 @@ package strategy
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -73,7 +73,7 @@ func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 	oauthToken := form.Get("oauth_token")
 	data, ok := strategy.store.Claim(oauthToken)
 	if !ok {
-		return "", errors.New("unknown oauth_token")
+		return "", ErrUnknown
 	}
 	fdata := data.(flickrData)
 
@@ -83,7 +83,7 @@ func (strategy *authFlickr) Callback(form url.Values) (string, error) {
 	}
 	tokenCred, vals, err := strategy.client.RequestToken(strategy.httpClient, tempCred, form.Get("oauth_verifier"))
 	if err != nil {
-		return "", errors.New("error getting request token, " + err.Error())
+		return "", fmt.Errorf("error getting request token: %w", err)
 	}
 
 	nsid := vals.Get("user_nsid")

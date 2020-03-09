@@ -7,8 +7,12 @@ import (
 )
 
 var (
-	// ErrUnauthorized is returned when a the user was not authenticated
+	// ErrUnauthorized is returned when the user was not authenticated.
 	ErrUnauthorized = errors.New("you are not the user you told me you were")
+
+	// ErrUnknown is returned when a user seems to have appeared in the middle of
+	// an auth flow.
+	ErrUnknown = errors.New("how did you get here?")
 )
 
 type strategyStore interface {

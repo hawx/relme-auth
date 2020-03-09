@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -69,7 +70,7 @@ func (strategy *authPGP) Redirect(me, profile string) (redirectURL string, err e
 func (strategy *authPGP) Callback(form url.Values) (string, error) {
 	data, ok := strategy.store.Claim(form.Get("state"))
 	if !ok {
-		return "", errors.New("how did you get here? 1")
+		return "", ErrUnknown
 	}
 	fdata := data.(pgpData)
 
@@ -83,13 +84,13 @@ func (strategy *authPGP) Callback(form url.Values) (string, error) {
 func verify(httpClient *http.Client, keyURL, signed, challenge string) error {
 	resp, err := httpClient.Get(keyURL)
 	if err != nil {
-		return errors.New("could not get file: " + err.Error())
+		return fmt.Errorf("could not get file: %w", err)
 	}
 	defer resp.Body.Close()
 
 	keyRing, err := openpgp.ReadArmoredKeyRing(resp.Body)
 	if err != nil {
-		return errors.New("could not read key: " + err.Error())
+		return fmt.Errorf("could not read key: %w", err)
 	}
 
 	blk, rest := clearsign.Decode([]byte(signed))

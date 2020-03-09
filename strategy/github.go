@@ -3,7 +3,6 @@ package strategy
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 
 	"golang.org/x/oauth2"
@@ -54,7 +53,7 @@ func (strategy *authGitHub) Redirect(me, profile string) (redirectURL string, er
 func (strategy *authGitHub) Callback(form url.Values) (string, error) {
 	data, ok := strategy.store.Claim(form.Get("state"))
 	if !ok {
-		return "", errors.New("how did you get here?")
+		return "", ErrUnknown
 	}
 	expectedURL := data.(string)
 
