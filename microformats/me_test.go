@@ -85,12 +85,12 @@ func TestMe(t *testing.T) {
 			{Rel: "pgpkey", Href: "my-key"},
 		}, []A{
 			{Rel: "me", Href: someSite.URL},
-			{Rel: "me", Href: "http://localhost/link"},
+			{Rel: "me", Href: "what://localhost/link"},
 		}))
 	}))
 	defer meSite.Close()
 
-	strategies := matchingStrategy([]string{otherSite.URL, missingSite.URL, someSite.URL, "http://localhost/link"})
+	strategies := matchingStrategy([]string{otherSite.URL, missingSite.URL, someSite.URL, "what://localhost/link"})
 
 	eventsCh := client.Me(meSite.URL, strategies)
 
@@ -112,7 +112,7 @@ func TestMe(t *testing.T) {
 	if assert.False(timedOut) {
 		assert.True(ok)
 		assert.Equal(Found, event.Type)
-		assert.Equal("http://localhost/link", event.Link)
+		assert.Equal("what://localhost/link", event.Link)
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
@@ -140,7 +140,7 @@ func TestMe(t *testing.T) {
 	if assert.False(timedOut) {
 		assert.True(ok)
 		assert.Equal(Error, event.Type)
-		assert.Equal("http://localhost/link", event.Link)
+		assert.Equal("what://localhost/link", event.Link)
 		assert.NotNil(event.Err)
 	}
 
