@@ -90,10 +90,8 @@
     
       <section id="users">
         <div class="container">
-          <h1>For users</h1>
-      
-          <p>You can log in to this site without creating a new account! Instead make sure one (or more) of the methods below
-            is setup.</p>
+          <p>You can log in to this site without creating a new account! Instead make sure one (or more) of
+            the methods below is setup.</p>
       
           <h2>Providers</h2>
       
@@ -148,66 +146,6 @@
           <h2>More information</h2>
           <p>To find out more information on RelMeAuth, or other implementations, read <a
               href="https://indieweb.org/RelMeAuth">its IndieWeb wiki entry</a>.</p>
-        </div>
-      </section>
-    
-      <section id="developers">
-        <div class="container">
-          <h1>For developers</h1>
-      
-          <p>It is possible to use this site to provide login for your users.</p>
-      
-          <h2>Redirect a user to relme-auth</h2>
-          <p>The first step is to send a user to relme-auth so they can choose how
-            to authenticate. This is a simple redirect to <code>{{ .ThisURI }}/auth</code> with
-            a few query parameters:</p>
-          <dl>
-            <dt><code>me=</code></dt>
-            <dd>The web address of the user who is logging in.</dd>
-            <dt><code>client_id=</code></dt>
-            <dd>The URL to the site they are logging in to. This <em>should</em> be marked up with <a
-                href="https://www.w3.org/TR/indieauth/#application-information"><code>h-app</code></a> to provide a name to
-              display. You are also able to whitelist a <a
-                href="https://www.w3.org/TR/indieauth/#redirect-url"><code>redirect_uri</code></a> if it is not hosted at the
-              same domain.</dd>
-            <dt><code>redirect_uri=</code></dt>
-            <dd>Where to send the user after they have authenticated.</dd>
-            <dt><code>state=</code></dt>
-            <dd>A random string that will be passed back after authentication to prevent CSRF attacks.</dd>
-          </dl>
-      
-          <h2>The user is redirected back to the URI specified</h2>
-          <p>Once authentication is complete the user is sent back to your site with a couple of query parameters:</p>
-          <dl>
-            <dt><code>state=</code></dt>
-            <dd>The random string you originally sent, check this matches before continuing.</dd>
-            <dt><code>code=</code></dt>
-            <dd>A string you will need to verify to complete authentication.</dd>
-          </dl>
-      
-          <h2>Verify the code</h2>
-          <p>Make a <code>POST</code> request to <code>{{ .ThisURI }}/auth</code> to verify the
-            code you recieved. In return you will get the web address for the
-            authenticated user.</p>
-      
-          <pre><code>POST {{ .ThisURI }}/auth HTTP/1.1
-Content-Type: application/x-www-form-urlencoded;charset=UTF-8
-Accept: application/json
-
-code=kgnn18riem3pssk74&
-redirect_uri=https://example.com/callback&
-client_id=https://example.com/</code></pre>
-      
-          <p>Will, if correct, receive a JSON response with a value <code>"me"</code>.</p>
-      
-          <pre><code>HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "me": "https://john.doe/"
-}</code></pre>
-      
-          <p>Store the web address in a secure session and log the user in. You are done.</p>
         </div>
       </section>
     {{ end }}
