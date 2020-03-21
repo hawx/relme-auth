@@ -14,7 +14,7 @@ import (
 
 type exampleStore interface {
 	Tokens(string) ([]data.Token, error)
-	RevokeClient(me, clientID string) error
+	RevokeRow(me, rowID string) error
 	Forget(string) error
 }
 
@@ -122,19 +122,17 @@ func ExampleSignOut(baseURL string, store sessions.Store) http.HandlerFunc {
 // ExampleRevoke removes the token for the client_id.
 func ExampleRevoke(baseURL string, store sessions.Store, tokenStore exampleStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		clientID := r.FormValue("client_id")
-
 		session, _ := store.Get(r, "example-session")
 
-		var me string
-		meValue, ok := session.Values["me"]
-		if ok {
-			me, ok = meValue.(string)
+		me, ok := session.Values["me"].(string)
+		if !ok {
+			return
 		}
-		if ok {
-			if err := tokenStore.RevokeClient(me, clientID); err != nil {
-				log.Println("handler/example failed to revoke client:", err)
-			}
+
+		rowID := r.FormValue("id")
+
+		if err := tokenStore.RevokeRow(me, rowID); err != nil {
+			log.Println("handler/example failed to revoke token:", err)
 		}
 
 		http.Redirect(w, r, baseURL, http.StatusFound)

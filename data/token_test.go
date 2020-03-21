@@ -58,6 +58,49 @@ func TestToken(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestTokenRevokeTokenAt(t *testing.T) {
+	assert := assert.New(t)
+
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
+	defer db.Close()
+
+	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+
+	err := db.CreateToken(Token{
+		Token:     "abcde",
+		Me:        "http://john.doe.example.com",
+		ClientID:  "http://client.example.com",
+		Scope:     "create media",
+		CreatedAt: now,
+	})
+	assert.Nil(err)
+
+	err = db.CreateToken(Token{
+		Token:     "xyz",
+		Me:        "http://john.doe.example.com",
+		ClientID:  "http://client.example.com",
+		Scope:     "create update",
+		CreatedAt: now.Add(time.Second),
+	})
+	assert.Nil(err)
+
+	_, err = db.Token("abcde")
+	assert.Nil(err)
+	_, err = db.Token("xyz")
+	assert.Nil(err)
+
+	err = db.RevokeTokenAt("http://john.doe.example.com", "http://client.example.com", now)
+	assert.Nil(err)
+
+	_, err = db.Token("abcde")
+	assert.Equal(sql.ErrNoRows, err)
+	_, err = db.Token("xyz")
+	assert.Nil(err)
+
+	err = db.RevokeTokenAt("http://john.doe.example.com", "http://client.example.com", now)
+	assert.Nil(err)
+}
+
 func TestTokenRevokeByClient(t *testing.T) {
 	assert := assert.New(t)
 

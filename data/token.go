@@ -35,7 +35,7 @@ func (d *Database) Token(t string) (token Token, err error) {
 }
 
 func (d *Database) Tokens(me string) (tokens []Token, err error) {
-	rows, err := d.db.Query(`SELECT Token, Me, ClientID, Scope, CreatedAt FROM token WHERE Me = ?`,
+	rows, err := d.db.Query(`SELECT rowid, Me, ClientID, Scope, CreatedAt FROM token WHERE Me = ?`,
 		me)
 	if err != nil {
 		return
@@ -63,6 +63,12 @@ func (d *Database) Tokens(me string) (tokens []Token, err error) {
 
 func (d *Database) RevokeToken(token string) error {
 	_, err := d.db.Exec(`DELETE FROM token WHERE Token = ?`, token)
+
+	return err
+}
+
+func (d *Database) RevokeRow(me, rowID string) error {
+	_, err := d.db.Exec(`DELETE FROM token WHERE Me = ? AND rowid = ?`, me, rowID)
 
 	return err
 }
