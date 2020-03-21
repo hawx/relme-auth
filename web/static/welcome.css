@@ -251,3 +251,13 @@ button:active {
 input[type=url] + button {
     height: auto;
 }
+
+.control + .control {
+    margin-top: 1rem;
+}
+
+.control label {
+    font-size: .8rem;
+    display: block;
+}
+

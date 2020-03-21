@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"hawx.me/code/relme-auth/config"
@@ -13,6 +14,7 @@ import (
 )
 
 type exampleStore interface {
+	CreateToken(data.Token) error
 	Tokens(string) ([]data.Token, error)
 	RevokeRow(me, rowID string) error
 	Forget(string) error
@@ -124,6 +126,11 @@ func ExampleRevoke(baseURL string, store sessions.Store, tokenStore exampleStore
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "example-session")
 
+		if r.FormValue("state") != session.Values["state"] {
+			http.Error(w, "state did not match", http.StatusBadRequest)
+			return
+		}
+
 		me, ok := session.Values["me"].(string)
 		if !ok {
 			return
@@ -136,6 +143,58 @@ func ExampleRevoke(baseURL string, store sessions.Store, tokenStore exampleStore
 		}
 
 		http.Redirect(w, r, baseURL, http.StatusFound)
+	}
+}
+
+func ExampleGenerate(
+	baseURL string,
+	store sessions.Store,
+	generator func() (string, error),
+	tokenStore exampleStore,
+	templates tmpl,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "example-session")
+
+		if r.FormValue("state") != session.Values["state"] {
+			http.Error(w, "state did not match", http.StatusBadRequest)
+			return
+		}
+
+		me, ok := session.Values["me"].(string)
+		if !ok {
+			return
+		}
+
+		tokenString, err := generator()
+		if err != nil {
+			log.Println("handler/token could not generate token:", err)
+			return
+		}
+
+		if err := tokenStore.CreateToken(data.Token{
+			Token:     tokenString,
+			Me:        me,
+			ClientID:  r.FormValue("client_id"),
+			Scope:     r.FormValue("scope"),
+			CreatedAt: time.Now(),
+		}); err != nil {
+			log.Println("handler/example failed to create token:", err)
+		}
+
+		if err := templates.ExecuteTemplate(w, "generate.gotmpl", struct {
+			ThisURI  string
+			Me       string
+			ClientID string
+			Token    string
+		}{
+			ThisURI:  baseURL,
+			Me:       me,
+			ClientID: r.FormValue("client_id"),
+			Token:    tokenString,
+		}); err != nil {
+			log.Println("handler/example failed to write template:", err)
+		}
 	}
 }
 

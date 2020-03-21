@@ -113,6 +113,7 @@ func main() {
 	}
 
 	codeGenerator := random.Generator(20)
+	tokenGenerator := random.Generator(40)
 
 	secret, err := base64.StdEncoding.DecodeString(*cookieSecret)
 	if err != nil || len(secret) == 0 {
@@ -189,7 +190,7 @@ func main() {
 		"GET": handler.Auth(database, strategies, httpClient),
 	})
 
-	route.Handle("/token", handler.Token(database, random.Generator(40)))
+	route.Handle("/token", handler.Token(database, tokenGenerator))
 	route.Handle("/pgp/authorize", handler.PGP(templates))
 
 	route.Handle("/", handler.Example(*baseURL, conf, cookies, database, templates))
@@ -198,6 +199,7 @@ func main() {
 	route.Handle("/revoke", handler.ExampleRevoke(*baseURL, cookies, database))
 	route.Handle("/privacy", handler.ExamplePrivacy(*baseURL, cookies, templates))
 	route.Handle("/forget", handler.ExampleForget(*baseURL, cookies, database))
+	route.Handle("/generate", handler.ExampleGenerate(*baseURL, cookies, tokenGenerator, database, templates))
 
 	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}
 

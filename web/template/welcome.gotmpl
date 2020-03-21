@@ -41,7 +41,7 @@
                   <td><a href="{{ .ClientID }}">{{ .ClientID }}</a></td>
                   <td><time datetime="{{ .CreatedAt.Format "2006-01-02T15:04:05Z07:00" }}">{{ .CreatedAt.Format "2 Jan 2006" }}</time></td>
                   <td>{{ .Scope }}</td>
-                  <td class="no-padding"><form action="/revoke?id={{ .Token }}" method="post">
+                  <td class="no-padding"><form action="/revoke?id={{ .Token }}&state={{ $.State }}" method="post">
                     <button type="submit">Revoke</button>
                   </form></td>
                 </tr>
@@ -49,6 +49,25 @@
             </tbody>
           </table>
         {{ end }}
+
+        <h2>Generate Token</h2>
+        <form method="post" action="/generate">
+          <input name="state" value="{{ .State }}" hidden />
+
+          <div class="control">
+            <label for="client_id">Client ID</label>
+            <input id="client_id" name="client_id" />
+          </div>
+
+          <div class="control">
+            <label for="scope">Scope (space separated list)</label>
+            <input id="scope" name="scope" />
+          </div>
+
+          <div class="control">
+            <button type="submit">Create</button>
+            </div>
+        </form>
       </section>
     {{ else }}
       <header class="h-app hero">
