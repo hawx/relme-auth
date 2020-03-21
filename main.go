@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/context"
@@ -118,7 +119,11 @@ func main() {
 		fmt.Println("could not base64 decode cookie-secret:", err)
 		return
 	}
+
 	cookies := sessions.NewCookieStore(secret)
+	cookies.Options.HttpOnly = true
+	cookies.Options.SameSite = http.SameSiteStrictMode
+	cookies.Options.Secure = strings.HasPrefix(*baseURL, "https://")
 
 	database, err := data.Open(*dbPath, httpClient, cookies, data.Expiry{
 		Session: 5 * time.Minute,
