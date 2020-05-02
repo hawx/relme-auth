@@ -11,7 +11,7 @@ require (
 	golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
 	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/oauth2 v0.0.0-20190115181402-5dab4167f31c
-	hawx.me/code/assert v0.0.0-20150803185601-4570da094475
+	hawx.me/code/assert v0.0.0-20200428180912-91e855e32e7d
 	hawx.me/code/mux v0.0.0-20171229202905-76b5c781b7be
 	hawx.me/code/route v1.0.0
 	hawx.me/code/serve v0.0.0-20190207181551-eb94630184cf

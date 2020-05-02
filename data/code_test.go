@@ -10,7 +10,7 @@ import (
 )
 
 func TestCode(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Code: time.Hour})
 	defer db.Close()
@@ -24,24 +24,24 @@ func TestCode(t *testing.T) {
 		RedirectURI:  "http://client.example.com/callback",
 		CreatedAt:    now,
 	})
-	assert.Nil(err)
+	assert(err).Nil()
 
 	err = db.CreateCode("http://john.doe.example.com", "abcde", now)
-	assert.Nil(err)
+	assert(err).Nil()
 
 	code, err := db.Code("abcde")
-	assert.Nil(err)
-	assert.Equal("abcde", code.Code)
-	assert.Equal("code", code.ResponseType)
-	assert.Equal("http://john.doe.example.com", code.Me)
-	assert.Equal("http://client.example.com", code.ClientID)
-	assert.Equal("http://client.example.com/callback", code.RedirectURI)
-	assert.WithinDuration(code.CreatedAt, now, 10*time.Millisecond)
-	assert.False(code.Expired())
+	assert(err).Nil()
+	assert(code.Code).Equal("abcde")
+	assert(code.ResponseType).Equal("code")
+	assert(code.Me).Equal("http://john.doe.example.com")
+	assert(code.ClientID).Equal("http://client.example.com")
+	assert(code.RedirectURI).Equal("http://client.example.com/callback")
+	assert(code.CreatedAt).WithinDuration(now, 10*time.Millisecond)
+	assert(code.Expired()).False()
 }
 
 func TestCodeWithExpiry(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Code: time.Hour})
 	defer db.Close()
@@ -55,24 +55,24 @@ func TestCodeWithExpiry(t *testing.T) {
 		RedirectURI:  "http://client.example.com/callback",
 		CreatedAt:    now,
 	})
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	err = db.CreateCode("http://john.doe.example.com", "abcde", now)
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	code, err := db.Code("abcde")
-	assert.Nil(err)
-	assert.Equal("abcde", code.Code)
-	assert.Equal("code", code.ResponseType)
-	assert.Equal("http://john.doe.example.com", code.Me)
-	assert.Equal("http://client.example.com", code.ClientID)
-	assert.Equal("http://client.example.com/callback", code.RedirectURI)
-	assert.WithinDuration(code.CreatedAt, now, 10*time.Millisecond)
-	assert.True(code.Expired())
+	assert(err).Must.Nil()
+	assert(code.Code).Equal("abcde")
+	assert(code.ResponseType).Equal("code")
+	assert(code.Me).Equal("http://john.doe.example.com")
+	assert(code.ClientID).Equal("http://client.example.com")
+	assert(code.RedirectURI).Equal("http://client.example.com/callback")
+	assert(code.CreatedAt).WithinDuration(now, 10*time.Millisecond)
+	assert(code.Expired()).True()
 }
 
 func TestCodeReadTwice(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
 	defer db.Close()
@@ -86,15 +86,15 @@ func TestCodeReadTwice(t *testing.T) {
 		RedirectURI:  "http://client.example.com/callback",
 		CreatedAt:    now,
 	})
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	err = db.CreateCode("http://john.doe.example.com", "abcde", now)
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	code, err := db.Code("abcde")
-	assert.Nil(err)
-	assert.Equal("abcde", code.Code)
+	assert(err).Must.Nil()
+	assert(code.Code).Equal("abcde")
 
 	_, err = db.Code("abcde")
-	assert.Equal(sql.ErrNoRows, err)
+	assert(err).Equal(sql.ErrNoRows)
 }

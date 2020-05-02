@@ -9,7 +9,7 @@ import (
 )
 
 func TestProfile(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Profile: time.Hour})
 	defer db.Close()
@@ -24,22 +24,22 @@ func TestProfile(t *testing.T) {
 			{Provider: "other", Profile: "http://other.example.com/john.doe"},
 		},
 	})
-	assert.Nil(err)
+	assert(err).Nil()
 
 	profile, err := db.Profile("http://john.doe.example.com")
-	assert.Nil(err)
+	assert(err).Nil()
 
-	assert.Equal("http://john.doe.example.com", profile.Me)
-	assert.WithinDuration(now, profile.UpdatedAt, 10*time.Millisecond)
-	assert.False(profile.Expired())
+	assert(profile.Me).Equal("http://john.doe.example.com")
+	assert(profile.UpdatedAt).WithinDuration(now, 10*time.Millisecond)
+	assert(profile.Expired()).False()
 
-	if assert.Len(profile.Methods, 3) {
-		assert.Equal("else", profile.Methods[0].Provider)
-		assert.Equal("http://else.example.com/john.doe", profile.Methods[0].Profile)
-		assert.Equal("other", profile.Methods[1].Provider)
-		assert.Equal("http://other.example.com/john.doe", profile.Methods[1].Profile)
-		assert.Equal("someone", profile.Methods[2].Provider)
-		assert.Equal("http://someone.example.com/john.doe", profile.Methods[2].Profile)
+	if assert(profile.Methods).Len(3) {
+		assert(profile.Methods[0].Provider).Equal("else")
+		assert(profile.Methods[0].Profile).Equal("http://else.example.com/john.doe")
+		assert(profile.Methods[1].Provider).Equal("other")
+		assert(profile.Methods[1].Profile).Equal("http://other.example.com/john.doe")
+		assert(profile.Methods[2].Provider).Equal("someone")
+		assert(profile.Methods[2].Profile).Equal("http://someone.example.com/john.doe")
 	}
 
 	err = db.CacheProfile(Profile{
@@ -50,25 +50,25 @@ func TestProfile(t *testing.T) {
 			{Provider: "other", Profile: "http://cool.example.com/john.doe"},
 		},
 	})
-	assert.Nil(err)
+	assert(err).Nil()
 
 	profile, err = db.Profile("http://john.doe.example.com")
-	assert.Nil(err)
+	assert(err).Nil()
 
-	assert.Equal("http://john.doe.example.com", profile.Me)
-	assert.WithinDuration(now, profile.UpdatedAt, 10*time.Millisecond)
-	assert.False(profile.Expired())
+	assert(profile.Me).Equal("http://john.doe.example.com")
+	assert(profile.UpdatedAt).WithinDuration(now, 10*time.Millisecond)
+	assert(profile.Expired()).False()
 
-	if assert.Len(profile.Methods, 2) {
-		assert.Equal("other", profile.Methods[0].Provider)
-		assert.Equal("http://cool.example.com/john.doe", profile.Methods[0].Profile)
-		assert.Equal("someone", profile.Methods[1].Provider)
-		assert.Equal("http://someone.example.com/john.doe", profile.Methods[1].Profile)
+	if assert(profile.Methods).Len(2) {
+		assert(profile.Methods[0].Provider).Equal("other")
+		assert(profile.Methods[0].Profile).Equal("http://cool.example.com/john.doe")
+		assert(profile.Methods[1].Provider).Equal("someone")
+		assert(profile.Methods[1].Profile).Equal("http://someone.example.com/john.doe")
 	}
 }
 
 func TestProfileWhenExpired(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Profile: time.Hour})
 	defer db.Close()
@@ -83,21 +83,21 @@ func TestProfileWhenExpired(t *testing.T) {
 			{Provider: "other", Profile: "http://other.example.com/john.doe"},
 		},
 	})
-	assert.Nil(err)
+	assert(err).Nil()
 
 	profile, err := db.Profile("http://john.doe.example.com")
-	assert.Nil(err)
+	assert(err).Nil()
 
-	assert.Equal("http://john.doe.example.com", profile.Me)
-	assert.WithinDuration(now, profile.UpdatedAt, 10*time.Millisecond)
-	assert.True(profile.Expired())
+	assert(profile.Me).Equal("http://john.doe.example.com")
+	assert(profile.UpdatedAt).WithinDuration(now, 10*time.Millisecond)
+	assert(profile.Expired()).True()
 
-	if assert.Len(profile.Methods, 3) {
-		assert.Equal("else", profile.Methods[0].Provider)
-		assert.Equal("http://else.example.com/john.doe", profile.Methods[0].Profile)
-		assert.Equal("other", profile.Methods[1].Provider)
-		assert.Equal("http://other.example.com/john.doe", profile.Methods[1].Profile)
-		assert.Equal("someone", profile.Methods[2].Provider)
-		assert.Equal("http://someone.example.com/john.doe", profile.Methods[2].Profile)
+	if assert(profile.Methods).Len(3) {
+		assert(profile.Methods[0].Provider).Equal("else")
+		assert(profile.Methods[0].Profile).Equal("http://else.example.com/john.doe")
+		assert(profile.Methods[1].Provider).Equal("other")
+		assert(profile.Methods[1].Profile).Equal("http://other.example.com/john.doe")
+		assert(profile.Methods[2].Provider).Equal("someone")
+		assert(profile.Methods[2].Profile).Equal("http://someone.example.com/john.doe")
 	}
 }

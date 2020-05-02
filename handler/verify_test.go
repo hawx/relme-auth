@@ -26,7 +26,7 @@ func (s fakeVerifyStore) Code(code string) (data.Code, error) {
 }
 
 func TestVerify(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	code := data.Code{
 		ClientID:     "http://client.example.com/",
@@ -43,18 +43,18 @@ func TestVerify(t *testing.T) {
 
 	form := url.Values{"code": {code.Code}, "client_id": {code.ClientID}, "redirect_uri": {code.RedirectURI}}
 	resp, err := http.PostForm(s.URL, form)
-	assert.Nil(err)
-	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
 
 	var v struct {
 		Me string `json:"me"`
 	}
 	json.NewDecoder(resp.Body).Decode(&v)
-	assert.Equal(v.Me, code.Me)
+	assert(v.Me).Equal(code.Me)
 }
 
 func TestVerifyWithExpiredSession(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	code := data.Code{
 		ClientID:     "http://client.example.com",
@@ -71,19 +71,17 @@ func TestVerifyWithExpiredSession(t *testing.T) {
 
 	form := url.Values{"code": {code.Code}, "client_id": {code.ClientID}, "redirect_uri": {code.RedirectURI}}
 	resp, err := http.PostForm(s.URL, form)
-	assert.Nil(err)
-	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusBadRequest)
 
 	var v struct {
 		Error string `json:"error"`
 	}
 	json.NewDecoder(resp.Body).Decode(&v)
-	assert.Equal(v.Error, "invalid_request")
+	assert(v.Error).Equal("invalid_request")
 }
 
 func TestVerifyWithBadForm(t *testing.T) {
-	assert := assert.New(t)
-
 	code := data.Code{
 		ClientID:     "http://client.example.com",
 		RedirectURI:  "http://done.example.com",
@@ -108,21 +106,23 @@ func TestVerifyWithBadForm(t *testing.T) {
 
 	for name, form := range testCases {
 		t.Run(name, func(t *testing.T) {
+			assert := assert.Wrap(t)
+
 			resp, err := http.PostForm(s.URL, form)
-			assert.Nil(err)
-			assert.Equal(http.StatusBadRequest, resp.StatusCode)
+			assert(err).Must.Nil()
+			assert(resp.StatusCode).Equal(http.StatusBadRequest)
 
 			var v struct {
 				Error string `json:"error"`
 			}
 			json.NewDecoder(resp.Body).Decode(&v)
-			assert.Equal(v.Error, "invalid_request")
+			assert(v.Error).Equal("invalid_request")
 		})
 	}
 }
 
 func TestVerifyWithCodeSession(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	code := data.Code{
 		ClientID:     "http://client.example.com",
@@ -139,12 +139,12 @@ func TestVerifyWithCodeSession(t *testing.T) {
 
 	form := url.Values{"code": {code.Code}, "client_id": {code.ClientID}, "redirect_uri": {code.RedirectURI}}
 	resp, err := http.PostForm(s.URL, form)
-	assert.Nil(err)
-	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusBadRequest)
 
 	var v struct {
 		Error string `json:"error"`
 	}
 	json.NewDecoder(resp.Body).Decode(&v)
-	assert.Equal(v.Error, "invalid_request")
+	assert(v.Error).Equal("invalid_request")
 }

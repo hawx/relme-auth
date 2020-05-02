@@ -24,7 +24,7 @@ func (f *fakeCookieStore) Save(r *http.Request, w http.ResponseWriter, s *sessio
 }
 
 func TestForget(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
 	defer db.Close()
@@ -40,7 +40,7 @@ func TestForget(t *testing.T) {
 		State:        "abcde",
 		CreatedAt:    now,
 	})
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	err = db.CacheProfile(Profile{
 		Me:        "http://john.doe.example.com",
@@ -51,7 +51,7 @@ func TestForget(t *testing.T) {
 			{Provider: "other", Profile: "http://other.example.com/john.doe"},
 		},
 	})
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	err = db.CreateToken(Token{
 		Token:     "abcde",
@@ -60,17 +60,17 @@ func TestForget(t *testing.T) {
 		Scope:     "create media",
 		CreatedAt: now,
 	})
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	err = db.Forget("http://john.doe.example.com")
-	assert.Nil(err)
+	assert(err).Nil()
 
 	_, err = db.Session("http://john.doe.example.com")
-	assert.Equal(sql.ErrNoRows, err)
+	assert(err).Equal(sql.ErrNoRows)
 
 	_, err = db.Profile("http://john.doe.example.com")
-	assert.Equal(sql.ErrNoRows, err)
+	assert(err).Equal(sql.ErrNoRows)
 
 	tokens, _ := db.Tokens("https://john.doe.example.com")
-	assert.Len(tokens, 0)
+	assert(tokens).Len(0)
 }

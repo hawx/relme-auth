@@ -10,7 +10,7 @@ import (
 )
 
 func TestClient(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Client: time.Hour})
 	defer db.Close()
@@ -26,58 +26,63 @@ func TestClient(t *testing.T) {
 	defer s.Close()
 
 	client, err := db.Client(s.URL, s.URL+"/callback")
-	assert.Nil(err)
-	assert.Equal(s.URL, client.ID)
-	assert.Equal(s.URL+"/callback", client.RedirectURI)
-	assert.Equal("My App", client.Name)
-	assert.WithinDuration(time.Now(), time.Now(), time.Second)
-	assert.Equal(1, callCount)
+	assert(err).Must.Nil()
+	assert(client.ID).Equal(s.URL)
+	assert(client.RedirectURI).Equal(s.URL + "/callback")
+	assert(client.Name).Equal("My App")
+	assert(client.UpdatedAt).WithinDuration(time.Now(), time.Second)
+	assert(client.expiresAt).WithinDuration(time.Now().Add(time.Hour), time.Second)
+	assert(callCount).Equal(1)
 
 	client, err = db.Client(s.URL, s.URL+"/callback")
-	assert.Nil(err)
-	assert.Equal(s.URL, client.ID)
-	assert.Equal(s.URL+"/callback", client.RedirectURI)
-	assert.Equal("My App", client.Name)
-	assert.WithinDuration(time.Now(), time.Now(), time.Second)
-	assert.Equal(1, callCount)
+	assert(err).Nil()
+	assert(client.ID).Equal(s.URL)
+	assert(client.RedirectURI).Equal(s.URL + "/callback")
+	assert(client.Name).Equal("My App")
+	assert(client.UpdatedAt).WithinDuration(time.Now(), time.Second)
+	assert(client.expiresAt).WithinDuration(time.Now().Add(time.Hour), time.Second)
+	assert(callCount).Equal(1)
 
 	// new callback means new call to clientID
 	client, err = db.Client(s.URL, s.URL+"/not-callback")
-	assert.Nil(err)
-	assert.Equal(s.URL, client.ID)
-	assert.Equal(s.URL+"/not-callback", client.RedirectURI)
-	assert.Equal("My App", client.Name)
-	assert.WithinDuration(time.Now(), time.Now(), time.Second)
-	assert.Equal(2, callCount)
+	assert(err).Nil()
+	assert(client.ID).Equal(s.URL)
+	assert(client.RedirectURI).Equal(s.URL + "/not-callback")
+	assert(client.Name).Equal("My App")
+	assert(client.UpdatedAt).WithinDuration(time.Now(), time.Second)
+	assert(client.expiresAt).WithinDuration(time.Now().Add(time.Hour), time.Second)
+	assert(callCount).Equal(2)
 
 	// old callback was forgotten, so this calls clientID
 	client, err = db.Client(s.URL, s.URL+"/callback")
-	assert.Nil(err)
-	assert.Equal(s.URL, client.ID)
-	assert.Equal(s.URL+"/callback", client.RedirectURI)
-	assert.Equal("My App", client.Name)
-	assert.WithinDuration(time.Now(), time.Now(), time.Second)
-	assert.Equal(3, callCount)
+	assert(err).Nil()
+	assert(client.ID).Equal(s.URL)
+	assert(client.RedirectURI).Equal(s.URL + "/callback")
+	assert(client.Name).Equal("My App")
+	assert(client.UpdatedAt).WithinDuration(time.Now(), time.Second)
+	assert(client.expiresAt).WithinDuration(time.Now().Add(time.Hour), time.Second)
+	assert(callCount).Equal(3)
 }
 
 func TestClientWhenLocalhost(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Client: time.Hour})
 	defer db.Close()
 
 	client, err := db.Client("http://localhost:8080/", "http://localhost:8080/callback")
-	assert.Nil(err)
-	assert.Equal("http://localhost:8080/", client.ID)
-	assert.Equal("http://localhost:8080/callback", client.RedirectURI)
-	assert.Equal("Local App", client.Name)
-	assert.WithinDuration(time.Now(), time.Now(), time.Second)
+	assert(err).Nil()
+	assert(client.ID).Equal("http://localhost:8080/")
+	assert(client.RedirectURI).Equal("http://localhost:8080/callback")
+	assert(client.Name).Equal("Local App")
+	assert(client.UpdatedAt).WithinDuration(time.Now(), time.Second)
+	assert(client.expiresAt).WithinDuration(time.Now().Add(time.Hour), time.Second)
 }
 
 func TestClientWithMismatchedRedirectURI(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Client: time.Hour})
 	defer db.Close()
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -88,13 +93,13 @@ func TestClientWithMismatchedRedirectURI(t *testing.T) {
 	defer s.Close()
 
 	_, err := db.Client(s.URL, "http://example.com/callback")
-	assert.NotNil(err)
+	assert(err).NotNil()
 }
 
 func TestClientWithWhitelistedMismatchedRedirectURI(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Client: time.Hour})
 	defer db.Close()
 
 	callCount := 0
@@ -108,18 +113,19 @@ func TestClientWithWhitelistedMismatchedRedirectURI(t *testing.T) {
 	defer s.Close()
 
 	client, err := db.Client(s.URL, "http://example.com/callback")
-	assert.Nil(err)
-	assert.Equal(s.URL, client.ID)
-	assert.Equal("http://example.com/callback", client.RedirectURI)
-	assert.Equal("My App", client.Name)
-	assert.WithinDuration(time.Now(), time.Now(), time.Second)
-	assert.Equal(1, callCount)
+	assert(err).Nil()
+	assert(client.ID).Equal(s.URL)
+	assert(client.RedirectURI).Equal("http://example.com/callback")
+	assert(client.Name).Equal("My App")
+	assert(client.UpdatedAt).WithinDuration(time.Now(), time.Second)
+	assert(client.expiresAt).WithinDuration(time.Now().Add(time.Hour), time.Second)
+	assert(callCount).Equal(1)
 }
 
 func TestClientWithWhitelistedMismatchedRedirectURIInHeader(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
+	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{Client: time.Hour})
 	defer db.Close()
 
 	callCount := 0
@@ -133,10 +139,11 @@ func TestClientWithWhitelistedMismatchedRedirectURIInHeader(t *testing.T) {
 	defer s.Close()
 
 	client, err := db.Client(s.URL, "http://example.com/callback")
-	assert.Nil(err)
-	assert.Equal(s.URL, client.ID)
-	assert.Equal("http://example.com/callback", client.RedirectURI)
-	assert.Equal("My App", client.Name)
-	assert.WithinDuration(time.Now(), time.Now(), time.Second)
-	assert.Equal(1, callCount)
+	assert(err).Nil()
+	assert(client.ID).Equal(s.URL)
+	assert(client.RedirectURI).Equal("http://example.com/callback")
+	assert(client.Name).Equal("My App")
+	assert(client.UpdatedAt).WithinDuration(time.Now(), time.Second)
+	assert(client.expiresAt).WithinDuration(time.Now().Add(time.Hour), time.Second)
+	assert(callCount).Equal(1)
 }

@@ -45,7 +45,7 @@ func (s *fakeTokenStore) RevokeToken(t string) error {
 }
 
 func TestToken(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	code := data.Code{
 		ClientID:     "http://client.example.com/",
@@ -68,9 +68,9 @@ func TestToken(t *testing.T) {
 		"redirect_uri": {code.RedirectURI},
 		"me":           {code.Me},
 	})
-	assert.Nil(err)
-	assert.Equal(http.StatusOK, resp.StatusCode)
-	assert.Equal("application/json", resp.Header.Get("Content-Type"))
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
+	assert(resp.Header.Get("Content-Type")).Equal("application/json")
 
 	var v struct {
 		AccessToken string `json:"access_token"`
@@ -78,11 +78,11 @@ func TestToken(t *testing.T) {
 		Scope       string `json:"scope"`
 		Me          string `json:"me"`
 	}
-	assert.Nil(json.NewDecoder(resp.Body).Decode(&v))
-	assert.Equal("a token", v.AccessToken)
-	assert.Equal("Bearer", v.TokenType)
-	assert.Equal(code.Scope, v.Scope)
-	assert.Equal(code.Me, v.Me)
+	assert(json.NewDecoder(resp.Body).Decode(&v)).Must.Nil()
+	assert(v.AccessToken).Equal("a token")
+	assert(v.TokenType).Equal("Bearer")
+	assert(v.Scope).Equal(code.Scope)
+	assert(v.Me).Equal(code.Me)
 }
 
 func TestTokenWithBadParams(t *testing.T) {
@@ -180,7 +180,7 @@ func TestTokenWithExpiredSession(t *testing.T) {
 }
 
 func TestRevokeToken(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	token := data.Token{
 		Token:     "abcde",
@@ -198,14 +198,14 @@ func TestRevokeToken(t *testing.T) {
 		"action": {"revoke"},
 		"token":  {token.Token},
 	})
-	assert.Nil(err)
-	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
 
-	assert.Equal(sessionStore.token, data.Token{})
+	assert(sessionStore.token).Equal(data.Token{})
 }
 
 func TestVerifyToken(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	token := data.Token{
 		Token:     "abcde",
@@ -222,19 +222,19 @@ func TestVerifyToken(t *testing.T) {
 	req.Header.Add("Authorization", "Bearer "+token.Token)
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.Nil(err)
-	assert.Equal(http.StatusOK, resp.StatusCode)
-	assert.Equal("application/json", resp.Header.Get("Content-Type"))
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
+	assert(resp.Header.Get("Content-Type")).Equal("application/json")
 
 	var v struct {
 		Me       string `json:"me"`
 		ClientID string `json:"client_id"`
 		Scope    string `json:"scope"`
 	}
-	assert.Nil(json.NewDecoder(resp.Body).Decode(&v))
-	assert.Equal(token.Me, v.Me)
-	assert.Equal(token.ClientID, v.ClientID)
-	assert.Equal(token.Scope, v.Scope)
+	assert(json.NewDecoder(resp.Body).Decode(&v)).Must.Nil()
+	assert(v.Me).Equal(token.Me)
+	assert(v.ClientID).Equal(token.ClientID)
+	assert(v.Scope).Equal(token.Scope)
 }
 
 func TestVerifyTokenWithBadParams(t *testing.T) {

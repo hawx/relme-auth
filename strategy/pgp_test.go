@@ -43,7 +43,7 @@ func TestPGPNotMatch(t *testing.T) {
 }
 
 func TestPGPAuthFlow(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer server.Close()
@@ -73,23 +73,23 @@ func TestPGPAuthFlow(t *testing.T) {
 
 	// 1. Redirect
 	redirectURL, err := pgp.Redirect(key.URL, key.URL+"/key")
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	data := store.Link.(pgpData)
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?challenge=%s&client_id=%s&state=%s", server.URL, data.challenge, id, state)
-	assert.Equal(expectedRedirectURL, redirectURL)
+	assert(redirectURL).Equal(expectedRedirectURL)
 
 	// 2. Callback
 	profileURL, err := pgp.Callback(url.Values{
 		"state":  {state},
 		"signed": {sign(data.challenge, "testdata/private.asc")},
 	})
-	assert.Nil(err)
-	assert.Equal(key.URL, profileURL)
+	assert(err).Must.Nil()
+	assert(profileURL).Equal(key.URL)
 }
 
 func TestPGPAuthFlowWithBadKey(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer server.Close()
@@ -119,19 +119,19 @@ func TestPGPAuthFlowWithBadKey(t *testing.T) {
 
 	// 1. Redirect
 	redirectURL, err := pgp.Redirect(key.URL, key.URL+"/key")
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
 	data := store.Link.(pgpData)
 	expectedRedirectURL := fmt.Sprintf("%s/oauth/authorize?challenge=%s&client_id=%s&state=%s", server.URL, data.challenge, id, state)
-	assert.Equal(expectedRedirectURL, redirectURL)
+	assert(redirectURL).Equal(expectedRedirectURL)
 
 	// 2. Callback
 	profileURL, err := pgp.Callback(url.Values{
 		"state":  {state},
 		"signed": {sign("abcde", "testdata/other_private.asc")},
 	})
-	assert.Equal(ErrUnauthorized, err)
-	assert.Equal("", profileURL)
+	assert(err).Equal(ErrUnauthorized)
+	assert(profileURL).Equal("")
 }
 
 func sign(challenge, key string) string {

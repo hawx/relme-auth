@@ -45,7 +45,7 @@ func testPage(link string) string {
 func TestAuth(t *testing.T) {
 	var rURL, sURL string
 
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 	authStore := &fakeAuthStore{}
 	strat := &fakeStrategy{}
 
@@ -87,19 +87,18 @@ func TestAuth(t *testing.T) {
 		"redirect_uri": {"https://example.com/redirect"},
 		"state":        {"shared state"},
 	}.Encode(), nil)
-	assert.Nil(err)
+	assert(err).Must.Nil()
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
-	assert.Nil(err)
-
-	assert.Equal("https://example.com/redirect", resp.Header.Get("Location"))
+	assert(err).Must.Nil()
+	assert(resp.Header.Get("Location")).Equal("https://example.com/redirect")
 }
 
 func TestAuthWhenSessionExpired(t *testing.T) {
 	var rURL, sURL string
 
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 	authStore := &fakeAuthStore{}
 	strat := &fakeStrategy{}
 
@@ -141,19 +140,19 @@ func TestAuthWhenSessionExpired(t *testing.T) {
 		"redirect_uri": {"https://example.com/redirect"},
 		"state":        {"shared state"},
 	}.Encode(), nil)
-	assert.Nil(err)
+	assert(err).Must.Nil()
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
-	assert.Nil(err)
-	assert.Equal(http.StatusBadRequest, resp.StatusCode)
-	assert.Equal("", resp.Header.Get("Location"))
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusBadRequest)
+	assert(resp.Header.Get("Location")).Equal("")
 }
 
 func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	var rURL, sURL string
 
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 	authStore := &fakeAuthStore{}
 	strat := &falseStrategy{}
 
@@ -181,10 +180,10 @@ func TestAuthWhenNoMatchingStrategies(t *testing.T) {
 	req, err := http.NewRequest("GET", a.URL+"?"+url.Values{
 		"me": {s.URL},
 	}.Encode(), nil)
-	assert.Nil(err)
+	assert(err).Must.Nil()
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
-	assert.Nil(err)
-	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusBadRequest)
 }

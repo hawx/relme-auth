@@ -58,7 +58,7 @@ func (s matchingStrategy) IsAllowed(link string) (found strategy.Strategy, ok bo
 }
 
 func TestMe(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	var meSite, someSite, otherSite, missingSite *httptest.Server
 
@@ -95,77 +95,77 @@ func TestMe(t *testing.T) {
 	eventsCh := client.Me(meSite.URL, strategies)
 
 	event, ok, timedOut := getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(PGP, event.Type)
-		assert.Equal(meSite.URL+"/my-key", event.Link)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(PGP)
+		assert(event.Link).Equal(meSite.URL + "/my-key")
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Found, event.Type)
-		assert.Equal(someSite.URL, event.Link)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(Found)
+		assert(event.Link).Equal(someSite.URL)
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Found, event.Type)
-		assert.Equal("what://localhost/link", event.Link)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(Found)
+		assert(event.Link).Equal("what://localhost/link")
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Found, event.Type)
-		assert.Equal(otherSite.URL, event.Link)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(Found)
+		assert(event.Link).Equal(otherSite.URL)
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Found, event.Type)
-		assert.Equal(missingSite.URL, event.Link)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(Found)
+		assert(event.Link).Equal(missingSite.URL)
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Verified, event.Type)
-		assert.Equal(someSite.URL, event.Link)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(Verified)
+		assert(event.Link).Equal(someSite.URL)
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Error, event.Type)
-		assert.Equal("what://localhost/link", event.Link)
-		assert.NotNil(event.Err)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(Error)
+		assert(event.Link).Equal("what://localhost/link")
+		assert(event.Err).NotNil()
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Verified, event.Type)
-		assert.Equal(otherSite.URL, event.Link)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(Verified)
+		assert(event.Link).Equal(otherSite.URL)
 	}
 
 	event, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.True(ok)
-		assert.Equal(Unverified, event.Type)
-		assert.Equal(missingSite.URL, event.Link)
+	if assert(timedOut).False() {
+		assert(ok).True()
+		assert(event.Type).Equal(Unverified)
+		assert(event.Link).Equal(missingSite.URL)
 	}
 
 	_, ok, timedOut = getEvent(eventsCh)
-	if assert.False(timedOut) {
-		assert.False(ok)
+	if assert(timedOut).False() {
+		assert(ok).False()
 	}
 }
 
 func TestFindAuth(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	var me, good, bad *httptest.Server
 
@@ -188,16 +188,16 @@ func TestFindAuth(t *testing.T) {
 	defer me.Close()
 
 	links, pgpkey, err := client.FindAuth(me.URL)
-	assert.Nil(err)
-	assert.Equal("", pgpkey)
+	assert(err).Must.Nil()
+	assert(pgpkey).Equal("")
 
-	if assert.Len(links, 1) {
-		assert.Equal(links[0], good.URL)
+	if assert(links).Len(1) {
+		assert(links[0]).Equal(good.URL)
 	}
 }
 
 func TestFindAuthWithPGPKey(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	var me, good *httptest.Server
 
@@ -215,16 +215,16 @@ func TestFindAuthWithPGPKey(t *testing.T) {
 	defer me.Close()
 
 	links, pgpkey, err := client.FindAuth(me.URL)
-	assert.Nil(err)
-	assert.Equal(me.URL+"/key", pgpkey)
+	assert(err).Must.Nil()
+	assert(pgpkey).Equal(me.URL + "/key")
 
-	if assert.Len(links, 1) {
-		assert.Equal(links[0], good.URL)
+	if assert(links).Len(1) {
+		assert(links[0]).Equal(good.URL)
 	}
 }
 
 func TestFindAuthWithAuthnPGPKey(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	var me, good, bad *httptest.Server
 
@@ -248,16 +248,16 @@ func TestFindAuthWithAuthnPGPKey(t *testing.T) {
 	defer me.Close()
 
 	links, pgpkey, err := client.FindAuth(me.URL)
-	assert.Nil(err)
-	assert.Equal("http://example.com/key", pgpkey)
+	assert(err).Must.Nil()
+	assert(pgpkey).Equal("http://example.com/key")
 
-	if assert.Len(links, 1) {
-		assert.Equal(links[0], good.URL)
+	if assert(links).Len(1) {
+		assert(links[0]).Equal(good.URL)
 	}
 }
 
 func TestFindAuthWithNoneAuthnPGPKey(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	var me, good, bad *httptest.Server
 
@@ -281,16 +281,16 @@ func TestFindAuthWithNoneAuthnPGPKey(t *testing.T) {
 	defer me.Close()
 
 	links, pgpkey, err := client.FindAuth(me.URL)
-	assert.Nil(err)
-	assert.Equal("", pgpkey)
+	assert(err).Must.Nil()
+	assert(pgpkey).Equal("")
 
-	if assert.Len(links, 1) {
-		assert.Equal(links[0], good.URL)
+	if assert(links).Len(1) {
+		assert(links[0]).Equal(good.URL)
 	}
 }
 
 func TestFindAuthWhenNoAuthnRels(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	var me, good *httptest.Server
 
@@ -308,16 +308,16 @@ func TestFindAuthWhenNoAuthnRels(t *testing.T) {
 	defer me.Close()
 
 	links, _, err := client.FindAuth(me.URL)
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
-	if assert.Len(links, 2) {
-		assert.Equal(links[0], good.URL)
-		assert.Equal(links[1], "http://localhost/unknown")
+	if assert(links).Len(2) {
+		assert(links[0]).Equal(good.URL)
+		assert(links[1]).Equal("http://localhost/unknown")
 	}
 }
 
 func TestFind(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	html := `
 <!doctype html>
@@ -339,16 +339,16 @@ func TestFind(t *testing.T) {
 	defer s.Close()
 
 	links, err := client.Find(s.URL)
-	assert.Nil(err)
+	assert(err).Must.Nil()
 
-	if assert.Len(links, 2) {
-		assert.Equal(links[0], "https://example.com/a")
-		assert.Equal(links[1], "https://example.com/b")
+	if assert(links).Len(2) {
+		assert(links[0]).Equal("https://example.com/a")
+		assert(links[1]).Equal("https://example.com/b")
 	}
 }
 
 func TestLinksTo(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	html := `
 <!doctype html>
@@ -367,18 +367,18 @@ func TestLinksTo(t *testing.T) {
 	defer s.Close()
 
 	ok, err := client.LinksTo(s.URL, "https://example.com/a")
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 	ok, err = client.LinksTo(s.URL, "https://example.com/a/")
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 	ok, err = client.LinksTo(s.URL, "http://example.com/a")
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 
 	ok, err = client.LinksTo(s.URL, "https://example.com/b")
-	assert.Nil(err)
-	assert.False(ok)
+	assert(err).Must.Nil()
+	assert(ok).False()
 }
 
 func TestLinksToWithRedirects(t *testing.T) {
@@ -396,7 +396,7 @@ func TestLinksToWithRedirects(t *testing.T) {
 	// So I need to follow this short link to check that _any_ page it redirects
 	// to matches what I expect for my homepage.
 
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 	var twitterURL string
 
 	// my homepage links to my twitter
@@ -420,13 +420,13 @@ func TestLinksToWithRedirects(t *testing.T) {
 
 	// then we can verify that my homepage links twitter
 	ok, err := client.LinksTo(homepage.URL, twitter.URL)
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 
 	// and twitter links to my homepage
 	ok, err = client.LinksTo(twitter.URL, homepage.URL)
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 }
 
 func TestLinksToWithMoreRedirects(t *testing.T) {
@@ -441,7 +441,7 @@ func TestLinksToWithMoreRedirects(t *testing.T) {
 	//        me -> https://tco.com/RANDOM
 	//       302 -> https://example.com/my-homepage
 
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 	var twitterURL string
 
 	// my homepage links to my twitter
@@ -471,21 +471,21 @@ func TestLinksToWithMoreRedirects(t *testing.T) {
 
 	// then we can verify that my homepage links twitter
 	ok, err := client.LinksTo(homepage.URL, twitter.URL)
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 
 	// and twitter links to my homepage
 	ok, err = client.LinksTo(twitter.URL, homepage.URL)
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 
 	// and we can verify that my short homepage links twitter
 	ok, err = client.LinksTo(shortHomepage.URL, twitter.URL)
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 
 	// and twitter links to my short homepage
 	ok, err = client.LinksTo(twitter.URL, shortHomepage.URL)
-	assert.Nil(err)
-	assert.True(ok)
+	assert(err).Must.Nil()
+	assert(ok).True()
 }

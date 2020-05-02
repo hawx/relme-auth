@@ -10,7 +10,7 @@ import (
 )
 
 func TestToken(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
 	defer db.Close()
@@ -24,85 +24,42 @@ func TestToken(t *testing.T) {
 		Scope:     "create media",
 		CreatedAt: now,
 	})
-	assert.Nil(err)
+	assert(err).Nil()
 
 	token, err := db.Token("abcde")
-	assert.Nil(err)
-	assert.Equal("abcde", token.Token)
-	assert.Equal("http://john.doe.example.com", token.Me)
-	assert.Equal("http://client.example.com", token.ClientID)
-	assert.Equal("create media", token.Scope)
-	assert.Equal(now, token.CreatedAt)
+	assert(err).Nil()
+	assert(token.Token).Equal("abcde")
+	assert(token.Me).Equal("http://john.doe.example.com")
+	assert(token.ClientID).Equal("http://client.example.com")
+	assert(token.Scope).Equal("create media")
+	assert(token.CreatedAt).Equal(now)
 
 	tokens, err := db.Tokens("http://john.doe.example.com")
-	assert.Nil(err)
-	if assert.Len(tokens, 1) {
-		assert.Equal("abcde", tokens[0].Token)
-		assert.Equal("http://john.doe.example.com", tokens[0].Me)
-		assert.Equal("http://client.example.com", tokens[0].ClientID)
-		assert.Equal("create media", tokens[0].Scope)
-		assert.Equal(now, tokens[0].CreatedAt)
+	assert(err).Nil()
+	if assert(tokens).Len(1) {
+		assert(tokens[0].Token).Equal("1")
+		assert(tokens[0].Me).Equal("http://john.doe.example.com")
+		assert(tokens[0].ClientID).Equal("http://client.example.com")
+		assert(tokens[0].Scope).Equal("create media")
+		assert(tokens[0].CreatedAt).Equal(now)
 	}
 
 	err = db.RevokeToken("abcde")
-	assert.Nil(err)
+	assert(err).Nil()
 
 	_, err = db.Token("abcde")
-	assert.Equal(sql.ErrNoRows, err)
+	assert(err).Equal(sql.ErrNoRows)
 
 	tokens, err = db.Tokens("http://john.doe.example.com")
-	assert.Nil(err)
-	assert.Len(tokens, 0)
+	assert(err).Nil()
+	assert(tokens).Len(0)
 
 	err = db.RevokeToken("abcde")
-	assert.Nil(err)
-}
-
-func TestTokenRevokeTokenAt(t *testing.T) {
-	assert := assert.New(t)
-
-	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
-	defer db.Close()
-
-	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-
-	err := db.CreateToken(Token{
-		Token:     "abcde",
-		Me:        "http://john.doe.example.com",
-		ClientID:  "http://client.example.com",
-		Scope:     "create media",
-		CreatedAt: now,
-	})
-	assert.Nil(err)
-
-	err = db.CreateToken(Token{
-		Token:     "xyz",
-		Me:        "http://john.doe.example.com",
-		ClientID:  "http://client.example.com",
-		Scope:     "create update",
-		CreatedAt: now.Add(time.Second),
-	})
-	assert.Nil(err)
-
-	_, err = db.Token("abcde")
-	assert.Nil(err)
-	_, err = db.Token("xyz")
-	assert.Nil(err)
-
-	err = db.RevokeTokenAt("http://john.doe.example.com", "http://client.example.com", now)
-	assert.Nil(err)
-
-	_, err = db.Token("abcde")
-	assert.Equal(sql.ErrNoRows, err)
-	_, err = db.Token("xyz")
-	assert.Nil(err)
-
-	err = db.RevokeTokenAt("http://john.doe.example.com", "http://client.example.com", now)
-	assert.Nil(err)
+	assert(err).Nil()
 }
 
 func TestTokenRevokeByClient(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	db, _ := Open("file::memory:?mode=memory&cache=shared", http.DefaultClient, &fakeCookieStore{}, Expiry{})
 	defer db.Close()
@@ -116,32 +73,32 @@ func TestTokenRevokeByClient(t *testing.T) {
 		Scope:     "create media",
 		CreatedAt: now,
 	})
-	assert.Nil(err)
+	assert(err).Nil()
 
 	token, err := db.Token("abcde")
-	assert.Nil(err)
-	assert.Equal("abcde", token.Token)
-	assert.Equal("http://john.doe.example.com", token.Me)
-	assert.Equal("http://client.example.com", token.ClientID)
-	assert.Equal("create media", token.Scope)
-	assert.Equal(now, token.CreatedAt)
+	assert(err).Nil()
+	assert(token.Token).Equal("abcde")
+	assert(token.Me).Equal("http://john.doe.example.com")
+	assert(token.ClientID).Equal("http://client.example.com")
+	assert(token.Scope).Equal("create media")
+	assert(token.CreatedAt).Equal(now)
 
 	tokens, err := db.Tokens("http://john.doe.example.com")
-	assert.Nil(err)
-	if assert.Len(tokens, 1) {
-		assert.Equal("abcde", tokens[0].Token)
-		assert.Equal("http://john.doe.example.com", tokens[0].Me)
-		assert.Equal("http://client.example.com", tokens[0].ClientID)
-		assert.Equal("create media", tokens[0].Scope)
-		assert.Equal(now, tokens[0].CreatedAt)
+	assert(err).Nil()
+	if assert(tokens).Len(1) {
+		assert(tokens[0].Token).Equal("1")
+		assert(tokens[0].Me).Equal("http://john.doe.example.com")
+		assert(tokens[0].ClientID).Equal("http://client.example.com")
+		assert(tokens[0].Scope).Equal("create media")
+		assert(tokens[0].CreatedAt).Equal(now)
 	}
 
 	err = db.RevokeClient("http://john.doe.example.com", "http://client.example.com")
-	assert.Nil(err)
+	assert(err).Nil()
 
 	_, err = db.Token("abcde")
-	assert.Equal(sql.ErrNoRows, err)
+	assert(err).Equal(sql.ErrNoRows)
 
 	err = db.RevokeClient("http://john.doe.example.com", "http://client.example.com")
-	assert.Nil(err)
+	assert(err).Nil()
 }

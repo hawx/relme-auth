@@ -21,7 +21,7 @@ func (t *mockTemplate) ExecuteTemplate(w io.Writer, tmpl string, data interface{
 }
 
 func TestPGP(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	templates := &mockTemplate{}
 
@@ -30,12 +30,11 @@ func TestPGP(t *testing.T) {
 
 	http.Get(s.URL + "?client_id=my-client&state=my-state&challenge=my-challenge")
 
-	assert.Equal(templates.Tmpl, "pgp.gotmpl")
+	assert(templates.Tmpl).Equal("pgp.gotmpl")
 
 	data, ok := templates.Data.(pgpCtx)
-	if assert.True(ok) {
-		assert.Equal(data.ClientID, "my-client")
-		assert.Equal(data.State, "my-state")
-		assert.Equal(data.Challenge, "my-challenge")
-	}
+	assert(ok).Must.True()
+	assert("my-client").Equal(data.ClientID)
+	assert("my-state").Equal(data.State)
+	assert("my-challenge").Equal(data.Challenge)
 }

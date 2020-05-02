@@ -38,7 +38,7 @@ func (s *fakeChooseStore) Client(clientID, redirectURI string) (data.Client, err
 }
 
 func TestChoose(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	store := &fakeChooseStore{
 		client: data.Client{
@@ -60,25 +60,25 @@ func TestChoose(t *testing.T) {
 	}
 
 	resp, err := http.Get(s.URL + "?" + form.Encode())
-	assert.Nil(err)
-	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
 
 	data := tmpl.Data.(chooseCtx)
-	assert.Equal("choose.gotmpl", tmpl.Tmpl)
-	assert.Equal("http://client.example.com/", data.ClientID)
-	assert.Equal("Client", data.ClientName)
-	assert.Equal("http://me.example.com/", data.Me)
-	assert.False(data.Skip)
+	assert(tmpl.Tmpl).Equal("choose.gotmpl")
+	assert(data.ClientID).Equal("http://client.example.com/")
+	assert(data.ClientName).Equal("Client")
+	assert(data.Me).Equal("http://me.example.com/")
+	assert(data.Skip).False()
 
-	assert.Equal("id", store.session.ResponseType)
-	assert.Equal("http://me.example.com/", store.session.Me)
-	assert.Equal("http://client.example.com/", store.session.ClientID)
-	assert.Equal("http://client.example.com/callback", store.session.RedirectURI)
-	assert.Equal("some-value", store.session.State)
+	assert(store.session.ResponseType).Equal("id")
+	assert(store.session.Me).Equal("http://me.example.com/")
+	assert(store.session.ClientID).Equal("http://client.example.com/")
+	assert(store.session.RedirectURI).Equal("http://client.example.com/callback")
+	assert(store.session.State).Equal("some-value")
 }
 
 func TestChooseWithRecentLogin(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	store := &fakeChooseStore{
 		client: data.Client{
@@ -101,25 +101,25 @@ func TestChooseWithRecentLogin(t *testing.T) {
 	}
 
 	resp, err := http.Get(s.URL + "?" + form.Encode())
-	assert.Nil(err)
-	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
 
 	data := tmpl.Data.(chooseCtx)
-	assert.Equal("choose.gotmpl", tmpl.Tmpl)
-	assert.Equal("http://client.example.com/", data.ClientID)
-	assert.Equal("Client", data.ClientName)
-	assert.Equal("http://me.example.com/", data.Me)
-	assert.True(data.Skip)
+	assert(tmpl.Tmpl).Equal("choose.gotmpl")
+	assert(data.ClientID).Equal("http://client.example.com/")
+	assert(data.ClientName).Equal("Client")
+	assert(data.Me).Equal("http://me.example.com/")
+	assert(data.Skip).True()
 
-	assert.Equal("id", store.session.ResponseType)
-	assert.Equal("http://me.example.com/", store.session.Me)
-	assert.Equal("http://client.example.com/", store.session.ClientID)
-	assert.Equal("http://client.example.com/callback", store.session.RedirectURI)
-	assert.Equal("some-value", store.session.State)
+	assert(store.session.ResponseType).Equal("id")
+	assert(store.session.Me).Equal("http://me.example.com/")
+	assert(store.session.ClientID).Equal("http://client.example.com/")
+	assert(store.session.RedirectURI).Equal("http://client.example.com/callback")
+	assert(store.session.State).Equal("some-value")
 }
 
 func TestChooseWhenClientCannotBeRetrieved(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	store := &fakeChooseStore{}
 	tmpl := &mockTemplate{}
@@ -135,12 +135,12 @@ func TestChooseWhenClientCannotBeRetrieved(t *testing.T) {
 	}
 
 	resp, err := http.Get(s.URL + "?" + form.Encode())
-	assert.Nil(err)
-	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusBadRequest)
 }
 
 func TestChooseWithBadMe(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	store := &fakeChooseStore{
 		client: data.Client{
@@ -162,12 +162,12 @@ func TestChooseWithBadMe(t *testing.T) {
 	}
 
 	resp, err := http.Get(s.URL + "?" + form.Encode())
-	assert.Nil(err)
-	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusBadRequest)
 }
 
 func TestChooseWithBadClientID(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	store := &fakeChooseStore{
 		client: data.Client{
@@ -189,8 +189,8 @@ func TestChooseWithBadClientID(t *testing.T) {
 	}
 
 	resp, err := http.Get(s.URL + "?" + form.Encode())
-	assert.Nil(err)
-	assert.Equal(http.StatusBadRequest, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusBadRequest)
 }
 
 func TestChooseWithBadParams(t *testing.T) {
@@ -246,7 +246,7 @@ func TestChooseWithBadParams(t *testing.T) {
 }
 
 func TestChooseForCode(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert.Wrap(t)
 
 	store := &fakeChooseStore{
 		client: data.Client{
@@ -270,22 +270,22 @@ func TestChooseForCode(t *testing.T) {
 	}
 
 	resp, err := http.Get(s.URL + "?" + form.Encode())
-	assert.Nil(err)
-	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
 
 	data := tmpl.Data.(chooseCtx)
-	assert.Equal("choose.gotmpl", tmpl.Tmpl)
-	assert.Equal("http://client.example.com/", data.ClientID)
-	assert.Equal("Client", data.ClientName)
-	assert.Equal("http://me.example.com/", data.Me)
-	assert.False(data.Skip)
+	assert(tmpl.Tmpl).Equal("choose.gotmpl")
+	assert(data.ClientID).Equal("http://client.example.com/")
+	assert(data.ClientName).Equal("Client")
+	assert(data.Me).Equal("http://me.example.com/")
+	assert(data.Skip).False()
 
-	assert.Equal("code", store.session.ResponseType)
-	assert.Equal("http://me.example.com/", store.session.Me)
-	assert.Equal("http://client.example.com/", store.session.ClientID)
-	assert.Equal("http://client.example.com/callback", store.session.RedirectURI)
-	assert.Equal("some-value", store.session.State)
-	assert.Equal("create update", store.session.Scope)
+	assert(store.session.ResponseType).Equal("code")
+	assert(store.session.Me).Equal("http://me.example.com/")
+	assert(store.session.ClientID).Equal("http://client.example.com/")
+	assert(store.session.RedirectURI).Equal("http://client.example.com/callback")
+	assert(store.session.State).Equal("some-value")
+	assert(store.session.Scope).Equal("create update")
 }
 
 func TestChooseForCodeWithBadParams(t *testing.T) {
