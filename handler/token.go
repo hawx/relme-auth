@@ -42,7 +42,6 @@ func tokenEndpoint(store tokenStore, generator func() (string, error)) http.Hand
 			clientID     = r.FormValue("client_id")
 			redirectURI  = r.FormValue("redirect_uri")
 			codeVerifier = r.FormValue("code_verifier")
-			me           = r.FormValue("me")
 		)
 
 		if grantType != "authorization_code" {
@@ -81,9 +80,6 @@ func tokenEndpoint(store tokenStore, generator func() (string, error)) http.Hand
 			}
 		} else if codeVerifier != "" {
 			writeJSONError(w, "invalid_request", "Provided 'code_verifier' but initial request did not contain a challenge", http.StatusBadRequest)
-			return
-		} else if theCode.Me != me {
-			writeJSONError(w, "invalid_request", "The 'me' parameter did not match", http.StatusBadRequest)
 			return
 		}
 
