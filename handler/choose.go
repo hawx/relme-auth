@@ -38,6 +38,19 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			me                  = r.FormValue("me")
 		)
 
+		if me == "" {
+			if err := templates.ExecuteTemplate(w, "me.gotmpl", meCtx{
+				ClientID:     clientID,
+				RedirectURI:  redirectURI,
+				State:        state,
+				ResponseType: responseType,
+				Scope:        scope,
+			}); err != nil {
+				log.Println("handler/choose failed to write template:", err)
+			}
+			return
+		}
+
 		if responseType == "" {
 			responseType = "id"
 		}
@@ -125,4 +138,12 @@ type chooseCtx struct {
 	Me         string
 	Scopes     []string
 	Skip       bool
+}
+
+type meCtx struct {
+	ClientID     string
+	RedirectURI  string
+	State        string
+	ResponseType string
+	Scope        string
 }

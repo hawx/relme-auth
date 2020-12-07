@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>relme-auth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/public/choose.css" />
+  </head>
+  <body>
+    <div class="fill"></div>
+
+    <div class="container">
+      <form action="/auth" method="get">
+        <input type="hidden" name="client_id" value="{{ .ClientID }}" />
+        <input type="hidden" name="redirect_uri" value="{{ .RedirectURI }}" />
+        <input type="hidden" name="state" value="{{ .State }}" />
+        <input type="hidden" name="response_type" value="{{ .ResponseType }}" />
+        <input type="hidden" name="scope" value="{{ .Scope }}" />
+
+        <input name="me" />
+        <button class="btn" type="submit">Sign in</button>
+      </form>
+
+      {{ template "footer.gotmpl" . }}
+    </div>
+
+    <div class="fill"></div>
+  </body>
+</html>

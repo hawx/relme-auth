@@ -77,6 +77,42 @@ func TestChoose(t *testing.T) {
 	assert(store.session.State).Equal("some-value")
 }
 
+func TestChooseWithMissingMe(t *testing.T) {
+	assert := assert.Wrap(t)
+
+	store := &fakeChooseStore{
+		client: data.Client{
+			ID:          "http://client.example.com/",
+			RedirectURI: "http://client.example.com/callback",
+			Name:        "Client",
+		},
+	}
+	tmpl := &mockTemplate{}
+
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	defer s.Close()
+
+	form := url.Values{
+		"client_id":     {"http://client.example.com/"},
+		"redirect_uri":  {"http://client.example.com/callback"},
+		"state":         {"some-value"},
+		"response_type": {"code"},
+		"scope":         {"create update"},
+	}
+
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
+
+	data := tmpl.Data.(meCtx)
+	assert(tmpl.Tmpl).Equal("me.gotmpl")
+	assert(data.ClientID).Equal("http://client.example.com/")
+	assert(data.RedirectURI).Equal("http://client.example.com/callback")
+	assert(data.State).Equal("some-value")
+	assert(data.ResponseType).Equal("code")
+	assert(data.Scope).Equal("create update")
+}
+
 func TestChooseWithRecentLogin(t *testing.T) {
 	assert := assert.Wrap(t)
 
@@ -207,11 +243,6 @@ func TestChooseWithBadParams(t *testing.T) {
 	defer s.Close()
 
 	testCases := map[string]url.Values{
-		"missing me": {
-			"client_id":    {"http://client.example.com/"},
-			"redirect_uri": {"http://client.example.com/callback"},
-			"state":        {"some-value"},
-		},
 		"missing client_id": {
 			"me":           {"http://me.example.com/"},
 			"redirect_uri": {"http://client.example.com/callback"},
@@ -349,13 +380,6 @@ func TestChooseForCodeWithBadParams(t *testing.T) {
 	defer s.Close()
 
 	testCases := map[string]url.Values{
-		"missing me": {
-			"client_id":     {"http://client.example.com/"},
-			"redirect_uri":  {"http://client.example.com/callback"},
-			"state":         {"some-value"},
-			"response_type": {"code"},
-			"scope":         {"create update"},
-		},
 		"missing client_id": {
 			"me":            {"http://me.example.com/"},
 			"redirect_uri":  {"http://client.example.com/callback"},
