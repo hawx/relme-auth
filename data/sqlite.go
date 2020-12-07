@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -143,7 +144,7 @@ func (d *Database) schemaVersion() (int, error) {
 }
 
 func (d *Database) setSchemaVersion(version int) error {
-	_, err := d.db.Exec("PRAGMA user_version = ?", version)
+	_, err := d.db.Exec("PRAGMA user_version = " + strconv.Itoa(version))
 	return err
 }
 
