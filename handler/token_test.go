@@ -85,6 +85,50 @@ func TestToken(t *testing.T) {
 	assert(v.Me).Equal(code.Me)
 }
 
+func TestTokenWithPKCE(t *testing.T) {
+	assert := assert.Wrap(t)
+
+	code := data.Code{
+		ClientID:            "http://client.example.com/",
+		RedirectURI:         "http://done.example.com",
+		Me:                  "it is me",
+		CreatedAt:           time.Now(),
+		ExpiresAt:           time.Now().Add(time.Minute),
+		CodeChallenge:       "pixies",
+		CodeChallengeMethod: "plain",
+		Code:                "1234",
+		ResponseType:        "code",
+		Scope:               "create update",
+	}
+
+	s := httptest.NewServer(Token(&fakeTokenStore{code: code}, fakeGenerator))
+	defer s.Close()
+
+	resp, err := http.PostForm(s.URL, url.Values{
+		"grant_type":    {"authorization_code"},
+		"code":          {code.Code},
+		"client_id":     {code.ClientID},
+		"redirect_uri":  {code.RedirectURI},
+		"me":            {code.Me},
+		"code_verifier": {code.CodeChallenge},
+	})
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
+	assert(resp.Header.Get("Content-Type")).Equal("application/json")
+
+	var v struct {
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+		Scope       string `json:"scope"`
+		Me          string `json:"me"`
+	}
+	assert(json.NewDecoder(resp.Body).Decode(&v)).Must.Nil()
+	assert(v.AccessToken).Equal("a token")
+	assert(v.TokenType).Equal("Bearer")
+	assert(v.Scope).Equal(code.Scope)
+	assert(v.Me).Equal(code.Me)
+}
+
 func TestTokenWithBadParams(t *testing.T) {
 	code := data.Code{
 		ClientID:     "http://client.example.com",
@@ -101,41 +145,41 @@ func TestTokenWithBadParams(t *testing.T) {
 	defer s.Close()
 
 	testCases := map[string]url.Values{
-		"missing grant type": url.Values{
+		"missing grant type": {
 			"code":         {code.Code},
 			"client_id":    {code.ClientID},
 			"redirect_uri": {code.RedirectURI},
 			"me":           {code.Me},
 		},
-		"unknown grant type": url.Values{
+		"unknown grant type": {
 			"grant_type":   {"what"},
 			"code":         {code.Code},
 			"client_id":    {code.ClientID},
 			"redirect_uri": {code.RedirectURI},
 			"me":           {code.Me},
 		},
-		"invalid code": url.Values{
+		"invalid code": {
 			"grant_type":   {"authorization_code"},
 			"code":         {"nope"},
 			"client_id":    {code.ClientID},
 			"redirect_uri": {code.RedirectURI},
 			"me":           {code.Me},
 		},
-		"mismatched clientID": url.Values{
+		"mismatched clientID": {
 			"grant_type":   {"authorization_code"},
 			"code":         {code.Code},
 			"client_id":    {"nope"},
 			"redirect_uri": {code.RedirectURI},
 			"me":           {code.Me},
 		},
-		"mismatched redirectURI": url.Values{
+		"mismatched redirectURI": {
 			"grant_type":   {"authorization_code"},
 			"code":         {code.Code},
 			"client_id":    {code.ClientID},
 			"redirect_uri": {"nope"},
 			"me":           {code.Me},
 		},
-		"mismatched me": url.Values{
+		"mismatched me": {
 			"grant_type":   {"authorization_code"},
 			"code":         {code.Code},
 			"client_id":    {code.ClientID},
@@ -151,6 +195,78 @@ func TestTokenWithBadParams(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		})
 	}
+}
+
+func TestTokenWithBadPKCEParams(t *testing.T) {
+	code := data.Code{
+		ClientID:            "http://client.example.com/",
+		RedirectURI:         "http://done.example.com",
+		Me:                  "it is me",
+		CreatedAt:           time.Now(),
+		ExpiresAt:           time.Now().Add(time.Minute),
+		CodeChallenge:       "pixies",
+		CodeChallengeMethod: "plain",
+		Code:                "1234",
+		ResponseType:        "code",
+		Scope:               "create update",
+	}
+
+	s := httptest.NewServer(Token(&fakeTokenStore{code: code}, fakeGenerator))
+	defer s.Close()
+
+	testCases := map[string]url.Values{
+		"incorrect code verifier": {
+			"grant_type":    {"authorization_code"},
+			"code":          {code.Code},
+			"client_id":     {code.ClientID},
+			"redirect_uri":  {code.RedirectURI},
+			"me":            {code.Me},
+			"code_verifier": {"nope"},
+		},
+		"missing code verifier": {
+			"grant_type":   {"authorization_code"},
+			"code":         {code.Code},
+			"client_id":    {code.ClientID},
+			"redirect_uri": {code.RedirectURI},
+			"me":           {code.Me},
+		},
+	}
+
+	for name, form := range testCases {
+		t.Run(name, func(t *testing.T) {
+			resp, err := http.PostForm(s.URL, form)
+			assert.Nil(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+}
+
+func TestTokenWithUnexpectedPKCEParams(t *testing.T) {
+	code := data.Code{
+		ClientID:     "http://client.example.com/",
+		RedirectURI:  "http://done.example.com",
+		Me:           "it is me",
+		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(time.Minute),
+		Code:         "1234",
+		ResponseType: "code",
+		Scope:        "create update",
+	}
+
+	s := httptest.NewServer(Token(&fakeTokenStore{code: code}, fakeGenerator))
+	defer s.Close()
+
+	resp, err := http.PostForm(s.URL, url.Values{
+		"grant_type":    {"authorization_code"},
+		"code":          {code.Code},
+		"client_id":     {code.ClientID},
+		"redirect_uri":  {code.RedirectURI},
+		"me":            {code.Me},
+		"code_verifier": {"nope"},
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestTokenWithExpiredSession(t *testing.T) {

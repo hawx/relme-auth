@@ -98,3 +98,64 @@ func TestCodeReadTwice(t *testing.T) {
 	_, err = db.Code("abcde")
 	assert(err).Equal(sql.ErrNoRows)
 }
+
+func TestCodeVerifyChallenge(t *testing.T) {
+	testCases := []struct {
+		name      string
+		method    string
+		challenge string
+		verifier  string
+		ok        bool
+		err       error
+	}{
+		{
+			name:   "unknown method",
+			method: "what",
+			ok:     false,
+			err:    ErrUnknownCodeChallengeMethod,
+		},
+		{
+			name:      "plain matching",
+			method:    "plain",
+			challenge: "test",
+			verifier:  "test",
+			ok:        true,
+		},
+		{
+			name:      "plain non-matching",
+			method:    "plain",
+			challenge: "test",
+			verifier:  "nope",
+			ok:        false,
+		},
+		{
+			name:      "S256 matching",
+			method:    "S256",
+			challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+			verifier:  "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+			ok:        true,
+		},
+		{
+			name:      "S256 non-matching",
+			method:    "S256",
+			challenge: "test",
+			verifier:  "nope",
+			ok:        false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.Wrap(t)
+
+			code := Code{
+				CodeChallenge:       tc.challenge,
+				CodeChallengeMethod: tc.method,
+			}
+
+			ok, err := code.VerifyChallenge(tc.verifier)
+			assert(ok).Equal(tc.ok)
+			assert(err).Equal(tc.err)
+		})
+	}
+}

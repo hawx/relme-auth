@@ -108,8 +108,42 @@ func (d *Database) migrate() error {
       Me        TEXT PRIMARY KEY,
       CreatedAt DATETIME
     );
-`)
 
+`)
+	if err != nil {
+		return err
+	}
+
+	version, err := d.schemaVersion()
+	if err != nil {
+		return err
+	}
+
+	stmts := []string{
+		`ALTER TABLE session ADD COLUMN CodeChallenge TEXT;
+     ALTER TABLE session ADD COLUMN CodeChallengeMethod TEXT;`,
+	}
+
+	for _, stmt := range stmts[version:] {
+		_, err := d.db.Exec(stmt)
+		if err != nil {
+			return err
+		}
+	}
+
+	return d.setSchemaVersion(len(stmts))
+}
+
+func (d *Database) schemaVersion() (int, error) {
+	row := d.db.QueryRow("PRAGMA user_version")
+
+	var version int
+	err := row.Scan(&version)
+	return version, err
+}
+
+func (d *Database) setSchemaVersion(version int) error {
+	_, err := d.db.Exec("PRAGMA user_version = ?", version)
 	return err
 }
 

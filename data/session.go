@@ -5,16 +5,18 @@ import "time"
 // Session contains all of the information needed to keep track of OAuth
 // requests/responses with a 3rd party.
 type Session struct {
-	ResponseType string
-	Me           string
-	Provider     string
-	ProfileURI   string
-	ClientID     string
-	RedirectURI  string
-	Scope        string
-	State        string
-	CreatedAt    time.Time
-	ExpiresAt    time.Time
+	ResponseType        string
+	Me                  string
+	Provider            string
+	ProfileURI          string
+	ClientID            string
+	RedirectURI         string
+	CodeChallenge       string
+	CodeChallengeMethod string
+	Scope               string
+	State               string
+	CreatedAt           time.Time
+	ExpiresAt           time.Time
 }
 
 func (s Session) Expired() bool {
@@ -23,13 +25,15 @@ func (s Session) Expired() bool {
 
 func (d *Database) CreateSession(session Session) error {
 	_, err := d.db.Exec(`
-    INSERT OR REPLACE INTO session(ResponseType, Me, ClientID, RedirectURI, Scope, State, Provider, ProfileURI, CreatedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO session(ResponseType, Me, ClientID, RedirectURI, CodeChallenge, CodeChallengeMethod, Scope, State, Provider, ProfileURI, CreatedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
 		session.ResponseType,
 		session.Me,
 		session.ClientID,
 		session.RedirectURI,
+		session.CodeChallenge,
+		session.CodeChallengeMethod,
 		session.Scope,
 		session.State,
 		"",
@@ -50,7 +54,7 @@ func (d *Database) SetProvider(me, provider, profileURI string) error {
 
 func (d *Database) Session(me string) (session Session, err error) {
 	row := d.db.QueryRow(`
-    SELECT ResponseType, Me, ClientID, RedirectURI, Scope, State, Provider, ProfileURI, CreatedAt
+    SELECT ResponseType, Me, ClientID, RedirectURI, CodeChallenge, CodeChallengeMethod, Scope, State, Provider, ProfileURI, CreatedAt
     FROM session
     WHERE Me = ?`,
 		me)
@@ -60,6 +64,8 @@ func (d *Database) Session(me string) (session Session, err error) {
 		&session.Me,
 		&session.ClientID,
 		&session.RedirectURI,
+		&session.CodeChallenge,
+		&session.CodeChallengeMethod,
 		&session.Scope,
 		&session.State,
 		&session.Provider,

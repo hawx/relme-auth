@@ -288,6 +288,53 @@ func TestChooseForCode(t *testing.T) {
 	assert(store.session.Scope).Equal("create update")
 }
 
+func TestChooseForCodeWithPKCE(t *testing.T) {
+	assert := assert.Wrap(t)
+
+	store := &fakeChooseStore{
+		client: data.Client{
+			ID:          "http://client.example.com/",
+			RedirectURI: "http://client.example.com/callback",
+			Name:        "Client",
+		},
+	}
+	tmpl := &mockTemplate{}
+
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	defer s.Close()
+
+	form := url.Values{
+		"me":                    {"http://me.example.com/"},
+		"client_id":             {"http://client.example.com/"},
+		"redirect_uri":          {"http://client.example.com/callback"},
+		"code_challenge":        {"some-base64-string"},
+		"code_challenge_method": {"S256"},
+		"state":                 {"some-value"},
+		"response_type":         {"code"},
+		"scope":                 {"create update"},
+	}
+
+	resp, err := http.Get(s.URL + "?" + form.Encode())
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
+
+	data := tmpl.Data.(chooseCtx)
+	assert(tmpl.Tmpl).Equal("choose.gotmpl")
+	assert(data.ClientID).Equal("http://client.example.com/")
+	assert(data.ClientName).Equal("Client")
+	assert(data.Me).Equal("http://me.example.com/")
+	assert(data.Skip).False()
+
+	assert(store.session.ResponseType).Equal("code")
+	assert(store.session.Me).Equal("http://me.example.com/")
+	assert(store.session.ClientID).Equal("http://client.example.com/")
+	assert(store.session.RedirectURI).Equal("http://client.example.com/callback")
+	assert(store.session.CodeChallenge).Equal("some-base64-string")
+	assert(store.session.CodeChallengeMethod).Equal("S256")
+	assert(store.session.State).Equal("some-value")
+	assert(store.session.Scope).Equal("create update")
+}
+
 func TestChooseForCodeWithBadParams(t *testing.T) {
 	store := &fakeChooseStore{
 		client: data.Client{

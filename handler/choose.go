@@ -28,12 +28,14 @@ func Choose(baseURL string, store chooseStore, strategies strategy.Strategies, t
 func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strategies, templates tmpl) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			me           = r.FormValue("me")
-			clientID     = r.FormValue("client_id")
-			redirectURI  = r.FormValue("redirect_uri")
-			state        = r.FormValue("state")
-			responseType = r.FormValue("response_type")
-			scope        = r.FormValue("scope")
+			responseType        = r.FormValue("response_type")
+			clientID            = r.FormValue("client_id")
+			redirectURI         = r.FormValue("redirect_uri")
+			state               = r.FormValue("state")
+			codeChallenge       = r.FormValue("code_challenge")
+			codeChallengeMethod = r.FormValue("code_challenge_method")
+			scope               = r.FormValue("scope")
+			me                  = r.FormValue("me")
 		)
 
 		if responseType == "" {
@@ -77,13 +79,15 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			}
 
 			store.CreateSession(data.Session{
-				Me:           me,
-				ClientID:     clientID,
-				RedirectURI:  redirectURI,
-				State:        state,
-				ResponseType: responseType,
-				Scope:        strings.Join(scopes, " "),
-				CreatedAt:    time.Now().UTC(),
+				Me:                  me,
+				ClientID:            clientID,
+				RedirectURI:         redirectURI,
+				State:               state,
+				ResponseType:        responseType,
+				CodeChallenge:       codeChallenge,
+				CodeChallengeMethod: codeChallengeMethod,
+				Scope:               strings.Join(scopes, " "),
+				CreatedAt:           time.Now().UTC(),
 			})
 
 		default:
