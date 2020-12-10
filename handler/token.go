@@ -68,6 +68,7 @@ func tokenEndpoint(store tokenStore, generator func() (string, error)) http.Hand
 			writeJSONError(w, "invalid_request", "The 'redirect_uri' parameter did not match", http.StatusBadRequest)
 			return
 		}
+
 		if theCode.CodeChallenge != "" {
 			ok, err := theCode.VerifyChallenge(codeVerifier)
 			if err != nil {
@@ -75,11 +76,16 @@ func tokenEndpoint(store tokenStore, generator func() (string, error)) http.Hand
 				return
 			}
 			if !ok {
-				writeJSONError(w, "invalid_request", "that isn't the correct code", http.StatusBadRequest)
+				writeJSONError(w, "invalid_request", "Provided 'code_verifier' does not match initial challenge", http.StatusBadRequest)
 				return
 			}
 		} else if codeVerifier != "" {
 			writeJSONError(w, "invalid_request", "Provided 'code_verifier' but initial request did not contain a challenge", http.StatusBadRequest)
+			return
+		}
+
+		if len(theCode.Scope) == 0 {
+			writeJSONError(w, "invalid_request", "Scopeless code must be exchanged using authorization endpoint", http.StatusBadRequest)
 			return
 		}
 
@@ -135,6 +141,10 @@ func verifyTokenEndpoint(store tokenStore) http.HandlerFunc {
 			Scope:    token.Scope,
 		})
 	}
+}
+
+type meResponse struct {
+	Me string `json:"me"`
 }
 
 type tokenResponse struct {

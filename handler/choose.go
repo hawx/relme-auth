@@ -52,7 +52,8 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 		}
 
 		if responseType == "" {
-			responseType = "id"
+			http.Error(w, "missing response_type parameter", http.StatusBadRequest)
+			return
 		}
 
 		if me == "" || clientID == "" || redirectURI == "" || state == "" {
@@ -72,7 +73,8 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			return
 		}
 
-		var scopes []string
+		scopes := strings.Fields(scope)
+
 		switch responseType {
 		case "id":
 			store.CreateSession(data.Session{
@@ -85,12 +87,6 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 			})
 
 		case "code":
-			scopes = strings.Fields(scope)
-			if len(scopes) == 0 {
-				http.Error(w, "At least one scope must be provided", http.StatusBadRequest)
-				return
-			}
-
 			store.CreateSession(data.Session{
 				Me:                  me,
 				ClientID:            clientID,

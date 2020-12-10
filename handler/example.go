@@ -1,10 +1,14 @@
 package handler
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -39,19 +43,25 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 
 		state, _ := random.String(64)
 		session.Values["state"] = state
+		codeVerifier, _ := random.String(32)
+		session.Values["verifier"] = codeVerifier
 		if err := session.Save(r, w); err != nil {
 			log.Println("handler/example could not save session:", err)
 		}
 
+		hashedVerifier := sha256.Sum256([]byte(codeVerifier))
+		codeChallenge := strings.TrimRight(base64.URLEncoding.EncodeToString(hashedVerifier[:]), "=")
+
 		if err := templates.ExecuteTemplate(w, "welcome.gotmpl", welcomeCtx{
-			ThisURI:    baseURL,
-			State:      state,
-			Me:         me,
-			LoggedIn:   ok,
-			HasFlickr:  conf.Flickr != nil,
-			HasGitHub:  conf.GitHub != nil,
-			HasTwitter: conf.Twitter != nil,
-			Tokens:     tokens,
+			ThisURI:       baseURL,
+			State:         state,
+			CodeChallenge: codeChallenge,
+			Me:            me,
+			LoggedIn:      ok,
+			HasFlickr:     conf.Flickr != nil,
+			HasGitHub:     conf.GitHub != nil,
+			HasTwitter:    conf.Twitter != nil,
+			Tokens:        tokens,
 		}); err != nil {
 			log.Println("handler/example failed to write template:", err)
 		}
@@ -81,11 +91,14 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 		}
 
 		resp, err := http.PostForm(baseURL+"/auth", url.Values{
-			"code":         {code},
-			"client_id":    {baseURL + "/"},
-			"redirect_uri": {redirectURL},
+			"grant_type":    {"authorization_code"},
+			"code":          {code},
+			"client_id":     {baseURL + "/"},
+			"redirect_uri":  {redirectURL},
+			"code_verifier": {session.Values["verifier"].(string)},
 		})
 		if err != nil || resp.StatusCode != 200 {
+			io.Copy(w, resp.Body)
 			http.Error(w, "could not authenticate", http.StatusInternalServerError)
 			return
 		}
@@ -256,14 +269,15 @@ type exampleResponse struct {
 }
 
 type welcomeCtx struct {
-	ThisURI    string
-	State      string
-	Me         string
-	LoggedIn   bool
-	HasFlickr  bool
-	HasGitHub  bool
-	HasTwitter bool
-	Tokens     []data.Token
+	ThisURI       string
+	State         string
+	CodeChallenge string
+	Me            string
+	LoggedIn      bool
+	HasFlickr     bool
+	HasGitHub     bool
+	HasTwitter    bool
+	Tokens        []data.Token
 }
 
 type privacyCtx struct {

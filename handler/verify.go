@@ -16,7 +16,14 @@ type verifyStore interface {
 // it is invalid.
 func Verify(store verifyStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		code := r.FormValue("code")
+		var (
+			grantType    = r.FormValue("grant_type")
+			code         = r.FormValue("code")
+			clientID     = r.FormValue("client_id")
+			redirectURI  = r.FormValue("redirect_uri")
+			codeVerifier = r.FormValue("code_verifier")
+		)
+
 		w.Header().Set("Content-Type", "application/json")
 
 		if code == "" {
@@ -24,8 +31,13 @@ func Verify(store verifyStore) http.Handler {
 			return
 		}
 
+		if grantType != "authorization_code" {
+			// allowed for backwards compatibility
+			// TODO?: enforce response_type=id in this case
+		}
+
 		session, err := store.Code(code)
-		if err != nil || session.ResponseType != "id" {
+		if err != nil || (session.ResponseType != "id" && session.ResponseType != "code") {
 			writeJSONError(w, "invalid_request", "The code provided was not valid", http.StatusBadRequest)
 			return
 		}
@@ -35,13 +47,25 @@ func Verify(store verifyStore) http.Handler {
 			return
 		}
 
-		if session.ClientID != data.ParseClientID(r.FormValue("client_id")) {
+		if session.ClientID != data.ParseClientID(clientID) {
 			writeJSONError(w, "invalid_request", "The 'client_id' parameter did not match", http.StatusBadRequest)
 			return
 		}
-		if session.RedirectURI != r.FormValue("redirect_uri") {
+		if session.RedirectURI != redirectURI {
 			writeJSONError(w, "invalid_request", "The 'redirect_uri' parameter did not match", http.StatusBadRequest)
 			return
+		}
+
+		if session.ResponseType == "code" {
+			ok, err := session.VerifyChallenge(codeVerifier)
+			if err != nil {
+				writeJSONError(w, "invalid_request", err.Error(), http.StatusBadRequest)
+				return
+			}
+			if !ok {
+				writeJSONError(w, "invalid_request", "Provided 'code_verifier' does not match initial challenge", http.StatusBadRequest)
+				return
+			}
 		}
 
 		if err := json.NewEncoder(w).Encode(verifyCodeResponse{
