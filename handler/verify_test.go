@@ -53,6 +53,34 @@ func TestVerify(t *testing.T) {
 	assert(v.Me).Equal(code.Me)
 }
 
+func TestVerifyWithGrantTypeAuthorizationCode(t *testing.T) {
+	assert := assert.Wrap(t)
+
+	code := data.Code{
+		ClientID:     "http://client.example.com/",
+		RedirectURI:  "http://done.example.com",
+		Me:           "it is me",
+		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(time.Minute),
+		Code:         "1234",
+		ResponseType: "id",
+	}
+
+	s := httptest.NewServer(Verify(&fakeVerifyStore{code: code}))
+	defer s.Close()
+
+	form := url.Values{"code": {code.Code}, "client_id": {code.ClientID}, "redirect_uri": {code.RedirectURI}, "grant_type": {"authorization_code"}}
+	resp, err := http.PostForm(s.URL, form)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusOK)
+
+	var v struct {
+		Me string `json:"me"`
+	}
+	json.NewDecoder(resp.Body).Decode(&v)
+	assert(v.Me).Equal(code.Me)
+}
+
 func TestVerifyWithExpiredSession(t *testing.T) {
 	assert := assert.Wrap(t)
 
@@ -119,6 +147,28 @@ func TestVerifyWithBadForm(t *testing.T) {
 			assert(v.Error).Equal("invalid_request")
 		})
 	}
+}
+
+func TestVerifyWithGrantTypeUnknown(t *testing.T) {
+	assert := assert.Wrap(t)
+
+	code := data.Code{
+		ClientID:     "http://client.example.com/",
+		RedirectURI:  "http://done.example.com",
+		Me:           "it is me",
+		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(time.Minute),
+		Code:         "1234",
+		ResponseType: "id",
+	}
+
+	s := httptest.NewServer(Verify(&fakeVerifyStore{code: code}))
+	defer s.Close()
+
+	form := url.Values{"code": {code.Code}, "client_id": {code.ClientID}, "redirect_uri": {code.RedirectURI}, "grant_type": {"what"}}
+	resp, err := http.PostForm(s.URL, form)
+	assert(err).Must.Nil()
+	assert(resp.StatusCode).Equal(http.StatusBadRequest)
 }
 
 func TestVerifyWithCodeSession(t *testing.T) {

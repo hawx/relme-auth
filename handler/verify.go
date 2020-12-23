@@ -31,9 +31,13 @@ func Verify(store verifyStore) http.Handler {
 			return
 		}
 
+		if grantType == "" {
+			grantType = "authorization_code"
+		}
+
 		if grantType != "authorization_code" {
-			// allowed for backwards compatibility
-			// TODO?: enforce response_type=id in this case
+			writeJSONError(w, "invalid_request", "Only grant type of 'authorization_code' is supported", http.StatusBadRequest)
+			return
 		}
 
 		session, err := store.Code(code)
