@@ -14,14 +14,18 @@
         <h1>Sign-in to {{ .ClientName }}</h1>
         <h2>{{ .ClientID }}</h2>
 
-        {{ if .Scopes }}
-        <p>The app is requesting the following scopes:</p>
-        {{ range .Scopes }}
-          <label class="scope">
-            <input type="checkbox" name="scope" value="{{ . }}" checked disabled />
-            {{ . }}
-          </label>
+        {{ if not (eq .PKCEMethod "S256") }}
+          <p class="warning-msg">The app is not using PKCE with method S256</p>
         {{ end }}
+
+        {{ if .Scopes }}
+          <p>The app is requesting the following scopes:</p>
+          {{ range .Scopes }}
+            <label class="scope">
+              <input type="checkbox" name="scope" value="{{ . }}" checked disabled />
+              {{ . }}
+            </label>
+          {{ end }}
         {{ end }}
       </header>
 

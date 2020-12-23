@@ -113,6 +113,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 		tmplCtx := chooseCtx{
 			ClientID:   client.ID,
 			ClientName: client.Name,
+			PKCEMethod: codeChallengeMethod,
 			Me:         me,
 			Scopes:     scopes,
 		}
@@ -130,6 +131,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 type chooseCtx struct {
 	ClientID   string
 	ClientName string
+	PKCEMethod string
 	Me         string
 	Scopes     []string
 	Skip       bool
