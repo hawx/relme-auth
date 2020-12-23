@@ -63,7 +63,8 @@ func TestChoose(t *testing.T) {
 	assert(err).Must.Nil()
 	assert(resp.StatusCode).Equal(http.StatusOK)
 
-	data := tmpl.Data.(chooseCtx)
+	data, ok := tmpl.Data.(chooseCtx)
+	assert(ok).Must.True()
 	assert(tmpl.Tmpl).Equal("choose.gotmpl")
 	assert(data.ClientID).Equal("http://client.example.com/")
 	assert(data.ClientName).Equal("Client")
@@ -140,7 +141,8 @@ func TestChooseWithRecentLogin(t *testing.T) {
 	assert(err).Must.Nil()
 	assert(resp.StatusCode).Equal(http.StatusOK)
 
-	data := tmpl.Data.(chooseCtx)
+	data, ok := tmpl.Data.(chooseCtx)
+	assert(ok).Must.True()
 	assert(tmpl.Tmpl).Equal("choose.gotmpl")
 	assert(data.ClientID).Equal("http://client.example.com/")
 	assert(data.ClientName).Equal("Client")
@@ -400,13 +402,6 @@ func TestChooseForCodeWithBadParams(t *testing.T) {
 			"redirect_uri":  {"http://client.example.com/callback"},
 			"response_type": {"code"},
 			"scope":         {"create update"},
-		},
-		"missing scope": {
-			"me":            {"http://me.example.com/"},
-			"client_id":     {"http://client.example.com/"},
-			"redirect_uri":  {"http://client.example.com/callback"},
-			"state":         {"some-value"},
-			"response_type": {"code"},
 		},
 	}
 

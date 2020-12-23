@@ -52,8 +52,7 @@ func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strat
 		}
 
 		if responseType == "" {
-			http.Error(w, "missing response_type parameter", http.StatusBadRequest)
-			return
+			responseType = "id"
 		}
 
 		if me == "" || clientID == "" || redirectURI == "" || state == "" {
