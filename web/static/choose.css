@@ -147,6 +147,34 @@ a.btn:hover {
     border-color: rgba(42, 100, 151, .5);
 }
 
+.center {
+    display: flex;
+    justify-content: center;
+}
+
+.block {
+    display: block;
+}
+
+.field {
+    display: flex;
+}
+
+.field input {
+    margin-right: 5px;
+}
+
+@media screen and (max-width: 30rem) {
+    .field {
+        display: block;
+    }
+
+    .field input {
+        margin-bottom: .5rem;
+        margin-right: 0;
+    }
+}
+
 footer {
     margin: 2.6rem 0;
     font-size: .7rem;

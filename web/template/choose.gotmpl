@@ -14,7 +14,7 @@
         <h1>Sign-in to {{ .ClientName }}</h1>
         <h2>{{ .ClientID }}</h2>
 
-        {{ if not (eq .PKCEMethod "S256") }}
+        {{ if not (eq .CodeChallengeMethod "S256") }}
           <p class="warning-msg">The app is not using PKCE with method S256</p>
         {{ end }}
 

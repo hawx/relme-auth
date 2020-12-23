@@ -10,15 +10,41 @@
     <div class="fill"></div>
 
     <div class="container">
-      <form action="/auth" method="get">
+      <header>
+        <h1>Sign-in to {{ .ClientName }}</h1>
+        <h2>{{ .ClientID }}</h2>
+
+        {{ if not (eq .CodeChallengeMethod "S256") }}
+          <p class="warning-msg">The app is not using PKCE with method S256</p>
+        {{ end }}
+
+        {{ if .Scopes }}
+          <p>The app is requesting the following scopes:</p>
+          {{ range .Scopes }}
+            <label class="scope">
+              <input type="checkbox" name="scope" value="{{ . }}" checked disabled />
+              {{ . }}
+            </label>
+          {{ end }}
+        {{ end }}
+      </header>
+
+      <form action="/auth" method="get" class="center">
         <input type="hidden" name="client_id" value="{{ .ClientID }}" />
         <input type="hidden" name="redirect_uri" value="{{ .RedirectURI }}" />
         <input type="hidden" name="state" value="{{ .State }}" />
         <input type="hidden" name="response_type" value="{{ .ResponseType }}" />
+        <input type="hidden" name="code_challenge" value="{{ .CodeChallenge }}" />
+        <input type="hidden" name="code_challenge_method" value="{{ .CodeChallengeMethod }}" />
         <input type="hidden" name="scope" value="{{ .Scope }}" />
 
-        <input name="me" />
-        <button class="btn" type="submit">Sign in</button>
+        <div>
+          <label class="block" for="me">Your domain</label>
+          <div class="field">
+            <input type="url" id="me" name="me" placeholder="https://example.com/" />
+            <button type="submit">Sign in</button>
+          </div>
+        </div>
       </form>
 
       {{ template "footer.gotmpl" . }}
