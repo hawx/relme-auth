@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"hawx.me/code/relme-auth/data"
+	"hawx.me/code/relme-auth/internal/data"
 )
 
 type continueStore interface {

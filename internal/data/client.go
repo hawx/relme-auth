@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/peterhellberg/link"
-	"hawx.me/code/relme-auth/microformats"
+	"hawx.me/code/relme-auth/internal/microformats"
 )
 
 // Client stores an app's information, so it doesn't have to be queried again. If

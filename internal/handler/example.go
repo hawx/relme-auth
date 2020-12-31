@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
-	"hawx.me/code/relme-auth/config"
-	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/random"
+	"hawx.me/code/relme-auth/internal/config"
+	"hawx.me/code/relme-auth/internal/data"
+	"hawx.me/code/relme-auth/internal/random"
 )
 
 type exampleStore interface {

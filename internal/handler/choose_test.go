@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/strategy"
+	"hawx.me/code/relme-auth/internal/data"
+	"hawx.me/code/relme-auth/internal/strategy"
 )
 
 type fakeChooseStore struct {

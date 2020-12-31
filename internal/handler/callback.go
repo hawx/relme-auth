@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"time"
 
-	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/strategy"
+	"hawx.me/code/relme-auth/internal/data"
+	"hawx.me/code/relme-auth/internal/strategy"
 )
 
 type callbackStore interface {

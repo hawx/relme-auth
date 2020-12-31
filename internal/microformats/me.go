@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"golang.org/x/net/html"
-	"hawx.me/code/relme-auth/strategy"
+	"hawx.me/code/relme-auth/internal/strategy"
 )
 
 type matching interface {

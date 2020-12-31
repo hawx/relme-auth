@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"hawx.me/code/mux"
-	"hawx.me/code/relme-auth/data"
+	"hawx.me/code/relme-auth/internal/data"
 )
 
 type tokenStore interface {

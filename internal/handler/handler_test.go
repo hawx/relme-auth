@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/url"
 
-	"hawx.me/code/relme-auth/strategy"
+	"hawx.me/code/relme-auth/internal/strategy"
 )
 
 // fakeStrategy will return ok values and capture any args called with

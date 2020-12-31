@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"hawx.me/code/relme-auth/random"
+	"hawx.me/code/relme-auth/internal/random"
 )
 
 type StrategyStore struct {

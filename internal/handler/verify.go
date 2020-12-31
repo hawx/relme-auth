@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"hawx.me/code/relme-auth/data"
+	"hawx.me/code/relme-auth/internal/data"
 )
 
 type verifyStore interface {

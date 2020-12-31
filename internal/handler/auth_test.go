@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/data"
-	"hawx.me/code/relme-auth/strategy"
+	"hawx.me/code/relme-auth/internal/data"
+	"hawx.me/code/relme-auth/internal/strategy"
 )
 
 type fakeAuthStore struct {

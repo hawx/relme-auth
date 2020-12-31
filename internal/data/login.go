@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"hawx.me/code/relme-auth/random"
+	"hawx.me/code/relme-auth/internal/random"
 )
 
 var ErrNoLogin = errors.New("no login exists")

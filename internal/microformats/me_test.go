@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"hawx.me/code/assert"
-	"hawx.me/code/relme-auth/strategy"
+	"hawx.me/code/relme-auth/internal/strategy"
 )
 
 var client = &RelMe{
