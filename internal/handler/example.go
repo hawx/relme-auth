@@ -39,6 +39,22 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 		}
 		if ok {
 			tokens, _ = tokenStore.Tokens(me)
+			state, _ := random.String(64)
+			session.Values["state"] = state
+
+			if err := session.Save(r, w); err != nil {
+				log.Println("handler/example could not save session:", err)
+			}
+
+			if err := templates.ExecuteTemplate(w, "account.gotmpl", accountCtx{
+				Me:     me,
+				State:  state,
+				Tokens: tokens,
+			}); err != nil {
+				log.Println("handler/example failed to write template:", err)
+			}
+
+			return
 		}
 
 		state, _ := random.String(64)
@@ -278,6 +294,12 @@ type welcomeCtx struct {
 	HasGitHub     bool
 	HasTwitter    bool
 	Tokens        []data.Token
+}
+
+type accountCtx struct {
+	State  string
+	Me     string
+	Tokens []data.Token
 }
 
 type privacyCtx struct {
