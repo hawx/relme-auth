@@ -17,7 +17,7 @@ import (
 	"hawx.me/code/relme-auth/internal/random"
 )
 
-type exampleStore interface {
+type ExampleDB interface {
 	CreateToken(data.Token) error
 	Tokens(string) ([]data.Token, error)
 	RevokeRow(me, rowID string) error
@@ -26,7 +26,7 @@ type exampleStore interface {
 
 // Example implements a basic site using the authentication flow provided by
 // this package.
-func Example(baseURL string, conf config.Config, store sessions.Store, tokenStore exampleStore, templates tmpl) http.HandlerFunc {
+func Example(baseURL string, conf config.Config, store sessions.Store, tokenStore ExampleDB, templates tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "example-session")
 
@@ -151,7 +151,7 @@ func ExampleSignOut(baseURL string, store sessions.Store) http.HandlerFunc {
 }
 
 // ExampleRevoke removes the token for the client_id.
-func ExampleRevoke(baseURL string, store sessions.Store, tokenStore exampleStore) http.HandlerFunc {
+func ExampleRevoke(baseURL string, store sessions.Store, tokenStore ExampleDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "example-session")
 
@@ -179,7 +179,7 @@ func ExampleGenerate(
 	baseURL string,
 	store sessions.Store,
 	generator func() (string, error),
-	tokenStore exampleStore,
+	tokenStore ExampleDB,
 	templates tmpl,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -254,7 +254,7 @@ func ExamplePrivacy(baseURL string, store sessions.Store, templates tmpl) http.H
 	}
 }
 
-func ExampleForget(baseURL string, store sessions.Store, tokenStore exampleStore) http.HandlerFunc {
+func ExampleForget(baseURL string, store sessions.Store, tokenStore ExampleDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "example-session")
 

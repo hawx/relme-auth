@@ -9,14 +9,14 @@ import (
 	"hawx.me/code/relme-auth/internal/data"
 )
 
-type continueStore interface {
+type ContinueDB interface {
 	Login(*http.Request) (string, error)
 	Session(string) (data.Session, error)
 	CreateCode(me, code string, createdAt time.Time) error
 }
 
 // Continue handles a user choosing to authenticate using a previous session.
-func Continue(store continueStore, generator func() (string, error)) http.Handler {
+func Continue(store ContinueDB, generator func() (string, error)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userProfileURL, err := store.Login(r)
 		if err != nil {

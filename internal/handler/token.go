@@ -11,21 +11,21 @@ import (
 	"hawx.me/code/relme-auth/internal/data"
 )
 
-type tokenStore interface {
+type TokenDB interface {
 	Code(string) (data.Code, error)
 	Token(string) (data.Token, error)
 	CreateToken(data.Token) error
 	RevokeToken(string) error
 }
 
-func Token(store tokenStore, generator func() (string, error)) http.Handler {
+func Token(store TokenDB, generator func() (string, error)) http.Handler {
 	return mux.Method{
 		"POST": tokenEndpoint(store, generator),
 		"GET":  verifyTokenEndpoint(store),
 	}
 }
 
-func tokenEndpoint(store tokenStore, generator func() (string, error)) http.HandlerFunc {
+func tokenEndpoint(store TokenDB, generator func() (string, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("action") == "revoke" {
 			token := r.FormValue("token")
@@ -119,7 +119,7 @@ func tokenEndpoint(store tokenStore, generator func() (string, error)) http.Hand
 	}
 }
 
-func verifyTokenEndpoint(store tokenStore) http.HandlerFunc {
+func verifyTokenEndpoint(store TokenDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authParts := strings.Fields(r.Header.Get("Authorization"))
 

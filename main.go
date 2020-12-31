@@ -5,21 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"net"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
-	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/internal/config"
 	"hawx.me/code/relme-auth/internal/data"
-	"hawx.me/code/relme-auth/internal/handler"
-	"hawx.me/code/relme-auth/internal/microformats"
 	"hawx.me/code/relme-auth/internal/random"
-	"hawx.me/code/relme-auth/internal/strategy"
-	"hawx.me/code/route"
+	"hawx.me/code/relme-auth/internal/server"
 	"hawx.me/code/serve"
 )
 
@@ -86,30 +80,14 @@ func main() {
 		return
 	}
 
-	// use default values from DefaultTransport
-	tr := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-			DualStack: true,
-		}).DialContext,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-	}
-
 	httpClient := &http.Client{
-		Timeout:   10 * time.Second,
-		Transport: tr,
+		Timeout: 10 * time.Second,
 	}
 	noRedirectClient := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-		Timeout:   10 * time.Second,
-		Transport: tr,
+		Timeout: 10 * time.Second,
 	}
 
 	codeGenerator := random.Generator(20)
@@ -145,73 +123,22 @@ func main() {
 		return
 	}
 
-	route.Handle("/callback/continue", handler.Continue(database, codeGenerator))
-
-	var strategies strategy.Strategies
-	if *useTrue {
-		trueStrategy := strategy.True(*baseURL)
-		strategies = append(strategies, trueStrategy)
-
-		route.Handle("/callback/true", handler.Callback(database, trueStrategy, codeGenerator))
-
-	} else {
-		pgpDatabase, _ := data.Strategy("pgp")
-		pgpStrategy := strategy.PGP(pgpDatabase, *baseURL, "", httpClient)
-		route.Handle("/callback/pgp", handler.Callback(database, pgpStrategy, codeGenerator))
-		strategies = append(strategies, pgpStrategy)
-
-		if conf.Flickr != nil {
-			flickrDatabase, _ := data.Strategy("flickr")
-			flickrStrategy := strategy.Flickr(*baseURL, flickrDatabase, conf.Flickr.ID, conf.Flickr.Secret, httpClient)
-			route.Handle("/callback/flickr", handler.Callback(database, flickrStrategy, codeGenerator))
-			strategies = append(strategies, flickrStrategy)
-		}
-
-		if conf.GitHub != nil {
-			gitHubDatabase, _ := data.Strategy("github")
-			gitHubStrategy := strategy.GitHub(gitHubDatabase, conf.GitHub.ID, conf.GitHub.Secret)
-			route.Handle("/callback/github", handler.Callback(database, gitHubStrategy, codeGenerator))
-			strategies = append(strategies, gitHubStrategy)
-		}
-
-		if conf.Twitter != nil {
-			twitterDatabase, _ := data.Strategy("twitter")
-			twitterStrategy := strategy.Twitter(*baseURL, twitterDatabase, conf.Twitter.ID, conf.Twitter.Secret, httpClient)
-			route.Handle("/callback/twitter", handler.Callback(database, twitterStrategy, codeGenerator))
-			strategies = append(strategies, twitterStrategy)
-		}
-	}
-
-	route.Handle("/auth", mux.Method{
-		"GET":  handler.Choose(*baseURL, database, strategies, templates),
-		"POST": handler.Verify(database),
-	})
-	route.Handle("/auth/start", mux.Method{
-		"GET": handler.Auth(database, strategies, httpClient),
-	})
-
-	route.Handle("/token", handler.Token(database, tokenGenerator))
-	route.Handle("/pgp/authorize", handler.PGP(templates))
-
-	route.Handle("/", handler.Example(*baseURL, conf, cookies, database, templates))
-	route.Handle("/callback", handler.ExampleCallback(*baseURL, cookies))
-	route.Handle("/sign-out", handler.ExampleSignOut(*baseURL, cookies))
-	route.Handle("/revoke", handler.ExampleRevoke(*baseURL, cookies, database))
-	route.Handle("/privacy", handler.ExamplePrivacy(*baseURL, cookies, templates))
-	route.Handle("/forget", handler.ExampleForget(*baseURL, cookies, database))
-	route.Handle("/generate", handler.ExampleGenerate(*baseURL, cookies, tokenGenerator, database, templates))
-
-	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}
-
-	route.Handle("/ws", handler.WebSocket(strategies, database, relMe))
-	route.Handle("/public/*path", http.StripPrefix("/public", http.FileServer(http.Dir(*webPath+"/static"))))
-
-	srv := &http.Server{
+	serve.Server(*port, *socket, &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
-		Handler:      context.ClearHandler(route.Default),
-	}
-
-	serve.Server(*port, *socket, srv)
+		Handler: server.New(
+			database,
+			codeGenerator,
+			*baseURL,
+			httpClient,
+			conf,
+			*useTrue,
+			*webPath,
+			templates,
+			cookies,
+			tokenGenerator,
+			noRedirectClient,
+		),
+	})
 }

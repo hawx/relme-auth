@@ -7,7 +7,7 @@ import (
 	"hawx.me/code/relme-auth/internal/strategy"
 )
 
-type authStore interface {
+type AuthDB interface {
 	Session(string) (data.Session, error)
 	SetProvider(me, provider, profileURI string) error
 }
@@ -19,7 +19,7 @@ type authStore interface {
 //   - provider: 3rd party authentication provider that was chosen
 //   - profile: URL expected to be matched by the provider
 //   - redirect_uri: final URI to redirect to when auth is finished
-func Auth(store authStore, strategies strategy.Strategies, httpClient *http.Client) http.Handler {
+func Auth(store AuthDB, strategies strategy.Strategies, httpClient *http.Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			me          = r.FormValue("me")

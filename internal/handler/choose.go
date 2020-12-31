@@ -11,7 +11,7 @@ import (
 	"hawx.me/code/relme-auth/internal/strategy"
 )
 
-type chooseStore interface {
+type ChooseDB interface {
 	Login(*http.Request) (string, error)
 	CreateSession(data.Session) error
 	Client(clientID, redirectURI string) (data.Client, error)
@@ -19,13 +19,13 @@ type chooseStore interface {
 
 // Choose finds, for the "me" parameter, all authentication providers that can be
 // used for authentication.
-func Choose(baseURL string, store chooseStore, strategies strategy.Strategies, templates tmpl) http.Handler {
+func Choose(baseURL string, store ChooseDB, strategies strategy.Strategies, templates tmpl) http.Handler {
 	return mux.Method{
 		"GET": chooseProvider(baseURL, store, strategies, templates),
 	}
 }
 
-func chooseProvider(baseURL string, store chooseStore, strategies strategy.Strategies, templates tmpl) http.Handler {
+func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategies, templates tmpl) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			responseType        = r.FormValue("response_type")

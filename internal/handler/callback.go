@@ -10,7 +10,7 @@ import (
 	"hawx.me/code/relme-auth/internal/strategy"
 )
 
-type callbackStore interface {
+type CallbackDB interface {
 	SaveLogin(http.ResponseWriter, *http.Request, string) error
 	Session(string) (data.Session, error)
 	CreateCode(me, code string, createdAt time.Time) error
@@ -21,7 +21,7 @@ type callbackStore interface {
 // user, then it will redirect to the "redirect_uri" that the authentication
 // flow was originally started with. A "code" parameter is returned which can be
 // verified as belonging to the authenticated user for a short period of time.
-func Callback(store callbackStore, strat strategy.Strategy, generator func() (string, error)) http.Handler {
+func Callback(store CallbackDB, strat strategy.Strategy, generator func() (string, error)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			log.Println("handler/callback failed to parse form: ", err)

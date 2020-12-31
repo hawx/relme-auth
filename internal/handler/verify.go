@@ -8,13 +8,13 @@ import (
 	"hawx.me/code/relme-auth/internal/data"
 )
 
-type verifyStore interface {
+type VerifyDB interface {
 	Code(string) (data.Code, error)
 }
 
 // Verify allows clients to check who a particular "code" belongs to, or whether
 // it is invalid.
-func Verify(store verifyStore) http.Handler {
+func Verify(store VerifyDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			grantType    = r.FormValue("grant_type")

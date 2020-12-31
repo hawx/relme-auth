@@ -15,14 +15,14 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-type webSocketStore interface {
+type WebSocketDB interface {
 	Profile(string) (data.Profile, error)
 	CacheProfile(data.Profile) error
 }
 
 // WebSocket returns a http.Handler that handles websocket connections. The
 // client can request a set of authentication methods for a user.
-func WebSocket(strategies strategy.Strategies, store webSocketStore, relMe *microformats.RelMe) http.Handler {
+func WebSocket(strategies strategy.Strategies, store WebSocketDB, relMe *microformats.RelMe) http.Handler {
 	return &webSocketServer{
 		strategies:  strategies,
 		store:       store,
@@ -37,7 +37,7 @@ func (s *webSocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type webSocketServer struct {
 	strategies strategy.Strategies
-	store      webSocketStore
+	store      WebSocketDB
 	relMe      *microformats.RelMe
 
 	mu          sync.RWMutex
