@@ -47,9 +47,9 @@ func TestChoose(t *testing.T) {
 			Name:        "Client",
 		},
 	}
-	tmpl := &mockTemplate{}
+	chooseTmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, chooseTmpl, nil))
 	defer s.Close()
 
 	form := url.Values{
@@ -63,9 +63,9 @@ func TestChoose(t *testing.T) {
 	assert(err).Must.Nil()
 	assert(resp.StatusCode).Equal(http.StatusOK)
 
-	data, ok := tmpl.Data.(chooseCtx)
+	data, ok := chooseTmpl.Data.(chooseCtx)
 	assert(ok).Must.True()
-	assert(tmpl.Tmpl).Equal("choose.gotmpl")
+	assert(chooseTmpl.Tmpl).Equal("app")
 	assert(data.ClientID).Equal("http://client.example.com/")
 	assert(data.ClientName).Equal("Client")
 	assert(data.Me).Equal("http://me.example.com/")
@@ -88,9 +88,9 @@ func TestChooseWithMissingMe(t *testing.T) {
 			Name:        "Client",
 		},
 	}
-	tmpl := &mockTemplate{}
+	meTmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, nil, meTmpl))
 	defer s.Close()
 
 	form := url.Values{
@@ -105,8 +105,8 @@ func TestChooseWithMissingMe(t *testing.T) {
 	assert(err).Must.Nil()
 	assert(resp.StatusCode).Equal(http.StatusOK)
 
-	data := tmpl.Data.(meCtx)
-	assert(tmpl.Tmpl).Equal("me.gotmpl")
+	data := meTmpl.Data.(meCtx)
+	assert(meTmpl.Tmpl).Equal("app")
 	assert(data.ClientID).Equal("http://client.example.com/")
 	assert(data.RedirectURI).Equal("http://client.example.com/callback")
 	assert(data.State).Equal("some-value")
@@ -125,9 +125,9 @@ func TestChooseWithRecentLogin(t *testing.T) {
 		},
 		login: "http://me.example.com/",
 	}
-	tmpl := &mockTemplate{}
+	chooseTmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, chooseTmpl, nil))
 	defer s.Close()
 
 	form := url.Values{
@@ -141,9 +141,9 @@ func TestChooseWithRecentLogin(t *testing.T) {
 	assert(err).Must.Nil()
 	assert(resp.StatusCode).Equal(http.StatusOK)
 
-	data, ok := tmpl.Data.(chooseCtx)
+	data, ok := chooseTmpl.Data.(chooseCtx)
 	assert(ok).Must.True()
-	assert(tmpl.Tmpl).Equal("choose.gotmpl")
+	assert(chooseTmpl.Tmpl).Equal("app")
 	assert(data.ClientID).Equal("http://client.example.com/")
 	assert(data.ClientName).Equal("Client")
 	assert(data.Me).Equal("http://me.example.com/")
@@ -160,9 +160,8 @@ func TestChooseWhenClientCannotBeRetrieved(t *testing.T) {
 	assert := assert.Wrap(t)
 
 	store := &fakeChooseStore{}
-	tmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, nil, nil))
 	defer s.Close()
 
 	form := url.Values{
@@ -187,9 +186,8 @@ func TestChooseWithBadMe(t *testing.T) {
 			Name:        "Client",
 		},
 	}
-	tmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, nil, nil))
 	defer s.Close()
 
 	form := url.Values{
@@ -214,9 +212,8 @@ func TestChooseWithBadClientID(t *testing.T) {
 			Name:        "Client",
 		},
 	}
-	tmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, nil, nil))
 	defer s.Close()
 
 	form := url.Values{
@@ -239,9 +236,8 @@ func TestChooseWithBadParams(t *testing.T) {
 			Name:        "Client",
 		},
 	}
-	tmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, nil, nil))
 	defer s.Close()
 
 	testCases := map[string]url.Values{
@@ -288,9 +284,9 @@ func TestChooseForCode(t *testing.T) {
 			Name:        "Client",
 		},
 	}
-	tmpl := &mockTemplate{}
+	chooseTmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, chooseTmpl, nil))
 	defer s.Close()
 
 	form := url.Values{
@@ -306,8 +302,8 @@ func TestChooseForCode(t *testing.T) {
 	assert(err).Must.Nil()
 	assert(resp.StatusCode).Equal(http.StatusOK)
 
-	data := tmpl.Data.(chooseCtx)
-	assert(tmpl.Tmpl).Equal("choose.gotmpl")
+	data := chooseTmpl.Data.(chooseCtx)
+	assert(chooseTmpl.Tmpl).Equal("app")
 	assert(data.ClientID).Equal("http://client.example.com/")
 	assert(data.ClientName).Equal("Client")
 	assert(data.Me).Equal("http://me.example.com/")
@@ -331,9 +327,9 @@ func TestChooseForCodeWithPKCE(t *testing.T) {
 			Name:        "Client",
 		},
 	}
-	tmpl := &mockTemplate{}
+	chooseTmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, chooseTmpl, nil))
 	defer s.Close()
 
 	form := url.Values{
@@ -351,8 +347,8 @@ func TestChooseForCodeWithPKCE(t *testing.T) {
 	assert(err).Must.Nil()
 	assert(resp.StatusCode).Equal(http.StatusOK)
 
-	data := tmpl.Data.(chooseCtx)
-	assert(tmpl.Tmpl).Equal("choose.gotmpl")
+	data := chooseTmpl.Data.(chooseCtx)
+	assert(chooseTmpl.Tmpl).Equal("app")
 	assert(data.ClientID).Equal("http://client.example.com/")
 	assert(data.ClientName).Equal("Client")
 	assert(data.Me).Equal("http://me.example.com/")
@@ -376,9 +372,8 @@ func TestChooseForCodeWithBadParams(t *testing.T) {
 			Name:        "Client",
 		},
 	}
-	tmpl := &mockTemplate{}
 
-	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, tmpl))
+	s := httptest.NewServer(Choose("http://localhost", store, strategy.Strategies{&fakeStrategy{}}, nil, nil))
 	defer s.Close()
 
 	testCases := map[string]url.Values{

@@ -30,7 +30,7 @@ func TestPGP(t *testing.T) {
 
 	http.Get(s.URL + "?client_id=my-client&state=my-state&challenge=my-challenge")
 
-	assert(templates.Tmpl).Equal("pgp.gotmpl")
+	assert(templates.Tmpl).Equal("app")
 
 	data, ok := templates.Data.(pgpCtx)
 	assert(ok).Must.True()
