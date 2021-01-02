@@ -26,7 +26,7 @@ type ExampleDB interface {
 
 // Example implements a basic site using the authentication flow provided by
 // this package.
-func Example(baseURL string, conf config.Config, store sessions.Store, tokenStore ExampleDB, templates tmpl) http.HandlerFunc {
+func Example(baseURL string, conf config.Config, store sessions.Store, tokenStore ExampleDB, welcomeTemplate, accountTemplate tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "example-session")
 
@@ -46,7 +46,7 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 				log.Println("handler/example could not save session:", err)
 			}
 
-			if err := templates.ExecuteTemplate(w, "account.gotmpl", accountCtx{
+			if err := accountTemplate.ExecuteTemplate(w, "page", accountCtx{
 				Me:     me,
 				State:  state,
 				Tokens: tokens,
@@ -68,7 +68,7 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 		hashedVerifier := sha256.Sum256([]byte(codeVerifier))
 		codeChallenge := strings.TrimRight(base64.URLEncoding.EncodeToString(hashedVerifier[:]), "=")
 
-		if err := templates.ExecuteTemplate(w, "welcome.gotmpl", welcomeCtx{
+		if err := welcomeTemplate.ExecuteTemplate(w, "page", welcomeCtx{
 			ThisURI:       baseURL,
 			State:         state,
 			CodeChallenge: codeChallenge,
@@ -205,7 +205,7 @@ func ExampleGenerate(
 			log.Println("handler/example failed to create token:", err)
 		}
 
-		if err := templates.ExecuteTemplate(w, "generate.gotmpl", struct {
+		if err := templates.ExecuteTemplate(w, "page", struct {
 			ThisURI  string
 			Me       string
 			ClientID string
@@ -223,7 +223,7 @@ func ExampleGenerate(
 
 func ExamplePrivacy(baseURL string, store sessions.Store, templates tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := templates.ExecuteTemplate(w, "privacy.gotmpl", nil); err != nil {
+		if err := templates.ExecuteTemplate(w, "page", nil); err != nil {
 			log.Println("handler/example failed to write template:", err)
 		}
 	}

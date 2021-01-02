@@ -15,7 +15,7 @@ func PGP(templates tmpl) http.HandlerFunc {
 			challenge = r.FormValue("challenge")
 		)
 
-		if err := templates.ExecuteTemplate(w, "pgp.gotmpl", pgpCtx{
+		if err := templates.ExecuteTemplate(w, "page", pgpCtx{
 			ClientID:  clientID,
 			State:     state,
 			Challenge: challenge,

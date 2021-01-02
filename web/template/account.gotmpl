@@ -1,81 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>relme-auth</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/public/welcome.css" />
-  </head>
-  <body>
-    <header class="h-app">
-      <div class="container">
-        <h1 class="p-name">relme-auth</h1>
+{{ template "page" . }}
 
-        <div>
-          <span class="me"><a href="{{ .Me }}">{{ .Me }}</a></span>
-          <form action="/sign-out" method="post">
-            <button type="submit">Sign Out</button>
-          </form>
-        </div>
+{{ define "main" }}
+  <header class="h-app">
+    <div class="container">
+      <h1 class="p-name">relme-auth</h1>
+
+      <div>
+        <span class="me"><a href="{{ .Me }}">{{ .Me }}</a></span>
+        <form action="/sign-out" method="post">
+          <button type="submit">Sign Out</button>
+        </form>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <section class="container apps">
-      <h2>Authorized Apps</h2>
-      <p>You have granted {{ len .Tokens }} client{{ if not (eq (len .Tokens) 1) }}s{{ end }} access.</p>
+  <section class="container apps">
+    <h2>Authorized Apps</h2>
+    <p>You have granted {{ len .Tokens }} client{{ if not (eq (len .Tokens) 1) }}s{{ end }} access.</p>
 
-      {{ if gt (len .Tokens) 0 }}
-        <table>
-          <thead>
+    {{ if gt (len .Tokens) 0 }}
+      <table>
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Authorized</th>
+            <th>Scope</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Tokens }}
             <tr>
-              <th>Client</th>
-              <th>Authorized</th>
-              <th>Scope</th>
-              <th></th>
+              <td><a href="{{ .ClientID }}">{{ .ClientID }}</a></td>
+              <td><time datetime="{{ .CreatedAt.Format "2006-01-02T15:04:05Z07:00" }}">{{ .CreatedAt.Format "2 Jan 2006" }}</time></td>
+              <td>{{ .Scope }}</td>
+              <td class="no-padding"><form action="/revoke?id={{ .Token }}&state={{ $.State }}" method="post">
+                <button type="submit">Revoke</button>
+              </form></td>
             </tr>
-          </thead>
-          <tbody>
-            {{ range .Tokens }}
-              <tr>
-                <td><a href="{{ .ClientID }}">{{ .ClientID }}</a></td>
-                <td><time datetime="{{ .CreatedAt.Format "2006-01-02T15:04:05Z07:00" }}">{{ .CreatedAt.Format "2 Jan 2006" }}</time></td>
-                <td>{{ .Scope }}</td>
-                <td class="no-padding"><form action="/revoke?id={{ .Token }}&state={{ $.State }}" method="post">
-                  <button type="submit">Revoke</button>
-                </form></td>
-              </tr>
-            {{ end }}
-          </tbody>
-        </table>
-      {{ end }}
+          {{ end }}
+        </tbody>
+      </table>
+    {{ end }}
 
-      <h2>Generate Token</h2>
-      <form method="post" action="/generate">
-        <input name="state" value="{{ .State }}" hidden />
+    <h2>Generate Token</h2>
+    <form method="post" action="/generate">
+      <input name="state" value="{{ .State }}" hidden />
 
-        <div class="control">
-          <label for="client_id">Client ID</label>
-          <input id="client_id" name="client_id" />
-        </div>
+      <div class="control">
+        <label for="client_id">Client ID</label>
+        <input id="client_id" name="client_id" />
+      </div>
 
-        <div class="control">
-          <label for="scope">Scope (space separated list)</label>
-          <input id="scope" name="scope" />
-        </div>
+      <div class="control">
+        <label for="scope">Scope (space separated list)</label>
+        <input id="scope" name="scope" />
+      </div>
 
-        <div class="control">
-          <button type="submit">Create</button>
-        </div>
-      </form>
+      <div class="control">
+        <button type="submit">Create</button>
+      </div>
+    </form>
 
-      <h2>Forget</h2>
-      <p>Click the button below to delete all information associated with <strong>{{ .Me }}</strong>.</p>
+    <h2>Forget</h2>
+    <p>Click the button below to delete all information associated with <strong>{{ .Me }}</strong>.</p>
 
-      <form action="/forget" method="post">
-        <button type="submit">Forget</button>
-      </form>
-    </section>
-    
-    {{ template "footer.gotmpl" . }}
-  </body>
-</html>
+    <form action="/forget" method="post">
+      <button type="submit">Forget</button>
+    </form>
+  </section>
+{{ end }}

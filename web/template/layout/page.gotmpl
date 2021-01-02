@@ -1,0 +1,16 @@
+{{ define "page" }}
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>relme-auth</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link rel="stylesheet" href="/public/welcome.css" />
+    </head>
+    <body>
+      {{ block "main" . }}{{ end }}
+      
+      {{ template "footer.gotmpl" . }}
+    </body>
+  </html>
+{{ end }}

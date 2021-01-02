@@ -1,38 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>relme-auth</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/public/welcome.css" />
-  </head>
-  <body>
-    <section>
-      <div class="container">
-        <h1>Privacy</h1>
+{{ template "page" . }}
 
-        <h2>Data stored</h2>
+{{ define "main" }}
+  <section>
+    <div class="container">
+      <h1>Privacy</h1>
 
-        <p>The following data is stored when using this website:</p>
-        <ul>
-          <li>the profile URL ("me") entered</li>
-          <li>the URL, name and redirect URL for the application being granted
+      <h2>Data stored</h2>
+
+      <p>The following data is stored when using this website:</p>
+      <ul>
+        <li>the profile URL ("me") entered</li>
+        <li>the URL, name and redirect URL for the application being granted
           access</li>
-          <li>the name of any authentication providers found and verified from
+        <li>the name of any authentication providers found and verified from
           "me" (twitter, github, etc.)</li>
-          <li>the associated profile URL for those providers, or the URL to a
+        <li>the associated profile URL for those providers, or the URL to a
           PGP key</li>
-          <li>the date of authentication</li>
-        </ul>
+        <li>the date of authentication</li>
+      </ul>
 
-        <p>Access tokens for GitHub, Twitter, etc. are never stored.</p>
+      <p>Access tokens for GitHub, Twitter, etc. are never stored.</p>
 
-        <h2>Removing data</h2>
+      <h2>Removing data</h2>
 
-        <p>You can remove all data associated with yourself by clicking the "Forget" button once signed in.</p>
-      </div>
-    </section>
-
-    {{ template "footer.gotmpl" . }}
-  </body>
-</html>
+      <p>You can remove all data associated with yourself by clicking the "Forget" button once signed in.</p>
+    </div>
+  </section>
+{{ end }}

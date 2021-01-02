@@ -1,35 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>relme-auth</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/public/welcome.css" />
-  </head>
-  <body>
-    <header class="h-app">
-      <div class="container">
-        <h1 class="p-name">relme-auth</h1>
+{{ template "page" . }}
 
-        <div>
-          <span class="me"><a href="{{ .Me }}">{{ .Me }}</a></span>
-          <form action="/sign-out" method="post">
-            <button type="submit">Sign Out</button>
-          </form>
-        </div>
+{{ define "main" }}
+  <header class="h-app">
+    <div class="container">
+      <h1 class="p-name">relme-auth</h1>
+
+      <div>
+        <span class="me"><a href="{{ .Me }}">{{ .Me }}</a></span>
+        <form action="/sign-out" method="post">
+          <button type="submit">Sign Out</button>
+        </form>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <section class="container apps">
-      <p>Your new token for <strong>{{ .ClientID }}</strong> is</p>
+  <section class="container apps">
+    <p>Your new token for <strong>{{ .ClientID }}</strong> is</p>
 
-      <pre><code>{{ .Token }}</code></pre>
+    <pre><code>{{ .Token }}</code></pre>
 
-      <p>This will not be shown again, so make sure to put it somewhere safe.</p>
+    <p>This will not be shown again, so make sure to put it somewhere safe.</p>
 
-      <a href="{{ .ThisURI }}">Continue</a>
-    </section>
-
-    {{ template "footer.gotmpl" . }}
-  </body>
-</html>
+    <a href="{{ .ThisURI }}">Continue</a>
+  </section>
+{{ end }}

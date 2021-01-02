@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -58,6 +59,35 @@ func printHelp() {
 
    --socket SOCK
       Serve at given socket, instead.`)
+}
+
+func loadTemplates(webPath string) (map[string]*template.Template, error) {
+	layouts, err := template.New("").ParseGlob(webPath + "/template/layout/*.gotmpl")
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := filepath.Glob(webPath + "/template/*.gotmpl")
+	if err != nil {
+		return nil, err
+	}
+
+	templates := map[string]*template.Template{}
+
+	for _, file := range files {
+		t, err := layouts.Clone()
+		if err != nil {
+			return nil, err
+		}
+		t, err = t.ParseFiles(file)
+		if err != nil {
+			return nil, err
+		}
+
+		templates[filepath.Base(file)] = t
+	}
+
+	return templates, nil
 }
 
 func main() {
@@ -117,7 +147,7 @@ func main() {
 	}
 	defer database.Close()
 
-	templates, err := template.ParseGlob(*webPath + "/template/*")
+	templates, err := loadTemplates(*webPath)
 	if err != nil {
 		fmt.Println("could not load templates:", err)
 		return

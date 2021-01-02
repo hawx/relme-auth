@@ -1,0 +1,24 @@
+{{ define "app" }}
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>relme-auth</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link rel="stylesheet" href="/public/choose.css" />
+    </head>
+    <body>
+      <div class="fill"></div>
+
+      <div class="container">
+        {{ block "main" . }}{{ end }}
+        
+        {{ template "footer.gotmpl" . }}
+      </div>
+
+      <div class="fill"></div>
+
+      {{ block "scripts" . }}{{ end }}
+    </body>
+  </html>
+{{ end }}

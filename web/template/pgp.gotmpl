@@ -1,34 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>relme-auth</title>
-    <link rel="stylesheet" href="/public/choose.css" />
-  </head>
-  <body>
-    <div class="fill"></div>
+{{ template "app" . }}
 
-    <div class="container">
-      <header>
-        <h1>PGP: Sign this challenge</h1>
-      </header>
+{{ define "main" }}
+  <header>
+    <h1>PGP: Sign this challenge</h1>
+  </header>
 
-      <p>Sign the following challenge</p>
-      <textarea name="challenge" readonly>{{ .Challenge }}</textarea>
+  <p>Sign the following challenge</p>
+  <textarea name="challenge" readonly>{{ .Challenge }}</textarea>
 
-      <p>For example</p>
-      <pre><code>echo '{{ .Challenge }}' | gpg --clearsign</code></pre>
+  <p>For example</p>
+  <pre><code>echo '{{ .Challenge }}' | gpg --clearsign</code></pre>
 
-      <form action="/callback/pgp" method="post">
-        <label for="signed">Signed challenge</label>
-        <textarea id="signed" name="signed"></textarea>
-        <button type="submit">Submit</button>
-        <input type="hidden" name="state" value="{{ .State }}" />
-      </form>
-
-      {{ template "footer.gotmpl" . }}
-    </div>
-
-    <div class="fill"></div>
-  </body>
-</html>
+  <form action="/callback/pgp" method="post">
+    <label for="signed">Signed challenge</label>
+    <textarea id="signed" name="signed"></textarea>
+    <button type="submit">Submit</button>
+    <input type="hidden" name="state" value="{{ .State }}" />
+  </form>
+{{ end }}

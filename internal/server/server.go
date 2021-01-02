@@ -1,6 +1,7 @@
 package server
 
 import (
+	"html/template"
 	"io"
 	"net/http"
 
@@ -37,7 +38,7 @@ func New(
 	conf config.Config,
 	useTrue bool,
 	webPath string,
-	templates Templates,
+	templates map[string]*template.Template,
 	cookies *sessions.CookieStore,
 	tokenGenerator func() (string, error),
 	noRedirectClient *http.Client,
@@ -80,7 +81,7 @@ func New(
 	}
 
 	route.Handle("/auth", mux.Method{
-		"GET":  handler.Choose(baseURL, database, strategies, templates),
+		"GET":  handler.Choose(baseURL, database, strategies, templates["choose.gotmpl"], templates["me.gotmpl"]),
 		"POST": handler.Verify(database),
 	})
 	route.Handle("/auth/start", mux.Method{
@@ -88,15 +89,15 @@ func New(
 	})
 
 	route.Handle("/token", handler.Token(database, tokenGenerator))
-	route.Handle("/pgp/authorize", handler.PGP(templates))
+	route.Handle("/pgp/authorize", handler.PGP(templates["pgp.gotmpl"]))
 
-	route.Handle("/", handler.Example(baseURL, conf, cookies, database, templates))
+	route.Handle("/", handler.Example(baseURL, conf, cookies, database, templates["welcome.gotmpl"], templates["account.gotmpl"]))
 	route.Handle("/redirect", handler.ExampleCallback(baseURL, cookies))
 	route.Handle("/sign-out", handler.ExampleSignOut(baseURL, cookies))
 	route.Handle("/revoke", handler.ExampleRevoke(baseURL, cookies, database))
-	route.Handle("/privacy", handler.ExamplePrivacy(baseURL, cookies, templates))
+	route.Handle("/privacy", handler.ExamplePrivacy(baseURL, cookies, templates["privacy.gotmpl"]))
 	route.Handle("/forget", handler.ExampleForget(baseURL, cookies, database))
-	route.Handle("/generate", handler.ExampleGenerate(baseURL, cookies, tokenGenerator, database, templates))
+	route.Handle("/generate", handler.ExampleGenerate(baseURL, cookies, tokenGenerator, database, templates["generate.gotmpl"]))
 
 	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}
 

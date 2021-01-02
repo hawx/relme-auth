@@ -1,63 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>relme-auth</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/public/choose.css" />
-  </head>
-  <body>
-    <div class="fill"></div>
+{{ template "app" . }}
 
-    <div class="container">
-      <header>
-        <h1>Sign-in to {{ .ClientName }}</h1>
-        <h2>{{ .ClientID }}</h2>
+{{ define "main" }}
+  <header>
+    <h1>Sign-in to {{ .ClientName }}</h1>
+    <h2>{{ .ClientID }}</h2>
 
-        {{ if not (eq .CodeChallengeMethod "S256") }}
-          <p class="warning-msg">The app is not using PKCE with method S256</p>
-        {{ end }}
-
-        {{ if .Scopes }}
-          <p>The app is requesting the following scopes:</p>
-          {{ range .Scopes }}
-            <label class="scope">
-              <input type="checkbox" name="scope" value="{{ . }}" checked disabled />
-              {{ . }}
-            </label>
-          {{ end }}
-        {{ end }}
-      </header>
-
-      {{ if .Skip }}
-        <p>Continue signing-in with your previous session</p>
-
-        <ul class="methods">
-          <li>
-            <a class="btn" href="/callback/continue">
-              <strong>sign-in</strong> as {{ .Me }}
-            </a>
-          </li>
-        </ul>
-      {{ end }}
-      {{ if not .Skip }}
-        <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong></p>
-
-        <ul class="methods"></ul>
-        <div class="loader"></div>
-
-        <p class="info loading">
-          Results cached <span class="cachedAt"></span>. <a id="refresh">Refresh</a>.
-        </p>
-      {{ end }}
-
-      {{ template "footer.gotmpl" . }}
-    </div>
-
-    <div class="fill"></div>
-
-    {{ if not .Skip }}
-      <script src="/public/choose.js"></script>
+    {{ if not (eq .CodeChallengeMethod "S256") }}
+      <p class="warning-msg">The app is not using PKCE with method S256</p>
     {{ end }}
-  </body>
-</html>
+
+    {{ if .Scopes }}
+      <p>The app is requesting the following scopes:</p>
+      {{ range .Scopes }}
+        <label class="scope">
+          <input type="checkbox" name="scope" value="{{ . }}" checked disabled />
+          {{ . }}
+        </label>
+      {{ end }}
+    {{ end }}
+  </header>
+
+  {{ if .Skip }}
+    <p>Continue signing-in with your previous session</p>
+
+    <ul class="methods">
+      <li>
+        <a class="btn" href="/callback/continue">
+          <strong>sign-in</strong> as {{ .Me }}
+        </a>
+      </li>
+    </ul>
+  {{ end }}
+  {{ if not .Skip }}
+    <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong></p>
+
+    <ul class="methods"></ul>
+    <div class="loader"></div>
+
+    <p class="info loading">
+      Results cached <span class="cachedAt"></span>. <a id="refresh">Refresh</a>.
+    </p>
+  {{ end }}
+{{ end }}
+
+{{ define "scripts" }}
+  {{ if not .Skip }}
+    <script src="/public/choose.js"></script>
+  {{ end }}
+{{ end }}

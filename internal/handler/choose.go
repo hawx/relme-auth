@@ -19,13 +19,13 @@ type ChooseDB interface {
 
 // Choose finds, for the "me" parameter, all authentication providers that can be
 // used for authentication.
-func Choose(baseURL string, store ChooseDB, strategies strategy.Strategies, templates tmpl) http.Handler {
+func Choose(baseURL string, store ChooseDB, strategies strategy.Strategies, chooseTemplate, meTemplate tmpl) http.Handler {
 	return mux.Method{
-		"GET": chooseProvider(baseURL, store, strategies, templates),
+		"GET": chooseProvider(baseURL, store, strategies, chooseTemplate, meTemplate),
 	}
 }
 
-func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategies, templates tmpl) http.Handler {
+func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategies, chooseTemplate, meTemplate tmpl) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			responseType        = r.FormValue("response_type")
@@ -54,7 +54,7 @@ func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategi
 		scopes := strings.Fields(scope)
 
 		if me == "" {
-			if err := templates.ExecuteTemplate(w, "me.gotmpl", meCtx{
+			if err := meTemplate.ExecuteTemplate(w, "app", meCtx{
 				ClientID:            client.ID,
 				ClientName:          client.Name,
 				RedirectURI:         redirectURI,
@@ -126,7 +126,7 @@ func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategi
 			tmplCtx.Skip = true
 		}
 
-		if err := templates.ExecuteTemplate(w, "choose.gotmpl", tmplCtx); err != nil {
+		if err := chooseTemplate.ExecuteTemplate(w, "app", tmplCtx); err != nil {
 			log.Println("handler/choose failed to write template:", err)
 		}
 	})
