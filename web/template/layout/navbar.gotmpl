@@ -1,0 +1,14 @@
+{{ define "navbar" }}
+  <header class="h-app navbar">
+    <div class="container">
+      <h1 class="p-name">relme-auth</h1>
+
+      <div>
+        <span class="me"><a href="{{ .Me }}">{{ .Me }}</a></span>
+        <form class="inline-block" action="/sign-out" method="post">
+          <button type="submit">Sign Out</button>
+        </form>
+      </div>
+    </div>
+  </header>
+{{ end }}

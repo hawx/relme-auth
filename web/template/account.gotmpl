@@ -1,18 +1,7 @@
 {{ template "page" . }}
 
 {{ define "main" }}
-  <header class="h-app">
-    <div class="container">
-      <h1 class="p-name">relme-auth</h1>
-
-      <div>
-        <span class="me"><a href="{{ .Me }}">{{ .Me }}</a></span>
-        <form action="/sign-out" method="post">
-          <button type="submit">Sign Out</button>
-        </form>
-      </div>
-    </div>
-  </header>
+  {{ template "navbar" . }}
 
   <section class="container apps">
     <h2>Authorized Apps</h2>

@@ -5,19 +5,20 @@
       <meta charset="utf-8" />
       <title>relme-auth</title>
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <link rel="stylesheet" href="/public/choose.css" />
+      <link rel="stylesheet" href="/public/welcome.css" />
     </head>
-    <body>
-      <div class="fill"></div>
+    <body class="flex-container">
+      <div class="flex-container flex-fill">
+        <div class="flex-fill"></div>
 
-      <div class="container">
-        {{ block "main" . }}{{ end }}
-        
-        {{ template "footer.gotmpl" . }}
+        <div class="container">
+          {{ block "main" . }}{{ end }}          
+        </div>
+
+        <div class="flex-fill"></div>
       </div>
 
-      <div class="fill"></div>
-
+      {{ template "footer.gotmpl" . }}
       {{ block "scripts" . }}{{ end }}
     </body>
   </html>
