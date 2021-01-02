@@ -91,7 +91,7 @@ func New(
 	route.Handle("/pgp/authorize", handler.PGP(templates))
 
 	route.Handle("/", handler.Example(baseURL, conf, cookies, database, templates))
-	route.Handle("/callback", handler.ExampleCallback(baseURL, cookies))
+	route.Handle("/redirect", handler.ExampleCallback(baseURL, cookies))
 	route.Handle("/sign-out", handler.ExampleSignOut(baseURL, cookies))
 	route.Handle("/revoke", handler.ExampleRevoke(baseURL, cookies, database))
 	route.Handle("/privacy", handler.ExamplePrivacy(baseURL, cookies, templates))

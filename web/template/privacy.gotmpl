@@ -27,28 +27,9 @@
 
         <p>Access tokens for GitHub, Twitter, etc. are never stored.</p>
 
-        <h2>Forget</h2>
-        {{ if .LoggedIn }}
-          <p>Click the button below to delete all information associated with <strong>{{ .Me }}</strong>.</p>
+        <h2>Removing data</h2>
 
-          <form action="/forget" method="post">
-            <button type="submit">Forget</button>
-          </form>
-        {{ end }}
-
-        {{ if not .LoggedIn }}
-          <p>To remove data associated with your use of this website, first sign-in:</p>
-
-          <form action="/auth" method="get">
-            <div class="field">
-              <input type="url" name="me" placeholder="https://example.com" />
-              <button type="submit">Sign In</button>
-            </div>
-            <input type="hidden" name="client_id" value="{{ .ThisURI }}/" />
-            <input type="hidden" name="redirect_uri" value="{{ .ThisURI }}/callback?r=privacy" />
-            <input type="hidden" name="state" value="{{ .State }}" />
-          </form>
-        {{ end }}
+        <p>You can remove all data associated with yourself by clicking the "Forget" button once signed in.</p>
       </div>
     </section>
 

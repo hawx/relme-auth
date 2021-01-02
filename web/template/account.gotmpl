@@ -67,6 +67,13 @@
           <button type="submit">Create</button>
         </div>
       </form>
+
+      <h2>Forget</h2>
+      <p>Click the button below to delete all information associated with <strong>{{ .Me }}</strong>.</p>
+
+      <form action="/forget" method="post">
+        <button type="submit">Forget</button>
+      </form>
     </section>
     
     {{ template "footer.gotmpl" . }}

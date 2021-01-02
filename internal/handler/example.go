@@ -98,13 +98,7 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 			return
 		}
 
-		redirectURL := baseURL + "/callback"
-		finalURL := baseURL
-
-		if r.FormValue("r") == "privacy" {
-			redirectURL += "?r=privacy"
-			finalURL = baseURL + "/privacy"
-		}
+		redirectURL := baseURL + "/redirect"
 
 		resp, err := http.PostForm(baseURL+"/auth", url.Values{
 			"grant_type":    {"authorization_code"},
@@ -132,7 +126,7 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 			log.Println("handler/example could not save session:", err)
 		}
 
-		http.Redirect(w, r, finalURL, http.StatusFound)
+		http.Redirect(w, r, "/", http.StatusFound)
 	}
 }
 
@@ -229,26 +223,7 @@ func ExampleGenerate(
 
 func ExamplePrivacy(baseURL string, store sessions.Store, templates tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "example-session")
-
-		var me string
-		meValue, ok := session.Values["me"]
-		if ok {
-			me, ok = meValue.(string)
-		}
-
-		state, _ := random.String(64)
-		session.Values["state"] = state
-		if err := session.Save(r, w); err != nil {
-			log.Println("handler/example could not save session:", err)
-		}
-
-		if err := templates.ExecuteTemplate(w, "privacy.gotmpl", privacyCtx{
-			ThisURI:  baseURL,
-			Me:       me,
-			LoggedIn: ok,
-			State:    state,
-		}); err != nil {
+		if err := templates.ExecuteTemplate(w, "privacy.gotmpl", nil); err != nil {
 			log.Println("handler/example failed to write template:", err)
 		}
 	}
@@ -300,11 +275,4 @@ type accountCtx struct {
 	State  string
 	Me     string
 	Tokens []data.Token
-}
-
-type privacyCtx struct {
-	ThisURI  string
-	State    string
-	Me       string
-	LoggedIn bool
 }

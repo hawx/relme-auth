@@ -20,7 +20,7 @@
           </div>
           <input type="hidden" name="response_type" value="code" />
           <input type="hidden" name="client_id" value="{{ .ThisURI }}/" />
-          <input type="hidden" name="redirect_uri" value="{{ .ThisURI }}/callback" />
+          <input type="hidden" name="redirect_uri" value="{{ .ThisURI }}/redirect" />
           <input type="hidden" name="state" value="{{ .State }}" />
           <input type="hidden" name="code_challenge" value="{{ .CodeChallenge }}" />
           <input type="hidden" name="code_challenge_method" value="S256" />
