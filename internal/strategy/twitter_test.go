@@ -59,7 +59,7 @@ func TestTwitterAuthFlow(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" && r.URL.Path == "/oauth/request_token" &&
-			r.PostFormValue("oauth_consumer_key") == id {
+			hasParam(r, "oauth_consumer_key", id) {
 
 			w.Write([]byte(url.Values{
 				"oauth_callback_confirmed": {"true"},
@@ -69,9 +69,9 @@ func TestTwitterAuthFlow(t *testing.T) {
 		}
 
 		if r.Method == "POST" && r.URL.Path == "/oauth/access_token" &&
-			r.PostFormValue("oauth_token") == tempToken &&
-			r.PostFormValue("oauth_verifier") == tempSecret &&
-			r.PostFormValue("oauth_consumer_key") == id {
+			hasParam(r, "oauth_token", tempToken) &&
+			hasParam(r, "oauth_verifier", tempSecret) &&
+			hasParam(r, "oauth_consumer_key", id) {
 
 			w.Write([]byte(url.Values{
 				"oauth_token":        {tempToken},
@@ -139,7 +139,7 @@ func TestTwitterAuthFlowWithBadUser(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" && r.URL.Path == "/oauth/request_token" &&
-			r.PostFormValue("oauth_consumer_key") == id {
+			hasParam(r, "oauth_consumer_key", id) {
 
 			w.Write([]byte(url.Values{
 				"oauth_callback_confirmed": {"true"},
@@ -149,9 +149,9 @@ func TestTwitterAuthFlowWithBadUser(t *testing.T) {
 		}
 
 		if r.Method == "POST" && r.URL.Path == "/oauth/access_token" &&
-			r.PostFormValue("oauth_token") == tempToken &&
-			r.PostFormValue("oauth_verifier") == tempSecret &&
-			r.PostFormValue("oauth_consumer_key") == id {
+			hasParam(r, "oauth_token", tempToken) &&
+			hasParam(r, "oauth_verifier", tempSecret) &&
+			hasParam(r, "oauth_consumer_key", id) {
 
 			w.Write([]byte(url.Values{
 				"oauth_token":        {tempToken},

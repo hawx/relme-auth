@@ -2,6 +2,8 @@ package strategy
 
 import (
 	"errors"
+	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -76,4 +78,23 @@ func (s *oneStore) Claim(state string) (link interface{}, ok bool) {
 	}
 
 	return s.Link, true
+}
+
+func hasParam(r *http.Request, key, value string) bool {
+	params := strings.Split(strings.TrimPrefix(r.Header.Get("Authorization"), "OAuth "), ",")
+	for _, param := range params {
+		parts := strings.Split(param, "=")
+
+		if len(parts) != 2 {
+			continue
+		}
+
+		if strings.TrimSpace(parts[0]) == key &&
+			strings.TrimSuffix(strings.TrimPrefix(strings.TrimSpace(parts[1]), "\""), "\"") == value {
+
+			return true
+		}
+	}
+
+	return false
 }
