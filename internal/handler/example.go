@@ -238,7 +238,7 @@ func ExampleGenerate(
 	}
 }
 
-func ExamplePrivacy(baseURL string, store sessions.Store, templates tmpl) http.HandlerFunc {
+func ExamplePrivacy(templates tmpl) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := templates.ExecuteTemplate(w, "page", nil); err != nil {
 			log.Println("handler/example failed to write template:", err)

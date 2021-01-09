@@ -96,7 +96,7 @@ func New(
 	route.Handle("/redirect", handler.ExampleCallback(baseURL, cookies))
 	route.Handle("/sign-out", handler.ExampleSignOut(baseURL, cookies))
 	route.Handle("/revoke", handler.ExampleRevoke(baseURL, cookies, database))
-	route.Handle("/privacy", handler.ExamplePrivacy(baseURL, cookies, templates["privacy.gotmpl"]))
+	route.Handle("/privacy", handler.ExamplePrivacy(templates["privacy.gotmpl"]))
 	route.Handle("/forget", handler.ExampleForget(baseURL, cookies, database))
 	route.Handle("/generate", handler.ExampleGenerate(baseURL, cookies, tokenGenerator, database, templates["generate.gotmpl"]))
 
