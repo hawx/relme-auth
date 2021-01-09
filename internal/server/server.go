@@ -92,6 +92,7 @@ func New(
 	route.Handle("/pgp/authorize", handler.PGP(templates["pgp.gotmpl"]))
 
 	route.Handle("/", handler.Example(baseURL, conf, cookies, database, templates["welcome.gotmpl"], templates["account.gotmpl"]))
+	route.Handle("/sign-in", handler.ExampleSignIn(baseURL, cookies))
 	route.Handle("/redirect", handler.ExampleCallback(baseURL, cookies))
 	route.Handle("/sign-out", handler.ExampleSignOut(baseURL, cookies))
 	route.Handle("/revoke", handler.ExampleRevoke(baseURL, cookies, database))

@@ -57,6 +57,24 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 			return
 		}
 
+		if err := welcomeTemplate.ExecuteTemplate(w, "page", welcomeCtx{
+			ThisURI:    baseURL,
+			Me:         me,
+			LoggedIn:   ok,
+			HasFlickr:  conf.Flickr != nil,
+			HasGitHub:  conf.GitHub != nil,
+			HasTwitter: conf.Twitter != nil,
+			Tokens:     tokens,
+		}); err != nil {
+			log.Println("handler/example failed to write template:", err)
+		}
+	}
+}
+
+func ExampleSignIn(baseURL string, store sessions.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "example-session")
+
 		state, _ := random.String(64)
 		session.Values["state"] = state
 		codeVerifier, _ := random.String(32)
@@ -67,20 +85,19 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 
 		hashedVerifier := sha256.Sum256([]byte(codeVerifier))
 		codeChallenge := strings.TrimRight(base64.URLEncoding.EncodeToString(hashedVerifier[:]), "=")
-
-		if err := welcomeTemplate.ExecuteTemplate(w, "page", welcomeCtx{
-			ThisURI:       baseURL,
-			State:         state,
-			CodeChallenge: codeChallenge,
-			Me:            me,
-			LoggedIn:      ok,
-			HasFlickr:     conf.Flickr != nil,
-			HasGitHub:     conf.GitHub != nil,
-			HasTwitter:    conf.Twitter != nil,
-			Tokens:        tokens,
-		}); err != nil {
-			log.Println("handler/example failed to write template:", err)
+		form := url.Values{
+			"response_type":         {"code"},
+			"client_id":             {baseURL},
+			"redirect_uri":          {baseURL + "/redirect"},
+			"state":                 {state},
+			"code_challenge":        {codeChallenge},
+			"code_challenge_method": {"S256"},
+			"me":                    {r.FormValue("me")},
 		}
+
+		redirectURL := baseURL + "/auth?" + form.Encode()
+
+		http.Redirect(w, r, redirectURL, http.StatusFound)
 	}
 }
 
