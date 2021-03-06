@@ -131,7 +131,7 @@ func main() {
 
 	cookies := sessions.NewCookieStore(secret)
 	cookies.Options.HttpOnly = true
-	cookies.Options.SameSite = http.SameSiteStrictMode
+	cookies.Options.SameSite = http.SameSiteLaxMode
 	cookies.Options.Secure = strings.HasPrefix(*baseURL, "https://")
 
 	database, err := data.Open(*dbPath, httpClient, cookies, data.Expiry{
