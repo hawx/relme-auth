@@ -6,7 +6,7 @@
       <h1 class="p-name">relme-auth</h1>
       <h2>Sign in with your domain</h2>
       <p>Try signing in to this site:</p>
-      
+
       <form action="/sign-in" method="get">
         <div class="field">
           <input type="url" name="me" placeholder="https://example.com/" />
@@ -15,18 +15,18 @@
       </form>
     </div>
   </header>
-  
+
   <section id="users">
     <div class="container">
       <p>You can log in to this site without creating a new account! Instead make sure one (or more) of
         the methods below is setup.</p>
-      
+
       <h3 id="pgp">PGP</h3>
       <p>To authenticate with your PGP key add a link to your public key on your homepage.</p>
       <pre><code>&lt;a rel="pgpkey" href="/key.asc"&gt;Key&lt;/a&gt;</code></pre>
       <p>Or if you don't want the link to be visible.</p>
       <pre><code>&lt;link rel="pgpkey" href="/key.asc" /&gt;</code></pre>
-      
+
       {{ if .HasFlickr }}
         <h3 id="flickr">Flickr</h3>
         <p>To authenticate with your Flickr account add a link to your profile on your homepage.</p>
@@ -35,7 +35,7 @@
         <pre><code>&lt;link rel="me" href="https://www.flickr.com/people/YOU" /&gt;</code></pre>
         <p>Make sure your Flickr profile has a link back to your homepage.</p>
       {{ end }}
-      
+
       {{ if .HasGitHub }}
         <h3 id="github">GitHub</h3>
         <p>To authenticate with your GitHub account add a link to your profile on your homepage.</p>
@@ -44,7 +44,7 @@
         <pre><code>&lt;link rel="me" href="https://github.com/YOU" /&gt;</code></pre>
         <p>Make sure your GitHub profile has a link back to your homepage.</p>
       {{ end }}
-      
+
       {{ if .HasTwitter }}
         <h3 id="twitter">Twitter</h3>
         <p>To authenticate with your Twitter account add a link to your profile on your homepage.</p>
@@ -53,7 +53,7 @@
         <pre><code>&lt;link rel="me" href="https://twitter.com/YOU" /&gt;</code></pre>
         <p>Make sure your Twitter profile has a link back to your homepage.</p>
       {{ end }}
-      
+
       <h2>Choosing auth providers</h2>
       <p>You may want to mark some links up with <code>rel="me"</code>, but
         not want to consider them for authentication. You can choose which
@@ -62,13 +62,28 @@
       <pre><code>&lt;a rel="me authn" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;
 &lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;
 &lt;a rel="pgpkey authn" href="/public.asc"&gt;My PGP Key&lt;/a&gt;</code></pre>
-      
+
       <h2>IndieAuth</h2>
-      <p>To use this service for <a href="https://indieweb.org/IndieAuth">IndieAuth</a>, add the following to your page's
-        <code>&lt;head&gt;</code>:</p>
+      <p>To use this service for <a href="https://indieweb.org/IndieAuth">IndieAuth</a> create a JSON file containing this minimal config:</p>
+
+      <pre><code>{
+  "issuer": "https://yoursite.example.com/",
+  "authorization_endpoint": "{{ .ThisURI }}/auth",
+  "token_endpoint": "{{ .ThisURI }}/token",
+  "code_challenge_methods_supported": ["S256"]
+}</code></pre>
+
+      <p>The recommended path for this is <code>/.well-known/oauth-authorization-server</code>, but you can use something else if it makes more sense for you. The "issuer" should be set to your URL. See <a href="https://indieauth.spec.indieweb.org/#indieauth-server-metadata">the IndieAuth specification</a> for more detail on what each property means.</p>
+
+      <p>Then link to that file in your homepage's <code>&lt;head&gt;</code>:</p>
+      <pre><code>&lt;link rel="authorization_endpoint" href="/.well-known/oauth-authorization-server"&gt;</code></pre>
+
+      <p>For greater compatibility with services that use the previous
+        method of config discovery you might also want to add the following to
+        your page's <code>&lt;head&gt;</code>:</p>
       <pre><code>&lt;link rel="authorization_endpoint" href="{{ .ThisURI }}/auth"&gt;
 &lt;link rel="token_endpoint" href="{{ .ThisURI }}/token"&gt;</code></pre>
-      
+
       <h2>More information</h2>
       <p>To find out more information on RelMeAuth, or other implementations, read <a href="https://indieweb.org/RelMeAuth">its IndieWeb wiki entry</a>.</p>
     </div>
