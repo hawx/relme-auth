@@ -76,7 +76,7 @@
       <p>The recommended path for this is <code>/.well-known/oauth-authorization-server</code>, but you can use something else if it makes more sense for you. The "issuer" should be set to your URL. See <a href="https://indieauth.spec.indieweb.org/#indieauth-server-metadata">the IndieAuth specification</a> for more detail on what each property means.</p>
 
       <p>Then link to that file in your homepage's <code>&lt;head&gt;</code>:</p>
-      <pre><code>&lt;link rel="authorization_endpoint" href="/.well-known/oauth-authorization-server"&gt;</code></pre>
+      <pre><code>&lt;link rel="indieauth-metadata" href="/.well-known/oauth-authorization-server"&gt;</code></pre>
 
       <p>For greater compatibility with services that use the previous
         method of config discovery you might also want to add the following to
