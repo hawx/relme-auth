@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/gorilla/sessions"
 	"hawx.me/code/relme-auth/internal/config"
@@ -20,7 +19,7 @@ import (
 type ExampleDB interface {
 	CreateToken(data.Token) error
 	Tokens(string) ([]data.Token, error)
-	RevokeRow(me, rowID string) error
+	RevokeToken(string) error
 	Forget(string) error
 }
 
@@ -171,14 +170,9 @@ func ExampleRevoke(baseURL string, store sessions.Store, tokenStore ExampleDB) h
 			return
 		}
 
-		me, ok := session.Values["me"].(string)
-		if !ok {
-			return
-		}
-
 		rowID := r.FormValue("id")
 
-		if err := tokenStore.RevokeRow(me, rowID); err != nil {
+		if err := tokenStore.RevokeToken(rowID); err != nil {
 			log.Println("handler/example failed to revoke token:", err)
 		}
 
@@ -189,7 +183,7 @@ func ExampleRevoke(baseURL string, store sessions.Store, tokenStore ExampleDB) h
 func ExampleGenerate(
 	baseURL string,
 	store sessions.Store,
-	generator func() (string, error),
+	generator func(int) (string, error),
 	tokenStore ExampleDB,
 	templates tmpl,
 ) http.HandlerFunc {
@@ -206,19 +200,17 @@ func ExampleGenerate(
 			return
 		}
 
-		tokenString, err := generator()
+		token, tokenString, err := data.NewToken(generator, data.Code{
+			Me:       me,
+			ClientID: r.FormValue("client_id"),
+			Scope:    r.FormValue("scope"),
+		})
 		if err != nil {
 			log.Println("handler/token could not generate token:", err)
 			return
 		}
 
-		if err := tokenStore.CreateToken(data.Token{
-			Token:     tokenString,
-			Me:        me,
-			ClientID:  r.FormValue("client_id"),
-			Scope:     r.FormValue("scope"),
-			CreatedAt: time.Now(),
-		}); err != nil {
+		if err := tokenStore.CreateToken(token); err != nil {
 			log.Println("handler/example failed to create token:", err)
 		}
 

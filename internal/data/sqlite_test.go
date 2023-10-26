@@ -54,11 +54,12 @@ func TestForget(t *testing.T) {
 	assert(err).Must.Nil()
 
 	err = db.CreateToken(Token{
-		Token:     "abcde",
-		Me:        "http://john.doe.example.com",
-		ClientID:  "http://client.example.com",
-		Scope:     "create media",
-		CreatedAt: now,
+		ShortToken:    "abcde",
+		LongTokenHash: "xyz",
+		Me:            "http://john.doe.example.com",
+		ClientID:      "http://client.example.com",
+		Scope:         "create media",
+		CreatedAt:     now,
 	})
 	assert(err).Must.Nil()
 

@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/internal/data"
@@ -18,14 +17,14 @@ type TokenDB interface {
 	RevokeToken(string) error
 }
 
-func Token(store TokenDB, generator func() (string, error)) http.Handler {
+func Token(store TokenDB, generator func(int) (string, error)) http.Handler {
 	return mux.Method{
 		"POST": tokenEndpoint(store, generator),
 		"GET":  verifyTokenEndpoint(store),
 	}
 }
 
-func tokenEndpoint(store TokenDB, generator func() (string, error)) http.HandlerFunc {
+func tokenEndpoint(store TokenDB, generator func(int) (string, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("action") == "revoke" {
 			token := r.FormValue("token")
@@ -89,20 +88,13 @@ func tokenEndpoint(store TokenDB, generator func() (string, error)) http.Handler
 			return
 		}
 
-		tokenString, err := generator()
+		token, tokenString, err := data.NewToken(generator, theCode)
 		if err != nil {
 			log.Println("handler/token could not generate token:", err)
 			http.Error(w, "something went wrong", http.StatusInternalServerError)
 			return
 		}
 
-		token := data.Token{
-			Token:     tokenString,
-			Me:        theCode.Me,
-			ClientID:  theCode.ClientID,
-			Scope:     theCode.Scope,
-			CreatedAt: time.Now(),
-		}
 		if err := store.CreateToken(token); err != nil {
 			log.Println("handler/token could not persist token:", err)
 			http.Error(w, "something went wrong", http.StatusInternalServerError)
@@ -111,7 +103,7 @@ func tokenEndpoint(store TokenDB, generator func() (string, error)) http.Handler
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(tokenResponse{
-			AccessToken: token.Token,
+			AccessToken: tokenString,
 			TokenType:   "Bearer",
 			Scope:       token.Scope,
 			Me:          token.Me,

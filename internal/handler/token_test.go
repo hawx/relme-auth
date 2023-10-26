@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,7 +14,7 @@ import (
 	"hawx.me/code/relme-auth/internal/data"
 )
 
-func fakeGenerator() (string, error) { return "a token", nil }
+func fakeGenerator(i int) (string, error) { return fmt.Sprintf("ran%ddom", i), nil }
 
 type fakeTokenStore struct {
 	code  data.Code
@@ -28,7 +29,7 @@ func (s *fakeTokenStore) Code(code string) (data.Code, error) {
 }
 
 func (s *fakeTokenStore) Token(t string) (data.Token, error) {
-	if t == s.token.Token {
+	if t == s.token.ShortToken {
 		return s.token, nil
 	}
 	return data.Token{}, errors.New("no")
@@ -79,7 +80,7 @@ func TestToken(t *testing.T) {
 		Me          string `json:"me"`
 	}
 	assert(json.NewDecoder(resp.Body).Decode(&v)).Must.Nil()
-	assert(v.AccessToken).Equal("a token")
+	assert(v.AccessToken).Equal("relmeauth_ran8dom_ran24dom")
 	assert(v.TokenType).Equal("Bearer")
 	assert(v.Scope).Equal(code.Scope)
 	assert(v.Me).Equal(code.Me)
@@ -123,7 +124,7 @@ func TestTokenWithPKCE(t *testing.T) {
 		Me          string `json:"me"`
 	}
 	assert(json.NewDecoder(resp.Body).Decode(&v)).Must.Nil()
-	assert(v.AccessToken).Equal("a token")
+	assert(v.AccessToken).Equal("relmeauth_ran8dom_ran24dom")
 	assert(v.TokenType).Equal("Bearer")
 	assert(v.Scope).Equal(code.Scope)
 	assert(v.Me).Equal(code.Me)
@@ -299,11 +300,11 @@ func TestRevokeToken(t *testing.T) {
 	assert := assert.Wrap(t)
 
 	token := data.Token{
-		Token:     "abcde",
-		ClientID:  "http://client.example.com",
-		Scope:     "create update",
-		Me:        "it is me",
-		CreatedAt: time.Now(),
+		ShortToken: "abcde",
+		ClientID:   "http://client.example.com",
+		Scope:      "create update",
+		Me:         "it is me",
+		CreatedAt:  time.Now(),
 	}
 	sessionStore := &fakeTokenStore{token: token}
 
@@ -312,7 +313,7 @@ func TestRevokeToken(t *testing.T) {
 
 	resp, err := http.PostForm(s.URL, url.Values{
 		"action": {"revoke"},
-		"token":  {token.Token},
+		"token":  {token.ShortToken},
 	})
 	assert(err).Must.Nil()
 	assert(resp.StatusCode).Equal(http.StatusOK)
@@ -324,18 +325,18 @@ func TestVerifyToken(t *testing.T) {
 	assert := assert.Wrap(t)
 
 	token := data.Token{
-		Token:     "abcde",
-		ClientID:  "http://client.example.com",
-		Scope:     "create update",
-		Me:        "it is me",
-		CreatedAt: time.Now(),
+		ShortToken: "abcde",
+		ClientID:   "http://client.example.com",
+		Scope:      "create update",
+		Me:         "it is me",
+		CreatedAt:  time.Now(),
 	}
 
 	s := httptest.NewServer(Token(&fakeTokenStore{token: token}, fakeGenerator))
 	defer s.Close()
 
 	req, _ := http.NewRequest("GET", s.URL, nil)
-	req.Header.Add("Authorization", "Bearer "+token.Token)
+	req.Header.Add("Authorization", "Bearer "+token.ShortToken)
 
 	resp, err := http.DefaultClient.Do(req)
 	assert(err).Must.Nil()
@@ -355,22 +356,22 @@ func TestVerifyToken(t *testing.T) {
 
 func TestVerifyTokenWithBadParams(t *testing.T) {
 	token := data.Token{
-		ClientID:  "http://client.example.com",
-		Me:        "it is me",
-		CreatedAt: time.Now(),
-		Token:     "abcde",
-		Scope:     "create update",
+		ClientID:   "http://client.example.com",
+		Me:         "it is me",
+		CreatedAt:  time.Now(),
+		ShortToken: "abcde",
+		Scope:      "create update",
 	}
 
 	s := httptest.NewServer(Token(&fakeTokenStore{token: token}, fakeGenerator))
 	defer s.Close()
 
 	req, _ := http.NewRequest("GET", s.URL, nil)
-	req.Header.Add("Authorization", "Bearer "+token.Token)
+	req.Header.Add("Authorization", "Bearer "+token.ShortToken)
 
 	testCases := map[string]string{
 		"invalid auth header": "one-part",
-		"not bearer":          "something " + token.Token,
+		"not bearer":          "something " + token.ShortToken,
 		"unknown token":       "Bearer what",
 	}
 
