@@ -40,7 +40,7 @@ func New(
 	webPath string,
 	templates map[string]*template.Template,
 	cookies *sessions.CookieStore,
-	tokenGenerator func() (string, error),
+	tokenGenerator func(int) (string, error),
 	noRedirectClient *http.Client,
 ) http.Handler {
 	route.Handle("/callback/continue", handler.Continue(database, codeGenerator))

@@ -63,52 +63,53 @@ func Open(path string, httpClient *http.Client, cookies sessions.Store, expiry E
 
 func (d *Database) migrate() error {
 	_, err := d.db.Exec(`
-    CREATE TABLE IF NOT EXISTS profile (
-      Me        TEXT PRIMARY KEY,
-      CreatedAt DATETIME
-    );
+		CREATE TABLE IF NOT EXISTS profile (
+			Me        TEXT PRIMARY KEY,
+			CreatedAt DATETIME
+		);
 
-    CREATE TABLE IF NOT EXISTS method (
-      Me       TEXT,
-      Provider TEXT,
-      Profile  TEXT,
-      PRIMARY KEY (Me, Provider),
-      FOREIGN KEY (Me) REFERENCES profile(Me)
-    );
+		CREATE TABLE IF NOT EXISTS method (
+			Me       TEXT,
+			Provider TEXT,
+			Profile  TEXT,
+			PRIMARY KEY (Me, Provider),
+			FOREIGN KEY (Me) REFERENCES profile(Me)
+		);
 
-    CREATE TABLE IF NOT EXISTS client (
-      ClientID    TEXT PRIMARY KEY,
-      RedirectURI TEXT,
-      Name        TEXT,
-      CreatedAt   DATETIME
-    );
+		CREATE TABLE IF NOT EXISTS client (
+			ClientID    TEXT PRIMARY KEY,
+			RedirectURI TEXT,
+			Name        TEXT,
+			CreatedAt   DATETIME
+		);
 
-    CREATE TABLE IF NOT EXISTS session (
-      Me           TEXT PRIMARY KEY,
-      ResponseType TEXT,
-      Provider     TEXT,
-      ProfileURI   TEXT,
-      ClientID     TEXT,
-      RedirectURI  TEXT,
-      Scope        TEXT,
-      State        TEXT,
-      Code         TEXT,
-      CreatedAt    DATETIME
-    );
+		CREATE TABLE IF NOT EXISTS session (
+			Me           TEXT PRIMARY KEY,
+			ResponseType TEXT,
+			Provider     TEXT,
+			ProfileURI   TEXT,
+			ClientID     TEXT,
+			RedirectURI  TEXT,
+			Scope        TEXT,
+			State        TEXT,
+			Code         TEXT,
+			CreatedAt    DATETIME
+		);
 
-    CREATE TABLE IF NOT EXISTS token (
-      Token     TEXT PRIMARY KEY,
-      Me        TEXT,
-      ClientID  TEXT,
-      Scope     TEXT,
-      CreatedAt DATETIME
-    );
+		CREATE TABLE IF NOT EXISTS token (
+			ShortToken    TEXT PRIMARY KEY,
+			LongTokenHash TEXT,
+			Me            TEXT,
+			ClientID      TEXT,
+			Scope         TEXT,
+			CreatedAt     DATETIME
+		);
 
-    CREATE TABLE IF NOT EXISTS login (
-      ID        TEXT,
-      Me        TEXT PRIMARY KEY,
-      CreatedAt DATETIME
-    );
+		CREATE TABLE IF NOT EXISTS login (
+			ID        TEXT,
+			Me        TEXT PRIMARY KEY,
+			CreatedAt DATETIME
+		);
 
 `)
 	if err != nil {
@@ -122,7 +123,7 @@ func (d *Database) migrate() error {
 
 	stmts := []string{
 		`ALTER TABLE session ADD COLUMN CodeChallenge TEXT;
-     ALTER TABLE session ADD COLUMN CodeChallengeMethod TEXT;`,
+		 ALTER TABLE session ADD COLUMN CodeChallengeMethod TEXT;`,
 	}
 
 	for _, stmt := range stmts[version:] {
@@ -150,12 +151,12 @@ func (d *Database) setSchemaVersion(version int) error {
 
 func (d *Database) Forget(me string) error {
 	_, err := d.db.Exec(`
-    DELETE FROM profile WHERE Me = ?;
-    DELETE FROM method WHERE Me = ?;
-    DELETE FROM session WHERE Me = ?;
-    DELETE FROM token WHERE Me = ?;
-    DELETE FROM login WHERE Me = ?;
-  `,
+		DELETE FROM profile WHERE Me = ?;
+		DELETE FROM method WHERE Me = ?;
+		DELETE FROM session WHERE Me = ?;
+		DELETE FROM token WHERE Me = ?;
+		DELETE FROM login WHERE Me = ?;
+	`,
 		me, me, me, me, me)
 
 	return err

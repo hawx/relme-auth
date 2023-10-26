@@ -18,17 +18,18 @@ func TestToken(t *testing.T) {
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
 	err := db.CreateToken(Token{
-		Token:     "abcde",
-		Me:        "http://john.doe.example.com",
-		ClientID:  "http://client.example.com",
-		Scope:     "create media",
-		CreatedAt: now,
+		ShortToken:    "abcde",
+		LongTokenHash: "Ngi8oeROpsTSaOttsCJgJpiSwLQrhrvx53pvoWw8koI",
+		Me:            "http://john.doe.example.com",
+		ClientID:      "http://client.example.com",
+		Scope:         "create media",
+		CreatedAt:     now,
 	})
 	assert(err).Nil()
 
-	token, err := db.Token("abcde")
+	token, err := db.Token("relmeauth_abcde_xyz")
 	assert(err).Nil()
-	assert(token.Token).Equal("abcde")
+	assert(token.ShortToken).Equal("abcde")
 	assert(token.Me).Equal("http://john.doe.example.com")
 	assert(token.ClientID).Equal("http://client.example.com")
 	assert(token.Scope).Equal("create media")
@@ -37,7 +38,7 @@ func TestToken(t *testing.T) {
 	tokens, err := db.Tokens("http://john.doe.example.com")
 	assert(err).Nil()
 	if assert(tokens).Len(1) {
-		assert(tokens[0].Token).Equal("1")
+		assert(tokens[0].ShortToken).Equal("abcde")
 		assert(tokens[0].Me).Equal("http://john.doe.example.com")
 		assert(tokens[0].ClientID).Equal("http://client.example.com")
 		assert(tokens[0].Scope).Equal("create media")
@@ -47,7 +48,7 @@ func TestToken(t *testing.T) {
 	err = db.RevokeToken("abcde")
 	assert(err).Nil()
 
-	_, err = db.Token("abcde")
+	_, err = db.Token("relmeauth_abcde_xyz")
 	assert(err).Equal(sql.ErrNoRows)
 
 	tokens, err = db.Tokens("http://john.doe.example.com")
@@ -67,17 +68,18 @@ func TestTokenRevokeByClient(t *testing.T) {
 	now := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
 	err := db.CreateToken(Token{
-		Token:     "abcde",
-		Me:        "http://john.doe.example.com",
-		ClientID:  "http://client.example.com",
-		Scope:     "create media",
-		CreatedAt: now,
+		ShortToken:    "abcde",
+		LongTokenHash: "Ngi8oeROpsTSaOttsCJgJpiSwLQrhrvx53pvoWw8koI",
+		Me:            "http://john.doe.example.com",
+		ClientID:      "http://client.example.com",
+		Scope:         "create media",
+		CreatedAt:     now,
 	})
 	assert(err).Nil()
 
-	token, err := db.Token("abcde")
+	token, err := db.Token("relmeauth_abcde_xyz")
 	assert(err).Nil()
-	assert(token.Token).Equal("abcde")
+	assert(token.ShortToken).Equal("abcde")
 	assert(token.Me).Equal("http://john.doe.example.com")
 	assert(token.ClientID).Equal("http://client.example.com")
 	assert(token.Scope).Equal("create media")
@@ -86,7 +88,7 @@ func TestTokenRevokeByClient(t *testing.T) {
 	tokens, err := db.Tokens("http://john.doe.example.com")
 	assert(err).Nil()
 	if assert(tokens).Len(1) {
-		assert(tokens[0].Token).Equal("1")
+		assert(tokens[0].ShortToken).Equal("abcde")
 		assert(tokens[0].Me).Equal("http://john.doe.example.com")
 		assert(tokens[0].ClientID).Equal("http://client.example.com")
 		assert(tokens[0].Scope).Equal("create media")
@@ -96,7 +98,7 @@ func TestTokenRevokeByClient(t *testing.T) {
 	err = db.RevokeClient("http://john.doe.example.com", "http://client.example.com")
 	assert(err).Nil()
 
-	_, err = db.Token("abcde")
+	_, err = db.Token("relmeauth_abcde_xyz")
 	assert(err).Equal(sql.ErrNoRows)
 
 	err = db.RevokeClient("http://john.doe.example.com", "http://client.example.com")
