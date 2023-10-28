@@ -230,10 +230,7 @@ func (s *webSocketServer) readAllEvents(conn *conn, request profileRequest, prof
 				conn.send(eventResponse{Type: "not-supported", Link: event.Link})
 			}
 
-		case microformats.Unverified:
-			conn.send(eventResponse{Type: "unverified", Link: event.Link})
-
-		case microformats.Verified:
+		case microformats.Unverified, microformats.Verified:
 			if strategy, ok := s.strategies.IsAllowed(event.Link); ok {
 				query := url.Values{
 					"me":           {request.Me},
@@ -242,7 +239,12 @@ func (s *webSocketServer) readAllEvents(conn *conn, request profileRequest, prof
 					"redirect_uri": {request.RedirectURI},
 				}
 
-				conn.send(eventResponse{Type: "verified", Link: event.Link, Method: chooseCtxMethod{
+				typeName := "unverified"
+				if event.Type == microformats.Verified {
+					typeName = "verified"
+				}
+
+				conn.send(eventResponse{Type: typeName, Link: event.Link, Method: chooseCtxMethod{
 					Query:        query.Encode(),
 					StrategyName: strategy.Name(),
 					ProfileURL:   event.Link,

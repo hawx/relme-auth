@@ -32,7 +32,7 @@ refresh.onclick = function() {
 };
 
 const elements = {};
-let anyVerified = false;
+let anyListed = false;
 
 socket.onmessage = function (event) {
     const profile = JSON.parse(event.data);
@@ -50,7 +50,7 @@ socket.onmessage = function (event) {
         case 'pgp':
             const pgpEl = renderText(methods, profile.Link);
             toMethod(pgpEl, profile.Method);
-            anyVerified = true;
+            anyListed = true;
             break;
         case 'found':
             elements[profile.Link] = renderText(methods, profile.Link);
@@ -59,15 +59,16 @@ socket.onmessage = function (event) {
             toError(elements[profile.Link], 'unsupported');
             break;
         case 'unverified':
-            methods.removeChild(elements[profile.Link]);
+            elements[profile.Link] = toMethod(elements[profile.Link], profile.Method, true);
+            anyListed = true;
             break;
         case 'verified':
             elements[profile.Link] = toMethod(elements[profile.Link], profile.Method);
-            anyVerified = true;
+            anyListed = true;
             break;
         case 'done':
             loader.classList.add('hide');
-            if (!anyVerified) {
+            if (!anyListed) {
                 const errorText = document.createTextNode("Sorry, you aren't able to use any of the supported authentication providers.");
                 methods.classList.add('info');
                 methods.appendChild(errorText);
@@ -139,13 +140,14 @@ function toError(li, errorClass) {
     li.appendChild(errorText);
 }
 
-function toMethod(li, method) {
+function toMethod(li, method, unverified) {
     while (li.firstChild) {
         li.removeChild(li.firstChild);
     }
 
     const btn = document.createElement('a');
     btn.classList.add('btn');
+    if (unverified) { btn.classList.add('unverified'); }
     btn.href = '/auth/start?' + method.Query;
 
     const name = document.createElement('strong');
