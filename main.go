@@ -21,43 +21,43 @@ import (
 func printHelp() {
 	fmt.Println(`Usage: relme-auth [options]
 
-	relme-auth is a web service for authenticating with 3rd party
-	auth providers.
+  relme-auth is a web service for authenticating with 3rd party
+  auth providers.
 
-	The providers implemented are:
-	 * GitHub
-	 * Flickr
-	 * PGP
+  The providers implemented are:
+   * GitHub
+   * Flickr
+   * PGP
 
  CONFIGURATION
-	 --config PATH='./config.toml'
-		 Configuration file to use, this defines the secrets for
-		 communicating with 3rd party authentication providers.
+  --config PATH='./config.toml'
+    Configuration file to use, this defines the secrets for
+    communicating with 3rd party authentication providers.
 
-	 --base-url URL='http://localhost:8080'
-		 Where this app is going to be accessible from.
+   --base-url URL='http://localhost:8080'
+     Where this app is going to be accessible from.
 
-	 --cookie-secret SECRET
-		 A base64 encoded string to use for authenticating sessions.
-		 It is recommended to use 32 or 64 bytes for this value.
+   --cookie-secret SECRET
+    A base64 encoded string to use for authenticating sessions.
+    It is recommended to use 32 or 64 bytes for this value.
 
-	 --true
-		 Use the fake 'true' authentication provider. This should
-		 only be used locally for testing as it says everyone is
-		 authenticated!
+   --true
+    Use the fake 'true' authentication provider. This should
+    only be used locally for testing as it says everyone is
+    authenticated!
 
  DATA
-	 --db PATH
-			Use the sqlite database at the given path.
+  --db PATH
+    Use the sqlite database at the given path.
 
  SERVE
-	 Will use a systemd.socket if configured to do so.
+  Will use a systemd.socket if configured to do so.
 
-	 --port PORT='8080'
-			Serve on given port.
+  --port PORT='8080'
+    Serve on given port.
 
-	 --socket SOCK
-			Serve at given socket, instead.`)
+  --socket SOCK
+    Serve at given socket, instead.`)
 }
 
 func loadTemplates(webPath string) (map[string]*template.Template, error) {
