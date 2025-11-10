@@ -71,13 +71,6 @@ func New(
 			route.Handle("/callback/github", handler.Callback(database, gitHubStrategy, codeGenerator))
 			strategies = append(strategies, gitHubStrategy)
 		}
-
-		if conf.Twitter != nil {
-			twitterDatabase, _ := data.Strategy("twitter")
-			twitterStrategy := strategy.Twitter(baseURL, twitterDatabase, conf.Twitter.ID, conf.Twitter.Secret, httpClient)
-			route.Handle("/callback/twitter", handler.Callback(database, twitterStrategy, codeGenerator))
-			strategies = append(strategies, twitterStrategy)
-		}
 	}
 
 	route.Handle("/auth", mux.Method{

@@ -4,9 +4,8 @@ import "github.com/BurntSushi/toml"
 
 // Config has the options required for running relme-auth.
 type Config struct {
-	Flickr  *Strategy `toml:"flickr"`
-	GitHub  *Strategy `toml:"github"`
-	Twitter *Strategy `toml:"twitter"`
+	Flickr *Strategy `toml:"flickr"`
+	GitHub *Strategy `toml:"github"`
 }
 
 // Strategy has configuration required for an OAuth/OAuth 2.0 service.

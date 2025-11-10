@@ -45,21 +45,12 @@
         <p>Make sure your GitHub profile has a link back to your homepage.</p>
       {{ end }}
 
-      {{ if .HasTwitter }}
-        <h3 id="twitter">Twitter</h3>
-        <p>To authenticate with your Twitter account add a link to your profile on your homepage.</p>
-        <pre><code>&lt;a rel="me" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;</code></pre>
-        <p>Or if you don't want the link to be visible.</p>
-        <pre><code>&lt;link rel="me" href="https://twitter.com/YOU" /&gt;</code></pre>
-        <p>Make sure your Twitter profile has a link back to your homepage.</p>
-      {{ end }}
-
       <h2>Choosing auth providers</h2>
       <p>You may want to mark some links up with <code>rel="me"</code>, but
         not want to consider them for authentication. You can choose which
         will be considered by adding <code>rel="authn"</code> too.</p>
-      <p>In the following example only Twitter and PGP would be shown as options.</p>
-      <pre><code>&lt;a rel="me authn" href="https://twitter.com/YOU"&gt;Twitter&lt;/a&gt;
+      <p>In the following example only Flickr and PGP would be shown as options.</p>
+      <pre><code>&lt;a rel="me authn" href="https://flickr.com/people/YOU"&gt;Flickr&lt;/a&gt;
 &lt;a rel="me" href="https://github.com/YOU"&gt;GitHub&lt;/a&gt;
 &lt;a rel="pgpkey authn" href="/public.asc"&gt;My PGP Key&lt;/a&gt;</code></pre>
 

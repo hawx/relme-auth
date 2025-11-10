@@ -27,7 +27,6 @@ func printHelp() {
 	The providers implemented are:
 	 * GitHub
 	 * Flickr
-	 * Twitter
 	 * PGP
 
  CONFIGURATION

@@ -57,13 +57,12 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 		}
 
 		if err := welcomeTemplate.ExecuteTemplate(w, "page", welcomeCtx{
-			ThisURI:    baseURL,
-			Me:         me,
-			LoggedIn:   ok,
-			HasFlickr:  conf.Flickr != nil,
-			HasGitHub:  conf.GitHub != nil,
-			HasTwitter: conf.Twitter != nil,
-			Tokens:     tokens,
+			ThisURI:   baseURL,
+			Me:        me,
+			LoggedIn:  ok,
+			HasFlickr: conf.Flickr != nil,
+			HasGitHub: conf.GitHub != nil,
+			Tokens:    tokens,
 		}); err != nil {
 			log.Println("handler/example failed to write template:", err)
 		}
@@ -276,7 +275,6 @@ type welcomeCtx struct {
 	LoggedIn      bool
 	HasFlickr     bool
 	HasGitHub     bool
-	HasTwitter    bool
 	Tokens        []data.Token
 }
 
