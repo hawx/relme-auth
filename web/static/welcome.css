@@ -400,6 +400,18 @@ a.btn:hover {
     border-color: rgba(42, 100, 151, .5);
 }
 
+a.btn.unverified {
+    background: rgba(169, 97, 54, .1);
+    border-color: rgba(169, 97, 54, .2);
+    color: rgb(169, 97, 54);
+}
+
+a.btn.unverified:hover {
+    background: rgba(151, 98, 42, .1);
+    border-color: rgba(151, 98, 42, .5);
+    color: rgb(151, 98, 42);
+}
+
 .center {
     display: flex;
     justify-content: center;
