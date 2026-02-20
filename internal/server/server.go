@@ -20,6 +20,7 @@ type DB interface {
 	handler.CallbackDB
 	handler.ChooseDB
 	handler.ContinueDB
+	handler.CredentialDB
 	handler.ExampleDB
 	handler.TokenDB
 	handler.VerifyDB
@@ -74,7 +75,7 @@ func New(
 	}
 
 	route.Handle("/auth", mux.Method{
-		"GET":  handler.Choose(baseURL, database, strategies, templates["choose.gotmpl"], templates["me.gotmpl"]),
+		"GET":  handler.Choose(database, templates["choose.gotmpl"], templates["me.gotmpl"]),
 		"POST": handler.Verify(database),
 	})
 	route.Handle("/auth/start", mux.Method{
@@ -84,6 +85,13 @@ func New(
 	route.Handle("/token", handler.Token(database, tokenGenerator))
 	route.Handle("/pgp/authorize", handler.PGP(templates["pgp.gotmpl"]))
 
+	passkeyRegistrationDatabase, _ := data.Strategy("passkey-register")
+	route.Handle("/passkey/register/start", handler.PasskeyRegisterStart(cookies, passkeyRegistrationDatabase))
+	route.Handle("/passkey/register/end", handler.PasskeyRegisterEnd(passkeyRegistrationDatabase, database))
+
+	passkeyDatabase, _ := data.Strategy("passkey")
+	route.Handle("/passkey/authorize", handler.Passkey(passkeyDatabase, database, codeGenerator))
+
 	route.Handle("/", handler.Example(baseURL, conf, cookies, database, templates["welcome.gotmpl"], templates["account.gotmpl"]))
 	route.Handle("/sign-in", handler.ExampleSignIn(baseURL, cookies))
 	route.Handle("/redirect", handler.ExampleCallback(baseURL, cookies))
@@ -92,6 +100,7 @@ func New(
 	route.Handle("/privacy", handler.ExamplePrivacy(templates["privacy.gotmpl"]))
 	route.Handle("/forget", handler.ExampleForget(baseURL, cookies, database))
 	route.Handle("/generate", handler.ExampleGenerate(baseURL, cookies, tokenGenerator, database, templates["generate.gotmpl"]))
+	route.Handle("/delete-credential", handler.ExampleDeleteCredential(baseURL, cookies, database))
 
 	relMe := &microformats.RelMe{Client: httpClient, NoRedirectClient: noRedirectClient}
 

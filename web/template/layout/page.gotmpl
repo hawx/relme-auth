@@ -11,6 +11,7 @@
       {{ block "main" . }}{{ end }}
       
       {{ template "footer.gotmpl" . }}
+      {{ block "scripts" . }}{{ end }}
     </body>
   </html>
 {{ end }}

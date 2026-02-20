@@ -21,6 +21,8 @@ type ExampleDB interface {
 	Tokens(string) ([]data.Token, error)
 	RevokeToken(string) error
 	Forget(string) error
+	Credentials(string) ([]data.Credential, error)
+	DeleteCredential(string) error
 }
 
 // Example implements a basic site using the authentication flow provided by
@@ -45,10 +47,14 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 				log.Println("handler/example could not save session:", err)
 			}
 
+			// TODO: probably handle the error in some way...
+			credentials, _ := tokenStore.Credentials(me)
+
 			if err := accountTemplate.ExecuteTemplate(w, "page", accountCtx{
-				Me:     me,
-				State:  state,
-				Tokens: tokens,
+				Me:          me,
+				State:       state,
+				Tokens:      tokens,
+				Credentials: credentials,
 			}); err != nil {
 				log.Println("handler/example failed to write template:", err)
 			}
@@ -179,6 +185,25 @@ func ExampleRevoke(baseURL string, store sessions.Store, tokenStore ExampleDB) h
 	}
 }
 
+func ExampleDeleteCredential(baseURL string, store sessions.Store, tokenStore ExampleDB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "example-session")
+
+		if r.FormValue("state") != session.Values["state"] {
+			http.Error(w, "state did not match", http.StatusBadRequest)
+			return
+		}
+
+		credentialID := r.FormValue("id")
+
+		if err := tokenStore.DeleteCredential(credentialID); err != nil {
+			log.Println("handler/example failed to delete credential:", err)
+		}
+
+		http.Redirect(w, r, baseURL, http.StatusFound)
+	}
+}
+
 func ExampleGenerate(
 	baseURL string,
 	store sessions.Store,
@@ -279,7 +304,8 @@ type welcomeCtx struct {
 }
 
 type accountCtx struct {
-	State  string
-	Me     string
-	Tokens []data.Token
+	State       string
+	Me          string
+	Tokens      []data.Token
+	Credentials []data.Credential
 }

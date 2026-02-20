@@ -51,6 +51,32 @@
       </div>
     </form>
 
+    <h2>Passkey</h2>
+    <p>Set-up a passkey as an alternative method of signing in.</p>
+    {{ if .Credentials }}
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Credentials }}
+            <tr>
+              <td>{{ .CredentialID }}</td>
+              <td><time datetime="{{ .CreatedAt.Format "2006-01-02T15:04:05Z07:00" }}">{{ .CreatedAt.Format "2 Jan 2006" }}</time></td>
+              <td class="no-padding"><form action="/delete-credential?id={{ .CredentialID }}&state={{ $.State }}" method="post">
+                <button type="submit">Delete</button>
+              </form></td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    {{ end }}
+    <button type="button" id="createPasskey">Create passkey</button>
+    
     <h2>Forget</h2>
     <p>Click the button below to delete all information associated with <strong>{{ .Me }}</strong>.</p>
 
@@ -58,4 +84,8 @@
       <button type="submit">Forget</button>
     </form>
   </section>
+{{ end }}
+
+{{ define "scripts" }}
+  <script src="/public/passkey.js"></script>
 {{ end }}

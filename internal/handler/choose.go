@@ -8,7 +8,6 @@ import (
 
 	"hawx.me/code/mux"
 	"hawx.me/code/relme-auth/internal/data"
-	"hawx.me/code/relme-auth/internal/strategy"
 )
 
 type ChooseDB interface {
@@ -19,13 +18,13 @@ type ChooseDB interface {
 
 // Choose finds, for the "me" parameter, all authentication providers that can be
 // used for authentication.
-func Choose(baseURL string, store ChooseDB, strategies strategy.Strategies, chooseTemplate, meTemplate tmpl) http.Handler {
+func Choose(store ChooseDB, chooseTemplate, meTemplate tmpl) http.Handler {
 	return mux.Method{
-		"GET": chooseProvider(baseURL, store, strategies, chooseTemplate, meTemplate),
+		"GET": chooseProvider(store, chooseTemplate, meTemplate),
 	}
 }
 
-func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategies, chooseTemplate, meTemplate tmpl) http.Handler {
+func chooseProvider(store ChooseDB, chooseTemplate, meTemplate tmpl) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			responseType        = r.FormValue("response_type")

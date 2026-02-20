@@ -111,6 +111,12 @@ func (d *Database) migrate() error {
 			CreatedAt DATETIME
 		);
 
+    CREATE TABLE IF NOT EXISTS credential (
+      CredentialID TEXT PRIMARY KEY,
+      Me           TEXT,
+      PublicKey    TEXT,
+      CreatedAt    DATETIME
+    );
 `)
 	if err != nil {
 		return err

@@ -18,6 +18,7 @@ import (
 type WebSocketDB interface {
 	Profile(string) (data.Profile, error)
 	CacheProfile(data.Profile) error
+	Credentials(string) ([]data.Credential, error)
 }
 
 // WebSocket returns a http.Handler that handles websocket connections. The
@@ -123,6 +124,17 @@ func (s *webSocketServer) serveConnection(conn *conn) error {
 			Methods:   []data.Method{},
 		}
 
+		if creds, err := s.store.Credentials(msg.Me); err != nil {
+			log.Println("handler/websocket failed to find credential:", err)
+		} else if len(creds) > 0 {
+			conn.send(eventResponse{
+				Type: "passkey",
+				Method: chooseCtxMethod{
+					StrategyName: "passkey",
+				},
+			})
+		}
+
 		if err := s.readAllEvents(conn, msg, &profile); err != nil {
 			log.Println("handler/websocket failed to read all events:", err)
 			continue
@@ -199,7 +211,6 @@ func (s *webSocketServer) readAllEvents(conn *conn, request profileRequest, prof
 
 		case microformats.PGP:
 			if strategy, ok := s.strategies.IsAllowed("pgp"); ok {
-
 				query := url.Values{
 					"me":           {request.Me},
 					"provider":     {strategy.Name()},
