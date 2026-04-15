@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/clearsign"
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 )
 
 type pgpData struct {
@@ -102,7 +102,7 @@ func verify(httpClient *http.Client, keyURL, signed, challenge string) error {
 		return errors.New("challenge not correct")
 	}
 
-	_, err = openpgp.CheckDetachedSignature(keyRing, bytes.NewBuffer(blk.Bytes), blk.ArmoredSignature.Body)
+	_, err = openpgp.CheckDetachedSignature(keyRing, bytes.NewBuffer(blk.Bytes), blk.ArmoredSignature.Body, nil)
 	return err
 }
 
