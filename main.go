@@ -119,7 +119,7 @@ func main() {
 		Timeout: 10 * time.Second,
 	}
 
-	codeGenerator := random.Generator(20)
+	codeGenerator := random.Generator(32)
 	tokenGenerator := random.String
 
 	secret, err := base64.StdEncoding.DecodeString(*cookieSecret)
