@@ -39,6 +39,13 @@ func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategi
 			me                  = r.FormValue("me")
 		)
 
+		for _, vals := range r.Form {
+			if len(vals) > 1 {
+				http.Error(w, "request contains duplicate keys", http.StatusBadRequest)
+				return
+			}
+		}
+
 		clientID = data.ParseClientID(clientID)
 		if clientID == "" {
 			http.Error(w, "client_id is invalid", http.StatusBadRequest)

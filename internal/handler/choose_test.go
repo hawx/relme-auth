@@ -264,6 +264,13 @@ func TestChooseWithBadParams(t *testing.T) {
 			"redirect_uri":  {"http://client.example.com/callback"},
 			"state":         {"abcde"},
 		},
+		"duplicate keys": {
+			"response_type": {"code"},
+			"me":            {"http://me.example.com/"},
+			"client_id":     {"http://client.example.com/"},
+			"redirect_uri":  {"http://client.example.com/callback", "http://client.example.com/or-this"},
+			"state":         {"abcde"},
+		},
 	}
 
 	for name, form := range testCases {
