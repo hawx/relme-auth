@@ -79,6 +79,11 @@ func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategi
 			return
 		}
 
+		if codeChallengeMethod != "" && codeChallengeMethod != "S256" {
+			http.Error(w, "only S256 code challenge method allowed", http.StatusBadRequest)
+			return
+		}
+
 		me = data.ParseProfileURL(me)
 		if me == "" {
 			http.Error(w, "me is invalid", http.StatusBadRequest)

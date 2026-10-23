@@ -398,6 +398,16 @@ func TestChooseForCodeWithBadParams(t *testing.T) {
 			"response_type": {"code"},
 			"scope":         {"create update"},
 		},
+		"plain pkce": {
+			"me":                    {"http://me.example.com/"},
+			"client_id":             {"http://client.example.com/"},
+			"redirect_uri":          {"http://client.example.com/callback"},
+			"code_challenge":        {"some-base64-string"},
+			"code_challenge_method": {"plain"},
+			"state":                 {"some-value"},
+			"response_type":         {"code"},
+			"scope":                 {"create update"},
+		},
 	}
 
 	for name, form := range testCases {
