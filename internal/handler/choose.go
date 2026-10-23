@@ -3,6 +3,7 @@ package handler
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -119,12 +120,23 @@ func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategi
 			return
 		}
 
+		cancelURI, err := url.Parse(redirectURI)
+		if err != nil {
+			http.Error(w, "redirect_uri invalid", http.StatusBadRequest)
+			return
+		}
+		cancelQuery := cancelURI.Query()
+		cancelQuery.Set("error", "access_denied")
+		cancelQuery.Set("state", state)
+		cancelURI.RawQuery = cancelQuery.Encode()
+
 		tmplCtx := chooseCtx{
 			ClientID:            client.ID,
 			ClientName:          client.Name,
 			CodeChallengeMethod: codeChallengeMethod,
 			Me:                  me,
 			Scopes:              scopes,
+			CancelURI:           cancelURI.String(),
 		}
 
 		if loggedInMe, err := store.Login(r); err == nil && loggedInMe == me {
@@ -143,6 +155,7 @@ type chooseCtx struct {
 	CodeChallengeMethod string
 	Me                  string
 	Scopes              []string
+	CancelURI           string
 	Skip                bool
 }
 

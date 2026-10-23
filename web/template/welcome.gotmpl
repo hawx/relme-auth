@@ -3,6 +3,12 @@
 {{ define "main" }}
   <header class="h-app hero">
     <div class="container">
+      {{ if .Error }}
+        <div class="error-banner">
+          <p>error: {{ .Error }}</p>
+        </div>
+      {{ end }}
+
       <h1 class="p-name">relme-auth</h1>
       <h2>Sign in with your domain</h2>
       <p>Try signing in to this site:</p>

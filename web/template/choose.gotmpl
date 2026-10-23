@@ -32,7 +32,7 @@
     </ul>
   {{ end }}
   {{ if not .Skip }}
-    <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong></p>
+    <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong>:</p>
 
     <ul class="methods"></ul>
     <div class="loader"></div>
@@ -40,6 +40,11 @@
     <p class="info loading">
       Results cached <span class="cachedAt"></span>. <a id="refresh">Refresh</a>.
     </p>
+
+    <p>Or,</p>
+    <ul class="methods">
+      <a class="btn btn-cancel" href="{{ .CancelURI }}">Cancel sign-in</a>
+    </ul>
   {{ end }}
 {{ end }}
 

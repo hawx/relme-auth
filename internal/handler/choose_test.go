@@ -69,6 +69,7 @@ func TestChoose(t *testing.T) {
 	assert(data.ClientID).Equal("http://client.example.com/")
 	assert(data.ClientName).Equal("Client")
 	assert(data.Me).Equal("http://me.example.com/")
+	assert(data.CancelURI).Equal("http://client.example.com/callback?error=access_denied&state=some-value")
 	assert(data.Skip).False()
 
 	assert(store.session.ResponseType).Equal("id")

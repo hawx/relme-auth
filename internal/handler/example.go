@@ -63,6 +63,7 @@ func Example(baseURL string, conf config.Config, store sessions.Store, tokenStor
 			HasFlickr: conf.Flickr != nil,
 			HasGitHub: conf.GitHub != nil,
 			Tokens:    tokens,
+			Error:     r.FormValue("error"),
 		}); err != nil {
 			log.Println("handler/example failed to write template:", err)
 		}
@@ -110,6 +111,11 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 
 		if state != session.Values["state"] {
 			http.Error(w, "state did not match", http.StatusBadRequest)
+			return
+		}
+
+		if error := r.FormValue("error"); error != "" {
+			http.Redirect(w, r, "/?error="+error, http.StatusFound)
 			return
 		}
 
@@ -276,6 +282,7 @@ type welcomeCtx struct {
 	HasFlickr     bool
 	HasGitHub     bool
 	Tokens        []data.Token
+	Error         string
 }
 
 type accountCtx struct {
