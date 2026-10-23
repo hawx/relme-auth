@@ -16,7 +16,7 @@ type ContinueDB interface {
 }
 
 // Continue handles a user choosing to authenticate using a previous session.
-func Continue(store ContinueDB, generator func() (string, error)) http.Handler {
+func Continue(baseURL string, store ContinueDB, generator func() (string, error)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userProfileURL, err := store.Login(r)
 		if err != nil {
@@ -56,6 +56,7 @@ func Continue(store ContinueDB, generator func() (string, error)) http.Handler {
 		query := redirectURI.Query()
 		query.Set("code", code)
 		query.Set("state", session.State)
+		query.Set("iss", baseURL)
 		redirectURI.RawQuery = query.Encode()
 
 		http.Redirect(w, r, redirectURI.String(), http.StatusFound)

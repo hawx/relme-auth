@@ -114,6 +114,11 @@ func ExampleCallback(baseURL string, store sessions.Store) http.HandlerFunc {
 			return
 		}
 
+		if r.FormValue("iss") != baseURL {
+			http.Error(w, "iss did not match", http.StatusBadRequest)
+			return
+		}
+
 		if error := r.FormValue("error"); error != "" {
 			http.Redirect(w, r, "/?error="+error, http.StatusFound)
 			return

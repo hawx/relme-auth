@@ -93,7 +93,7 @@ func main() {
 	var (
 		port         = flag.String("port", "8080", "Port to run on")
 		socket       = flag.String("socket", "", "Socket to run on")
-		baseURL      = flag.String("base-url", "http://localhost:8080", "Where this is running")
+		baseURL      = flag.String("base-url", "http://localhost:8080", "Where this is running, presented as iss parameter")
 		configPath   = flag.String("config", "./config.toml", "Path to config file")
 		dbPath       = flag.String("db", "", "Path to database")
 		cookieSecret = flag.String("cookie-secret", "", "Secret to authenticate sessions with")

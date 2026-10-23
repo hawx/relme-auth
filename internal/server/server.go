@@ -43,32 +43,32 @@ func New(
 	tokenGenerator func(int) (string, error),
 	noRedirectClient *http.Client,
 ) http.Handler {
-	route.Handle("/callback/continue", handler.Continue(database, codeGenerator))
+	route.Handle("/callback/continue", handler.Continue(baseURL, database, codeGenerator))
 
 	var strategies strategy.Strategies
 	if useTrue {
 		trueStrategy := strategy.True(baseURL)
 		strategies = append(strategies, trueStrategy)
 
-		route.Handle("/callback/true", handler.Callback(database, trueStrategy, codeGenerator))
+		route.Handle("/callback/true", handler.Callback(baseURL, database, trueStrategy, codeGenerator))
 
 	} else {
 		pgpDatabase, _ := data.Strategy("pgp")
 		pgpStrategy := strategy.PGP(pgpDatabase, baseURL, "", httpClient)
-		route.Handle("/callback/pgp", handler.Callback(database, pgpStrategy, codeGenerator))
+		route.Handle("/callback/pgp", handler.Callback(baseURL, database, pgpStrategy, codeGenerator))
 		strategies = append(strategies, pgpStrategy)
 
 		if conf.Flickr != nil {
 			flickrDatabase, _ := data.Strategy("flickr")
 			flickrStrategy := strategy.Flickr(baseURL, flickrDatabase, conf.Flickr.ID, conf.Flickr.Secret, httpClient)
-			route.Handle("/callback/flickr", handler.Callback(database, flickrStrategy, codeGenerator))
+			route.Handle("/callback/flickr", handler.Callback(baseURL, database, flickrStrategy, codeGenerator))
 			strategies = append(strategies, flickrStrategy)
 		}
 
 		if conf.GitHub != nil {
 			gitHubDatabase, _ := data.Strategy("github")
 			gitHubStrategy := strategy.GitHub(gitHubDatabase, conf.GitHub.ID, conf.GitHub.Secret)
-			route.Handle("/callback/github", handler.Callback(database, gitHubStrategy, codeGenerator))
+			route.Handle("/callback/github", handler.Callback(baseURL, database, gitHubStrategy, codeGenerator))
 			strategies = append(strategies, gitHubStrategy)
 		}
 	}

@@ -64,10 +64,11 @@
       <p>To use this service for <a href="https://indieweb.org/IndieAuth">IndieAuth</a> create a JSON file containing this minimal config:</p>
 
       <pre><code>{
-  "issuer": "https://yoursite.example.com/",
+  "issuer": "{{ .ThisURI }}",
   "authorization_endpoint": "{{ .ThisURI }}/auth",
   "token_endpoint": "{{ .ThisURI }}/token",
-  "code_challenge_methods_supported": ["S256"]
+  "code_challenge_methods_supported": ["S256"],
+  "authorization_response_iss_parameter_supported": true
 }</code></pre>
 
       <p>The recommended path for this is <code>/.well-known/oauth-authorization-server</code>, but you can use something else if it makes more sense for you. The "issuer" should be set to your URL. See <a href="https://indieauth.spec.indieweb.org/#indieauth-server-metadata">the IndieAuth specification</a> for more detail on what each property means.</p>

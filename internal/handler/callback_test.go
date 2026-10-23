@@ -59,7 +59,7 @@ func TestCallback(t *testing.T) {
 		},
 	}
 
-	s := httptest.NewServer(Callback(store, &fakeStrategy{}, codeGenerator))
+	s := httptest.NewServer(Callback("http://localhost", store, &fakeStrategy{}, codeGenerator))
 	defer s.Close()
 
 	client := &http.Client{
@@ -75,11 +75,11 @@ func TestCallback(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusFound, resp.StatusCode)
-	assert.Equal(t, "http://example.com/callback?code=my-code&state=my-state", resp.Header.Get("Location"))
+	assert.Equal(t, "http://example.com/callback?code=my-code&iss=http%3A%2F%2Flocalhost&state=my-state", resp.Header.Get("Location"))
 }
 
 func TestCallbackWhenSessionDoesNotExist(t *testing.T) {
-	s := httptest.NewServer(Callback(&fakeCallbackStore{}, &fakeStrategy{}, codeGenerator))
+	s := httptest.NewServer(Callback("", &fakeCallbackStore{}, &fakeStrategy{}, codeGenerator))
 	defer s.Close()
 
 	form := url.Values{
@@ -102,7 +102,7 @@ func TestCallbackWhenSessionExpired(t *testing.T) {
 		},
 	}
 
-	s := httptest.NewServer(Callback(store, &fakeStrategy{}, codeGenerator))
+	s := httptest.NewServer(Callback("http://localhost", store, &fakeStrategy{}, codeGenerator))
 	defer s.Close()
 
 	form := url.Values{
@@ -124,7 +124,7 @@ func TestCallbackWhenProviderSaysTheyAreUnauthorized(t *testing.T) {
 		},
 	}
 
-	s := httptest.NewServer(Callback(store, &unauthorizedStrategy{}, codeGenerator))
+	s := httptest.NewServer(Callback("http://localhost", store, &unauthorizedStrategy{}, codeGenerator))
 	defer s.Close()
 
 	form := url.Values{
@@ -145,7 +145,7 @@ func TestCallbackWhenProviderErrors(t *testing.T) {
 		},
 	}
 
-	s := httptest.NewServer(Callback(store, &errorStrategy{}, codeGenerator))
+	s := httptest.NewServer(Callback("http://localhost", store, &errorStrategy{}, codeGenerator))
 	defer s.Close()
 
 	form := url.Values{

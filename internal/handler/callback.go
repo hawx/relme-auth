@@ -21,7 +21,7 @@ type CallbackDB interface {
 // user, then it will redirect to the "redirect_uri" that the authentication
 // flow was originally started with. A "code" parameter is returned which can be
 // verified as belonging to the authenticated user for a short period of time.
-func Callback(store CallbackDB, strat strategy.Strategy, generator func() (string, error)) http.Handler {
+func Callback(baseURL string, store CallbackDB, strat strategy.Strategy, generator func() (string, error)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			log.Println("handler/callback failed to parse form: ", err)
@@ -72,6 +72,7 @@ func Callback(store CallbackDB, strat strategy.Strategy, generator func() (strin
 		query := redirectURI.Query()
 		query.Set("code", code)
 		query.Set("state", session.State)
+		query.Set("iss", baseURL)
 		redirectURI.RawQuery = query.Encode()
 
 		store.SaveLogin(w, r, session.Me)

@@ -21,7 +21,7 @@
   </header>
 
   {{ if .Skip }}
-    <p>Continue signing-in with your previous session</p>
+    <p>Continue signing-in with your previous session:</p>
 
     <ul class="methods">
       <li>
@@ -30,8 +30,7 @@
         </a>
       </li>
     </ul>
-  {{ end }}
-  {{ if not .Skip }}
+  {{ else }}
     <p>Use one of the methods below to sign-in as <strong>{{ .Me }}</strong>:</p>
 
     <ul class="methods"></ul>
@@ -40,12 +39,12 @@
     <p class="info loading">
       Results cached <span class="cachedAt"></span>. <a id="refresh">Refresh</a>.
     </p>
-
-    <p>Or,</p>
-    <ul class="methods">
-      <a class="btn btn-cancel" href="{{ .CancelURI }}">Cancel sign-in</a>
-    </ul>
   {{ end }}
+
+  <p>Or,</p>
+  <ul class="methods">
+    <a class="btn btn-cancel" href="{{ .CancelURI }}">Cancel and return</a>
+  </ul>
 {{ end }}
 
 {{ define "scripts" }}

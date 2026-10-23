@@ -148,6 +148,7 @@ func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategi
 		cancelQuery := cancelURI.Query()
 		cancelQuery.Set("error", "access_denied")
 		cancelQuery.Set("state", state)
+		cancelQuery.Set("iss", baseURL)
 		cancelURI.RawQuery = cancelQuery.Encode()
 
 		tmplCtx := chooseCtx{
