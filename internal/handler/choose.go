@@ -87,7 +87,20 @@ func chooseProvider(baseURL string, store ChooseDB, strategies strategy.Strategi
 			return
 		}
 
-		if codeChallengeMethod != "" && codeChallengeMethod != "S256" {
+		switch codeChallengeMethod {
+		case "S256":
+			if codeChallenge == "" {
+				http.Error(w, "code challenge not provided", http.StatusBadRequest)
+				return
+			}
+
+		case "":
+			if codeChallenge != "" {
+				http.Error(w, "unexpected code challenge provided", http.StatusBadRequest)
+				return
+			}
+
+		default:
 			http.Error(w, "only S256 code challenge method allowed", http.StatusBadRequest)
 			return
 		}

@@ -265,11 +265,32 @@ func TestChooseWithBadParams(t *testing.T) {
 			"state":         {"abcde"},
 		},
 		"duplicate keys": {
-			"response_type": {"code"},
-			"me":            {"http://me.example.com/"},
-			"client_id":     {"http://client.example.com/"},
-			"redirect_uri":  {"http://client.example.com/callback", "http://client.example.com/or-this"},
-			"state":         {"abcde"},
+			"me":           {"http://me.example.com/"},
+			"client_id":    {"http://client.example.com/"},
+			"redirect_uri": {"http://client.example.com/callback", "http://client.example.com/or-this"},
+			"state":        {"abcde"},
+		},
+		"plain pkce": {
+			"me":                    {"http://me.example.com/"},
+			"client_id":             {"http://client.example.com/"},
+			"redirect_uri":          {"http://client.example.com/callback"},
+			"code_challenge":        {"some-base64-string"},
+			"code_challenge_method": {"plain"},
+			"state":                 {"some-value"},
+		},
+		"pkce method without challenge": {
+			"me":                    {"http://me.example.com/"},
+			"client_id":             {"http://client.example.com/"},
+			"redirect_uri":          {"http://client.example.com/callback"},
+			"code_challenge_method": {"S256"},
+			"state":                 {"some-value"},
+		},
+		"pkce challenge without method": {
+			"me":             {"http://me.example.com/"},
+			"client_id":      {"http://client.example.com/"},
+			"redirect_uri":   {"http://client.example.com/callback"},
+			"code_challenge": {"some-base64-string"},
+			"state":          {"some-value"},
 		},
 	}
 
@@ -406,6 +427,14 @@ func TestChooseForCodeWithBadParams(t *testing.T) {
 			"response_type": {"code"},
 			"scope":         {"create update"},
 		},
+		"duplicate keys": {
+			"me":            {"http://me.example.com/"},
+			"client_id":     {"http://client.example.com/"},
+			"redirect_uri":  {"http://client.example.com/callback", "http://client.example.com/or-this"},
+			"state":         {"some-value"},
+			"response_type": {"code"},
+			"scope":         {"create update"},
+		},
 		"plain pkce": {
 			"me":                    {"http://me.example.com/"},
 			"client_id":             {"http://client.example.com/"},
@@ -415,6 +444,24 @@ func TestChooseForCodeWithBadParams(t *testing.T) {
 			"state":                 {"some-value"},
 			"response_type":         {"code"},
 			"scope":                 {"create update"},
+		},
+		"pkce method without challenge": {
+			"me":                    {"http://me.example.com/"},
+			"client_id":             {"http://client.example.com/"},
+			"redirect_uri":          {"http://client.example.com/callback"},
+			"code_challenge_method": {"S256"},
+			"state":                 {"some-value"},
+			"response_type":         {"code"},
+			"scope":                 {"create update"},
+		},
+		"pkce challenge without method": {
+			"me":             {"http://me.example.com/"},
+			"client_id":      {"http://client.example.com/"},
+			"redirect_uri":   {"http://client.example.com/callback"},
+			"code_challenge": {"some-base64-string"},
+			"state":          {"some-value"},
+			"response_type":  {"code"},
+			"scope":          {"create update"},
 		},
 	}
 
